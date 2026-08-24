@@ -1,0 +1,59 @@
+{
+  "_comment": "PLACEHOLDERS ONLY. Rename label / labelEs / costumePrompt / scenePrompt with client-approved destination names. Do not treat these six tiles as official Turespaña destinations.",
+  "destinations": [
+    {
+      "id": "destination-1",
+      "label": "Destination 1",
+      "labelEs": "Destino 1",
+      "tileNote": "Rename me",
+      "accent": "#E42719",
+      "costumePrompt": "PLACEHOLDER costume for Destination 1 — replace with approved notes. Until then: a distinctive traditional Spanish festival look (embroidered short jacket, sash, and wide-brim hat). Do not print any real region name on the image.",
+      "scenePrompt": "PLACEHOLDER backdrop for Destination 1 — replace with approved notes. Until then: a painterly Spanish festival plaza at golden hour. No city or region names in the image."
+    },
+    {
+      "id": "destination-2",
+      "label": "Destination 2",
+      "labelEs": "Destino 2",
+      "tileNote": "Rename me",
+      "accent": "#FFEA00",
+      "costumePrompt": "PLACEHOLDER costume for Destination 2 — replace with approved notes. Until then: a distinctive traditional Spanish coastal look (white linen, light scarf, straw hat). Do not print any real region name on the image.",
+      "scenePrompt": "PLACEHOLDER backdrop for Destination 2 — replace with approved notes. Until then: a painterly Mediterranean shoreline with pale sand and blue water. No city or region names in the image."
+    },
+    {
+      "id": "destination-3",
+      "label": "Destination 3",
+      "labelEs": "Destino 3",
+      "tileNote": "Rename me",
+      "accent": "#7CB165",
+      "costumePrompt": "PLACEHOLDER costume for Destination 3 — replace with approved notes. Until then: a distinctive traditional Spanish mountain-pastoral look (wool vest, woven scarf, earth tones). Do not print any real region name on the image.",
+      "scenePrompt": "PLACEHOLDER backdrop for Destination 3 — replace with approved notes. Until then: painterly green hills and stone village rooftops. No city or region names in the image."
+    },
+    {
+      "id": "destination-4",
+      "label": "Destination 4",
+      "labelEs": "Destino 4",
+      "tileNote": "Rename me",
+      "accent": "#1B161C",
+      "costumePrompt": "PLACEHOLDER costume for Destination 4 — replace with approved notes. Until then: a distinctive traditional Spanish historic-city look (tailored cape or elegant dark dress/suit, refined accessories). Do not print any real region name on the image.",
+      "scenePrompt": "PLACEHOLDER backdrop for Destination 4 — replace with approved notes. Until then: a painterly historic arcade and warm stone architecture. No city or region names in the image."
+    },
+    {
+      "id": "destination-5",
+      "label": "Destination 5",
+      "labelEs": "Destino 5",
+      "tileNote": "Rename me",
+      "accent": "#C45C26",
+      "costumePrompt": "PLACEHOLDER costume for Destination 5 — replace with approved notes. Until then: a distinctive traditional Spanish island-maritime look (light fabrics, nautical stripes, festival energy — tasteful, never sexualized). Do not print any real region name on the image.",
+      "scenePrompt": "PLACEHOLDER backdrop for Destination 5 — replace with approved notes. Until then: a painterly volcanic-coast sunset over open water. No city or region names in the image."
+    },
+    {
+      "id": "destination-6",
+      "label": "Destination 6",
+      "labelEs": "Destino 6",
+      "tileNote": "Rename me",
+      "accent": "#8B1E3F",
+      "costumePrompt": "PLACEHOLDER costume for Destination 6 — replace with approved notes. Until then: a distinctive traditional Spanish harvest/country look (rustic blouse, apron, vineyard golden-hour styling). Do not print any real region name on the image.",
+      "scenePrompt": "PLACEHOLDER backdrop for Destination 6 — replace with approved notes. Until then: painterly rolling vineyards at late afternoon. No city or region names in the image."
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Your Spain portrait · Turespaña</title>
+  <meta name="theme-color" content="#1B161C" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root { --ink:#1B161C; --sun:#FFEA00; --passion:#E42719; --paper:#FFF8E7; --muted:#C8C0A8; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      background: linear-gradient(180deg, #2A2428 0%, var(--ink) 100%);
+      color: #fff;
+      font-family: Inter, system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 40px;
+    }
+    h1 { font-family: Fraunces, Georgia, serif; font-size: 1.6rem; margin: 8px 0 6px; text-align: center; }
+    .sub { color: var(--muted); text-align: center; margin: 0 0 18px; }
+    img { width: 100%; max-width: 420px; border-radius: 16px; border: 1px solid rgba(255,255,255,.15); }
+    a.btn {
+      display: inline-block;
+      margin-top: 18px;
+      background: var(--passion);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      padding: 14px 22px;
+      border-radius: 999px;
+    }
+    .err { color: #FF8A8A; text-align: center; }
+    .brand { letter-spacing: .22em; font-size: 11px; color: var(--sun); text-transform: uppercase; }
+  </style>
+</head>
+<body>
+  <div class="brand">Turespaña · IMEX</div>
+  <h1>Your Spain portrait</h1>
+  <p class="sub" id="status">Loading…</p>
+  <img id="photo" alt="Your portrait" hidden />
+  <a class="btn" id="download" hidden>Download</a>
+  <script>
+    (async function () {
+      const params = new URLSearchParams(location.search);
+      const id = params.get("id") || "";
+      const status = document.getElementById("status");
+      const img = document.getElementById("photo");
+      const dl = document.getElementById("download");
+      if (!id) { status.textContent = "Missing photo id."; status.className = "err"; return; }
+      try {
+        const r = await fetch("/api/claim?id=" + encodeURIComponent(id));
+        const data = await r.json();
+        if (!data.publicUrl) throw new Error("Photo not found");
+        img.src = data.publicUrl;
+        img.hidden = false;
+        dl.href = data.publicUrl;
+        dl.hidden = false;
+        status.textContent = "Save this souvenir from the Turespaña booth.";
+      } catch (e) {
+        status.textContent = "This portrait is not available. Ask the booth team to resend it by email.";
+        status.className = "err";
+      }
+    })();
+  </script>
+</body>
+</html>

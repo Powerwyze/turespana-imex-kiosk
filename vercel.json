@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "cleanUrls": true,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(self), microphone=(self), geolocation=()" }
+      ]
+    }
+  ],
+  "rewrites": [
+    { "source": "/claim", "destination": "/claim.html" }
+  ],
+  "functions": {
+    "api/banana.js": { "maxDuration": 300 },
+    "api/send-photo.js": { "maxDuration": 30 },
+    "api/lead.js": { "maxDuration": 30 },
+    "api/claim.js": { "maxDuration": 15 },
+    "api/health.js": { "maxDuration": 10 }
+  }
+}

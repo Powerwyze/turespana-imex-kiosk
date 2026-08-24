@@ -1,0 +1,196 @@
+/*
+ * PowerWyze On-Screen Keyboard
+ */
+
+.pw-osk {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 999999;
+  pointer-events: none;
+  visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.pw-osk.is-active {
+  pointer-events: auto;
+  visibility: visible;
+}
+
+.pw-osk__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.pw-osk.is-active .pw-osk__backdrop {
+  opacity: 1;
+}
+
+.pw-osk__panel {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  background: rgba(27, 22, 28, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  padding: 12px 8px 24px;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.5);
+  transform: translateY(100%);
+  transition: transform 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.pw-osk.is-active .pw-osk__panel {
+  transform: translateY(0);
+}
+
+.pw-osk__header {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 4px;
+}
+
+.pw-osk__close {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 20px;
+  padding: 8px;
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.pw-osk__close:active {
+  opacity: 1;
+}
+
+.pw-osk__domains {
+  display: flex;
+  gap: 6px;
+  padding: 0 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.pw-osk__domains::-webkit-scrollbar {
+  display: none;
+}
+
+.pw-osk__domain {
+  flex-shrink: 0;
+  background: #2A2428;
+  border: 1px solid #FFEA00;
+  color: #fff;
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.pw-osk__domain:active {
+  background: #FFEA00;
+  color: #1B161C;
+}
+
+.pw-osk__keys {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pw-osk__row {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.pw-osk__key {
+  flex: 1;
+  max-width: 48px;
+  height: 48px;
+  background: #2A2428;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-family: 'Oswald', sans-serif;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
+  transition: background 0.1s;
+  touch-action: manipulation;
+}
+
+.pw-osk__key:active,
+.pw-osk__key.is-active {
+  background: #FFEA00;
+  color: #1B161C;
+  transform: translateY(2px);
+  box-shadow: none;
+}
+
+.pw-osk__key--special {
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  max-width: none;
+  background: #3A3338;
+}
+
+.pw-osk__key--space {
+  flex: 4;
+  max-width: none;
+  flex-direction: column;
+  line-height: 1;
+}
+
+.pw-osk__key-main {
+  display: block;
+  height: 12px;
+}
+
+.pw-osk__key-sub {
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  opacity: 0.6;
+  margin-top: 2px;
+}
+
+.pw-osk__key--enter {
+  background: #E42719;
+  color: #FFFFFF;
+  font-size: 24px;
+  max-width: none;
+}
+
+.pw-osk__key--enter:active {
+  background: #b51c12;
+}
+
+@media (min-width: 600px) {
+  .pw-osk__panel {
+    border-radius: 16px 16px 0 0;
+  }
+  .pw-osk__key {
+    height: 56px;
+    font-size: 24px;
+    max-width: 64px;
+  }
+}
