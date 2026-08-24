@@ -203,6 +203,9 @@ function renderDestGrid() {
 function showScreen(id) {
   $$(".screen").forEach((el) => {
     const on = el.id === id;
+    if (!on && el.contains(document.activeElement)) {
+      try { document.activeElement.blur(); } catch (_) {}
+    }
     el.classList.toggle("is-active", on);
     el.hidden = !on;
     el.setAttribute("aria-hidden", on ? "false" : "true");

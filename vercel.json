@@ -12,6 +12,7 @@
     }
   ],
   "rewrites": [
+    { "source": "/favicon.ico", "destination": "/assets/sun.svg" },
     { "source": "/claim", "destination": "/claim.html" }
   ],
   "functions": {
