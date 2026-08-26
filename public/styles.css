@@ -183,15 +183,6 @@ button { font-family: inherit; cursor: pointer; }
 .screen { flex: 1; min-height: 0; display: none; flex-direction: column; }
 .screen.is-active { display: flex; }
 
-.placeholder-note {
-  margin: 0 0 10px;
-  text-align: center;
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  color: var(--sun);
-  opacity: 0.85;
-}
-
 .dest-grid {
   flex: 1;
   min-height: 0;

@@ -1,7 +1,7 @@
 /* ================================================================
  *  Turespaña · IMEX Las Vegas — portrait kiosk
  *  Flow: pick 1 of 6 destinations → camera → newsletter email →
- *        AI costume portrait → email + optional QR
+ *        AI costume poster → email + optional QR
  * ================================================================ */
 
 const $  = (sel, root = document) => root.querySelector(sel);
@@ -12,8 +12,7 @@ const I18N = {
     rotateTitle: "Please rotate to portrait",
     rotateSub: "This experience is designed for a 1080×1920 portrait kiosk.",
     heroTitle: "Pick a destination. Wear Spain.",
-    heroLede: "Choose one of six Spain destinations. We’ll dress you in its typical costume and email your portrait.",
-    placeholderNote: "Destination names are placeholders — easy to rename before show.",
+    heroLede: "Choose Andalucía, Madrid, Cataluña, País Vasco, Galicia, or Valencia. We’ll dress you for that destination and email your poster.",
     back: "← Destinations",
     hudPortrait: "PORTRAIT · 9:16",
     ctaTakePhoto: "Take My Photo",
@@ -21,9 +20,9 @@ const I18N = {
     stepPhoto: "Photo",
     stepEmail: "Email",
     stepPortrait: "Portrait",
-    footerEvent: "Turespaña · IMEX Las Vegas",
+    footerEvent: "Turespaña · IMEX Las Vegas · Oct 13–15 2026",
     footerPowered: "Powered by <strong>PowerWyze</strong>",
-    genPill: "Painting your portrait · ~60s",
+    genPill: "Creating your poster · ~60s",
     emailTitle: "Get your portrait + newsletter",
     emailSub: "We’ll email your costume portrait and add you to the Turespaña newsletter.",
     emailNameLabel: "Name",
@@ -34,24 +33,22 @@ const I18N = {
     emailErrName: "Please enter your name.",
     emailErrEmail: "Please enter a valid email.",
     emailErrConsent: "Newsletter opt-in is required to continue.",
-    waitTitle: "Painting your Spain portrait…",
-    waitSub: "Typical costume · travel-poster light · ~60 seconds",
-    resTitle: "Your Spain portrait is ready",
+    waitTitle: "Creating your Spain poster…",
+    waitSub: "Hyper-real Spain poster · ~60 seconds",
+    resTitle: "Your Spain poster is ready",
     resStatus: "Sent to your email",
     resSentTo: "✓ Sent to {email}",
     resSendFail: "Couldn't email {email}",
     resQr: "Scan to save on your phone",
     resCta: "Discover more at <strong>spain.info</strong>",
     resHint: "Tap anywhere to dismiss · auto-closes in <span id=\"resModalTimer\">20</span>s",
-    renameMe: "Rename me",
     chosen: "Costume · {label}",
   },
   es: {
     rotateTitle: "Gira a vertical",
     rotateSub: "Esta experiencia está diseñada para un kiosco vertical 1080×1920.",
     heroTitle: "Elige un destino. Ponte España.",
-    heroLede: "Elige uno de seis destinos. Te vestimos con su traje típico y te enviamos el retrato.",
-    placeholderNote: "Los nombres son provisionales — fáciles de cambiar antes del evento.",
+    heroLede: "Elige Andalucía, Madrid, Cataluña, País Vasco, Galicia o Valencia. Te vestimos para ese destino y te enviamos el cartel.",
     back: "← Destinos",
     hudPortrait: "VERTICAL · 9:16",
     ctaTakePhoto: "Toma mi foto",
@@ -59,9 +56,9 @@ const I18N = {
     stepPhoto: "Foto",
     stepEmail: "Correo",
     stepPortrait: "Retrato",
-    footerEvent: "Turespaña · IMEX Las Vegas",
+    footerEvent: "Turespaña · IMEX Las Vegas · 13–15 oct 2026",
     footerPowered: "Hecho por <strong>PowerWyze</strong>",
-    genPill: "Pintando tu retrato · ~60s",
+    genPill: "Creando tu cartel · ~60s",
     emailTitle: "Retrato + boletín",
     emailSub: "Te enviamos el retrato y te apuntamos al boletín de Turespaña.",
     emailNameLabel: "Nombre",
@@ -72,16 +69,15 @@ const I18N = {
     emailErrName: "Pon tu nombre.",
     emailErrEmail: "Correo inválido.",
     emailErrConsent: "El boletín es necesario para continuar.",
-    waitTitle: "Pintando tu retrato de España…",
-    waitSub: "Traje típico · luz de cartel · ~60 segundos",
-    resTitle: "Tu retrato de España está listo",
+    waitTitle: "Creando tu cartel de España…",
+    waitSub: "Cartel hiperreal de España · ~60 segundos",
+    resTitle: "Tu cartel de España está listo",
     resStatus: "Enviado a tu correo",
     resSentTo: "✓ Enviado a {email}",
     resSendFail: "No se pudo enviar a {email}",
     resQr: "Escanea para guardar en el móvil",
     resCta: "Descubre más en <strong>spain.info</strong>",
     resHint: "Toca para cerrar · se cierra en <span id=\"resModalTimer\">20</span>s",
-    renameMe: "Renómbrame",
     chosen: "Traje · {label}",
   },
 };
@@ -190,10 +186,11 @@ function renderDestGrid() {
     btn.className = "dest-tile";
     btn.style.setProperty("--tile-accent", d.accent || "#FFEA00");
     btn.setAttribute("role", "listitem");
+    const note = i18n.get() === "es" ? (d.tileNoteEs || d.tileNote) : d.tileNote;
     btn.innerHTML = `
       <span class="dest-tile__num">0${idx + 1}</span>
       <span class="dest-tile__label">${escapeHtml(destLabel(d))}</span>
-      <span class="dest-tile__note">${escapeHtml(d.tileNote || i18n.t("renameMe"))}</span>
+      ${note ? `<span class="dest-tile__note">${escapeHtml(note)}</span>` : ""}
     `;
     btn.addEventListener("click", () => selectDestination(d));
     grid.appendChild(btn);
@@ -358,8 +355,8 @@ const booth = (() => {
       boothQueueEl.textContent = "";
     } else {
       boothQueueEl.textContent = inflight === 1
-        ? "✦ Painting your portrait…"
-        : `✦ ${inflight} portraits painting…`;
+        ? "✦ Creating your poster…"
+        : `✦ ${inflight} posters in progress…`;
       boothQueueEl.style.display = "inline-flex";
     }
     showGenPill(inflight > 0);
@@ -473,7 +470,7 @@ const booth = (() => {
     ctx.fillText(destLabel(dest) || "Spain", pad, H - pad - 14 * scale);
     ctx.fillStyle = "#C8C0A8";
     ctx.font = `500 ${Math.round(20 * scale)}px Inter, sans-serif`;
-    ctx.fillText("spain.info  ·  IMEX Las Vegas", pad, H - pad + 10 * scale);
+        ctx.fillText("spain.info  ·  IMEX Las Vegas  ·  Oct 13–15 2026", pad, H - pad + 10 * scale);
     ctx.restore();
     return new Promise((res) => c.toBlob((b) => res(b), "image/jpeg", 0.95));
   }
@@ -697,13 +694,14 @@ async function boot() {
     const json = await r.json();
     DESTINATIONS = Array.isArray(json.destinations) ? json.destinations : [];
   } catch (e) {
-    DESTINATIONS = [1, 2, 3, 4, 5, 6].map((n) => ({
-      id: `destination-${n}`,
-      label: `Destination ${n}`,
-      labelEs: `Destino ${n}`,
-      tileNote: "Rename me",
-      accent: "#FFEA00",
-    }));
+    DESTINATIONS = [
+      { id: "andalucia", label: "Andalucía", labelEs: "Andalucía", tileNote: "Feria & flamenco", accent: "#E42719" },
+      { id: "madrid", label: "Madrid", labelEs: "Madrid", tileNote: "Capital chic", accent: "#FFEA00" },
+      { id: "cataluna", label: "Cataluña", labelEs: "Cataluña", tileNote: "Mediterráneo", accent: "#7CB165" },
+      { id: "pais-vasco", label: "País Vasco", labelEs: "País Vasco", tileNote: "Costa vasca", accent: "#1B161C" },
+      { id: "galicia", label: "Galicia", labelEs: "Galicia", tileNote: "Atlantic green", accent: "#7CB165" },
+      { id: "valencia", label: "Valencia", labelEs: "Valencia", tileNote: "Fallas & light", accent: "#C45C26" },
+    ];
   }
   renderDestGrid();
   showScreen("screenDest");

@@ -1,11 +1,15 @@
 /**
- * Turespaña · IMEX Las Vegas — destination costume portrait painter
+ * Turespaña · IMEX Las Vegas — activation poster generator
  *
  * POST multipart/form-data:
  *   image          jpeg blob (required)
- *   destinationId  one of destination-1 … destination-6 (required)
+ *   destinationId  andalucia | madrid | cataluna | pais-vasco | galicia | valencia
  *
- * OpenAI Image Edit first; Gemini 2.5 Flash Image fallback.
+ * OpenAI Image Edit first (guest photo + style-lock ref); Gemini fallback.
+ *
+ * STYLE LOCK: public/assets/activation-style-ref.jpg
+ *   Hyper-real AI/CGI commercial tourism poster (GoDR × Marlins look).
+ *   Copy LOOK only. SWAP branding to Turespaña / spain.info and Spain costumes.
  *
  * Env:
  *   OPENAI_API_KEY, OPENAI_IMAGE_MODEL, OPENAI_IMAGE_SIZE, OPENAI_IMAGE_QUALITY
@@ -19,6 +23,7 @@ const path = require("node:path");
 
 const OPENAI_URL = "https://api.openai.com/v1/images/edits";
 const GEMINI_MODEL = process.env.GEMINI_IMAGE_MODEL || "gemini-2.5-flash-image";
+const STYLE_REF_PATH = path.join(process.cwd(), "public", "assets", "activation-style-ref.jpg");
 
 function loadDestinations() {
   const p = path.join(process.cwd(), "public", "data", "destinations.json");
@@ -26,23 +31,32 @@ function loadDestinations() {
   return Array.isArray(raw.destinations) ? raw.destinations : [];
 }
 
+function loadStyleRef() {
+  try {
+    return fs.readFileSync(STYLE_REF_PATH);
+  } catch (_) {
+    return null;
+  }
+}
+
 function buildPrompt(dest) {
-  const label = dest?.label || "Destination";
+  const label = dest?.label || "Spain";
   const costume = dest?.costumePrompt || `typical traditional costume associated with ${label}`;
-  const scene = dest?.scenePrompt || "a painterly Spanish travel-poster landscape";
+  const scene = dest?.scenePrompt || "an iconic Spanish landmark composite at sunset";
 
   return [
-    "Reimagine EVERY person visible in the input photo as a premium Turespaña travel-poster portrait for an IMEX Las Vegas activation.",
-    `DESTINATION SLOT: "${label}". This label may still be a placeholder (e.g. Destination 1). Do NOT invent or print an official Spanish region, city, or destination name on the image.`,
+    "TASK: Reimagine EVERY person in the FIRST input photo as a Turespaña / spain.info IMEX Las Vegas activation poster. Match the LOOK of the STYLE REFERENCE image (second image when attached): a hyper-real AI/CGI commercial tourism poster — NOT a raw photobooth snapshot, NOT a flat illustration, NOT kiosk UI chrome.",
+    "STYLE LOCK (copy this energy exactly): polished composited subjects, airbrushed beauty-retouched skin, dramatic high-contrast cinematic lighting, strong rim light on hair and shoulders, saturated commercial color grade, animation/activation poster finish. Composite background (destination landmark + painted FLAG brushstroke in the sky). Commercial poster layout with a typography area.",
+    "STYLE REFERENCE IS LOOK-ONLY. Do NOT copy: Dominican Republic branding, Go Dominican Republic logo, Miami Marlins uniforms or wordmarks, baseball bats/gloves/caps, baseball stadium as the default setting, or Dominican Republic flag colors as the sky stroke. Do not invent other tourism boards or sports teams.",
+    `DESTINATION: ${label}. Wardrobe and landmark must read clearly as ${label}.`,
     "GROUP HANDLING (CRITICAL): Count the people in the input photo. If there is 1 person, render a solo hero portrait. If there are 2–5 people, render ALL of them together. HARD CAP: never render more than 5 people. If the input shows more than 5, pick the 5 most prominent/centered subjects only. Every rendered person must correspond to a real person in the input. Do not invent extra people.",
-    "Render style: hyper-detailed editorial illustration with rich painterly brushwork — premium Spain tourism poster art. Photo-realistic faces are allowed only if they match the same cohesive illustrated treatment as bodies and background (NO photo-head-on-painted-body).",
-    `WARDROBE (apply to EVERY person rendered): ${costume}. Tasteful, brand-safe, never sexualized. Preserve each person's gender presentation. Traditional costume should read clearly as Spanish regional dress without naming a real region in text.`,
-    `SETTING: ${scene}. Warm Iberian light, travel-magazine composition.`,
-    "Color palette inspired by Spain tourism brand colors (not a logo recreation): sun yellow, passion red, landscape green, and deep black, with warm stone and sky.",
-    "Mood: joyful, welcoming, proud, cinematic, ready-to-travel.",
-    "Composition: portrait 9:16 vertical. Solo: centered, upper body and head fully visible. Group: shoulder-to-shoulder, no cropped faces. Leave clean negative space in the lower portion for overlay text added separately.",
+    `WARDROBE (every person): ${costume}`,
+    `SETTING: ${scene} Composite that landmark with a large textured oil-paint BRUSHSTROKE of the SPANISH FLAG sweeping the sky (red–gold–red, thick wet paint, NOT a flag on a pole, similar energy to the painted flag stroke in the style reference). Warm Iberian sunset plus dramatic highlight, cinematic tourism-poster depth.`,
+    "POSTER TYPOGRAPHY (allowed in the generated image, commercial layout like the style ref): top-left TURESPAÑA wordmark in clean premium type (no Joan Miró artwork, no Sol de Miró sun drawing — that mark is copyrighted). Optional short destination name. Lower third may include a pill/button with spain.info. Do not add Dominican Republic, Marlins, baseball, or any other brand names.",
+    "Color palette: Turespaña / spain.info tourism energy — sun yellow, Spain red, landscape green, deep black — plus the Spanish flag red/gold sky stroke and fiery sunset oranges. Mood: joyful, welcoming, proud, cinematic, ready-to-travel.",
+    "Composition: portrait 9:16 vertical. Solo: centered, waist-up, head fully visible. Group: shoulder-to-shoulder, no cropped faces. Subjects are the hero; landmark + flag stroke fill the sky behind them.",
     "IDENTITY LOCK (CRITICAL): for each person rendered, keep that person's face shape, hair color and style, skin tone, ethnicity, age, gender presentation, and overall identity clearly recognizable. Do not swap, merge, or generify faces.",
-    "NO TEXT in the painting itself — no logos, no destination names, no city names, no watermarks, no overlaid words. The Sol de Miró artwork is copyrighted: do NOT reproduce Joan Miró's sun logo or his lettering.",
+    "CRITICAL FINISH: one cohesive hyper-real CGI poster from top to bottom — faces, clothes, and background share the same airbrushed commercial treatment. No photo-head-on-painted-body. No raw camera grain. No baseball unless a destination brief explicitly asked (none do).",
   ].join(" ");
 }
 
@@ -58,7 +72,7 @@ function fieldStr(fields, key) {
   return String(v || "").trim();
 }
 
-async function openaiEdit({ apiKey, model, size, quality, prompt, fileBuffer, mimeType, filename }) {
+async function openaiEdit({ apiKey, model, size, quality, prompt, fileBuffer, mimeType, filename, styleRefBuffer }) {
   const fd = new FormData();
   fd.append("model", model);
   fd.append("prompt", prompt);
@@ -66,6 +80,9 @@ async function openaiEdit({ apiKey, model, size, quality, prompt, fileBuffer, mi
   fd.append("quality", quality);
   fd.append("n", "1");
   fd.append("image", new Blob([fileBuffer], { type: mimeType || "image/jpeg" }), filename || "input.jpg");
+  if (styleRefBuffer) {
+    fd.append("image", new Blob([styleRefBuffer], { type: "image/jpeg" }), "activation-style-ref.jpg");
+  }
 
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), 280000);
@@ -98,26 +115,26 @@ async function openaiEdit({ apiKey, model, size, quality, prompt, fileBuffer, mi
   throw new Error("No image data in OpenAI response");
 }
 
-async function geminiEdit({ apiKey, prompt, fileBuffer, mimeType }) {
+async function geminiEdit({ apiKey, prompt, fileBuffer, mimeType, styleRefBuffer }) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent`;
-  const body = {
-    contents: [
-      {
-        role: "user",
-        parts: [
-          { text: prompt },
-          {
-            inlineData: {
-              mimeType: mimeType || "image/jpeg",
-              data: Buffer.from(fileBuffer).toString("base64"),
-            },
-          },
-        ],
-      },
-    ],
-    generationConfig: {
-      responseModalities: ["IMAGE"],
+  const parts = [{ text: prompt }];
+  parts.push({
+    inlineData: {
+      mimeType: mimeType || "image/jpeg",
+      data: Buffer.from(fileBuffer).toString("base64"),
     },
+  });
+  if (styleRefBuffer) {
+    parts.push({
+      inlineData: {
+        mimeType: "image/jpeg",
+        data: Buffer.from(styleRefBuffer).toString("base64"),
+      },
+    });
+  }
+  const body = {
+    contents: [{ role: "user", parts }],
+    generationConfig: { responseModalities: ["IMAGE"] },
   };
 
   const controller = new AbortController();
@@ -145,12 +162,12 @@ async function geminiEdit({ apiKey, prompt, fileBuffer, mimeType }) {
   }
 
   const data = await res.json();
-  const parts = data?.candidates?.[0]?.content?.parts || [];
-  for (const part of parts) {
+  const gparts = data?.candidates?.[0]?.content?.parts || [];
+  for (const part of gparts) {
     const b64 = part.inlineData?.data || part.inline_data?.data;
     if (b64) return Buffer.from(b64, "base64");
   }
-  const textParts = parts.filter((p) => p.text).map((p) => p.text).join(" | ");
+  const textParts = gparts.filter((p) => p.text).map((p) => p.text).join(" | ");
   throw new Error(`Gemini returned no image. ${textParts || "empty"}`.slice(0, 400));
 }
 
@@ -182,7 +199,7 @@ module.exports = async function handler(req, res) {
   const dest = destinations.find((d) => d.id === destinationId);
   if (!dest) {
     res.statusCode = 400;
-    return res.end("Unknown destinationId. Use destination-1 … destination-6 (or a renamed id in public/data/destinations.json).");
+    return res.end("Unknown destinationId. Use andalucia, madrid, cataluna, pais-vasco, galicia, or valencia.");
   }
 
   const fileField = files?.image;
@@ -197,6 +214,7 @@ module.exports = async function handler(req, res) {
   }
 
   const prompt = buildPrompt(dest);
+  const styleRefBuffer = loadStyleRef();
   const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-1";
   const size = process.env.OPENAI_IMAGE_SIZE || "1024x1536";
   const quality = process.env.OPENAI_IMAGE_QUALITY || "high";
@@ -217,6 +235,7 @@ module.exports = async function handler(req, res) {
         fileBuffer,
         mimeType,
         filename: file.originalFilename || "input.jpg",
+        styleRefBuffer,
       });
       provider = "openai";
     } catch (e) {
@@ -232,6 +251,7 @@ module.exports = async function handler(req, res) {
         prompt,
         fileBuffer,
         mimeType,
+        styleRefBuffer,
       });
       provider = "gemini";
     } catch (e) {

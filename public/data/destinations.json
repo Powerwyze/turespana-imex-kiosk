@@ -1,59 +1,65 @@
 {
-  "_comment": "PLACEHOLDERS ONLY. Rename label / labelEs / costumePrompt / scenePrompt with client-approved destination names. Do not treat these six tiles as official Turespaña destinations.",
+  "_comment": "IMEX activation destinations specified for this kiosk: Andalucía, Madrid, Cataluña, País Vasco, Galicia, Valencia. Costume/scene lines feed /api/banana. Rename here if the client adjusts wording.",
   "destinations": [
     {
-      "id": "destination-1",
-      "label": "Destination 1",
-      "labelEs": "Destino 1",
-      "tileNote": "Rename me",
+      "id": "andalucia",
+      "label": "Andalucía",
+      "labelEs": "Andalucía",
+      "tileNote": "Feria & flamenco",
+      "tileNoteEs": "Feria y flamenco",
       "accent": "#E42719",
-      "costumePrompt": "PLACEHOLDER costume for Destination 1 — replace with approved notes. Until then: a distinctive traditional Spanish festival look (embroidered short jacket, sash, and wide-brim hat). Do not print any real region name on the image.",
-      "scenePrompt": "PLACEHOLDER backdrop for Destination 1 — replace with approved notes. Until then: a painterly Spanish festival plaza at golden hour. No city or region names in the image."
+      "costumePrompt": "Tasteful Andalusian festival dress: embroidered short jacket or modest flamenca-inspired look (high neckline, full skirt, never sexualized), sash, Córdoba-style wide-brim hat optional. Smart travel alternative: linen and polished leather, still clearly Andalusian feria energy. NO baseball jerseys, NO sports uniforms.",
+      "scenePrompt": "Composite of Seville's Plaza de España arcades and Giralda tower at fiery golden-hour sunset, palm silhouettes, warm stone, cinematic travel-poster depth. Landmark reads as Andalucía, not a generic plaza."
     },
     {
-      "id": "destination-2",
-      "label": "Destination 2",
-      "labelEs": "Destino 2",
-      "tileNote": "Rename me",
+      "id": "madrid",
+      "label": "Madrid",
+      "labelEs": "Madrid",
+      "tileNote": "Capital chic",
+      "tileNoteEs": "Capital chic",
       "accent": "#FFEA00",
-      "costumePrompt": "PLACEHOLDER costume for Destination 2 — replace with approved notes. Until then: a distinctive traditional Spanish coastal look (white linen, light scarf, straw hat). Do not print any real region name on the image.",
-      "scenePrompt": "PLACEHOLDER backdrop for Destination 2 — replace with approved notes. Until then: a painterly Mediterranean shoreline with pale sand and blue water. No city or region names in the image."
+      "costumePrompt": "Madrid chulapo/chulapa-inspired smart look (checked neckerchief, waistcoat, cap) OR contemporary capital travel style: tailored jacket, elegant city-ready outfits. Tasteful, brand-safe. NO baseball jerseys, NO sports uniforms.",
+      "scenePrompt": "Composite of Madrid's Palacio Real and Gran Vía dusk glow, grand boulevards, warm street lamps, cinematic skyline. Landmark reads as Madrid."
     },
     {
-      "id": "destination-3",
-      "label": "Destination 3",
-      "labelEs": "Destino 3",
-      "tileNote": "Rename me",
+      "id": "cataluna",
+      "label": "Cataluña",
+      "labelEs": "Cataluña",
+      "tileNote": "Mediterráneo",
+      "tileNoteEs": "Mediterráneo",
       "accent": "#7CB165",
-      "costumePrompt": "PLACEHOLDER costume for Destination 3 — replace with approved notes. Until then: a distinctive traditional Spanish mountain-pastoral look (wool vest, woven scarf, earth tones). Do not print any real region name on the image.",
-      "scenePrompt": "PLACEHOLDER backdrop for Destination 3 — replace with approved notes. Until then: painterly green hills and stone village rooftops. No city or region names in the image."
+      "costumePrompt": "Catalan traditional cues (barretina, faixa sash, modest festive dress) OR smart Barcelona Mediterranean travel looks: clean tailoring, light fabrics. Tasteful, never sexualized. NO baseball jerseys, NO sports uniforms.",
+      "scenePrompt": "Composite of Barcelona's Sagrada Família silhouette and Gothic Quarter stone streets toward a Mediterranean sunset, cinematic tourism-poster depth. Landmark reads as Cataluña."
     },
     {
-      "id": "destination-4",
-      "label": "Destination 4",
-      "labelEs": "Destino 4",
-      "tileNote": "Rename me",
+      "id": "pais-vasco",
+      "label": "País Vasco",
+      "labelEs": "País Vasco",
+      "tileNote": "Costa vasca",
+      "tileNoteEs": "Costa vasca",
       "accent": "#1B161C",
-      "costumePrompt": "PLACEHOLDER costume for Destination 4 — replace with approved notes. Until then: a distinctive traditional Spanish historic-city look (tailored cape or elegant dark dress/suit, refined accessories). Do not print any real region name on the image.",
-      "scenePrompt": "PLACEHOLDER backdrop for Destination 4 — replace with approved notes. Until then: a painterly historic arcade and warm stone architecture. No city or region names in the image."
+      "costumePrompt": "Basque traditional cues (txapela beret, rustic-smart wool or linen, festive but modest) OR polished Basque-coast travel looks. Tasteful, brand-safe. NO baseball jerseys, NO sports uniforms.",
+      "scenePrompt": "Composite of the Guggenheim Bilbao titanium curves and San Sebastián bay at dramatic sunset, green hills, cinematic coastal light. Landmark reads as País Vasco."
     },
     {
-      "id": "destination-5",
-      "label": "Destination 5",
-      "labelEs": "Destino 5",
-      "tileNote": "Rename me",
+      "id": "galicia",
+      "label": "Galicia",
+      "labelEs": "Galicia",
+      "tileNote": "Atlantic green",
+      "tileNoteEs": "Verde atlántico",
+      "accent": "#7CB165",
+      "costumePrompt": "Galician traditional dress cues (monteira-inspired headpiece, embroidered vest, modest skirt or tailored rural-smart look) OR Atlantic travel layers in wool and linen. Tasteful, never sexualized. NO baseball jerseys, NO sports uniforms.",
+      "scenePrompt": "Composite of Santiago de Compostela cathedral towers and green Atlantic coastline under a luminous sunset, misty hills, cinematic pilgrimage-poster depth. Landmark reads as Galicia."
+    },
+    {
+      "id": "valencia",
+      "label": "Valencia",
+      "labelEs": "Valencia",
+      "tileNote": "Fallas & light",
+      "tileNoteEs": "Fallas y luz",
       "accent": "#C45C26",
-      "costumePrompt": "PLACEHOLDER costume for Destination 5 — replace with approved notes. Until then: a distinctive traditional Spanish island-maritime look (light fabrics, nautical stripes, festival energy — tasteful, never sexualized). Do not print any real region name on the image.",
-      "scenePrompt": "PLACEHOLDER backdrop for Destination 5 — replace with approved notes. Until then: a painterly volcanic-coast sunset over open water. No city or region names in the image."
-    },
-    {
-      "id": "destination-6",
-      "label": "Destination 6",
-      "labelEs": "Destino 6",
-      "tileNote": "Rename me",
-      "accent": "#8B1E3F",
-      "costumePrompt": "PLACEHOLDER costume for Destination 6 — replace with approved notes. Until then: a distinctive traditional Spanish harvest/country look (rustic blouse, apron, vineyard golden-hour styling). Do not print any real region name on the image.",
-      "scenePrompt": "PLACEHOLDER backdrop for Destination 6 — replace with approved notes. Until then: painterly rolling vineyards at late afternoon. No city or region names in the image."
+      "costumePrompt": "Valencian fallera/fallero-inspired festive dress (ornate but modest, high neckline) OR smart Mediterranean travel looks with citrus-festival energy. Tasteful, brand-safe. NO baseball jerseys, NO sports uniforms.",
+      "scenePrompt": "Composite of Valencia's City of Arts and Sciences and Mediterranean orange-grove light at sunset, water reflections, cinematic tourism-poster depth. Landmark reads as Valencia."
     }
   ]
 }

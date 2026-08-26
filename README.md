@@ -11,25 +11,32 @@ Closest pattern: [godr-marlins-kiosk](https://github.com/Powerwyze/godr-marlins-
 1. Kiosk attract screen (not a marketing landing page): pick **1 of 6** Spain destinations.
 2. Camera countdown → photo.
 3. Name + email for the **Turespaña newsletter** (required).
-4. AI dresses every person in the typical costume of that destination.
+4. AI dresses every person for that destination as a hyper-real tourism poster.
 5. Portrait emailed; QR to phone if Supabase storage is configured.
 
-## Destination placeholders
+## Destinations
 
-Official destination list is **unknown**. The six tiles are labeled **Destination 1–6** and are meant to be renamed in one file:
+Six tiles, renamed in [`public/data/destinations.json`](public/data/destinations.json):
 
-[`public/data/destinations.json`](public/data/destinations.json)
+**Andalucía · Madrid · Cataluña · País Vasco · Galicia · Valencia**
 
-Change `label`, `labelEs`, `costumePrompt`, and `scenePrompt`. Do **not** treat the current labels as client-approved names.
+Costume and landmark prompts live in that file so they stay easy to edit.
 
-## Event dates (do not silently overwrite)
+## Activation photo style
 
-| Source | Dates | Venue |
-| --- | --- | --- |
-| **Intake (shown on kiosk)** | Oct 10–13 (year not provided) | Mandalay (Las Vegas) |
-| **Official IMEX America 2026** | 13–15 October 2026 (Smart Monday 12 October) | Mandalay Bay |
+Generated photos follow a **hyper-real AI/CGI commercial tourism poster** look (style lock). Reference asset:
 
-The kiosk keeps the **intake** dates (`Oct 10–13`) and does **not** replace them with the official 2026 show dates. Confirm year and dates with Alba / Ines before show.
+[`public/assets/activation-style-ref.jpg`](public/assets/activation-style-ref.jpg)
+
+Copy the *look* of that poster (composited subjects, painted-flag sky stroke, dramatic lighting). Swap branding to **Turespaña / spain.info** and Spanish destination costumes — not baseball uniforms. Kiosk UI chrome stays spain.info / Turespaña and is **not** restyled to match the poster.
+
+## Event dates
+
+On-screen and in email:
+
+**IMEX Las Vegas · Oct 13–15 2026 · Hotel Mandalay** (indoor kiosk).
+
+(Earlier intake had Oct 10–13; the kiosk now uses the official IMEX America 2026 dates.)
 
 ## Brand
 
@@ -44,7 +51,7 @@ public/app.js
 public/styles.css
 public/claim.html    QR claim page (phone)
 public/data/destinations.json
-public/assets/       OSK + QR lib
+public/assets/       OSK, QR lib, activation-style-ref.jpg
 api/banana.js        AI image generation (OpenAI, Gemini fallback)
 api/send-photo.js    email delivery
 api/lead.js          newsletter lead + optional photo store
@@ -106,9 +113,7 @@ npx vercel dev
 
 ## Remaining human gaps
 
-- Approved 6 destination names + costume notes
-- Licensed logo file
-- Confirm IMEX dates/year vs official 13–15 Oct 2026
+- Confirm licensed logo file (geometric sun is temporary)
 - Newsletter legal copy / privacy
 - Create `turespana_leads` + storage bucket if QR is required
 - Hardware: 1 indoor branded kiosk, 3 days, 8 hours/day

@@ -102,7 +102,7 @@ module.exports = async function handler(req, res) {
         newsletter: newsletter !== false,
         public_url: publicUrl,
         source: "turespana-imex-kiosk",
-        event: "IMEX Las Vegas",
+        event: "IMEX Las Vegas · Oct 13–15 2026 · Hotel Mandalay",
       };
       const { error: insErr } = await supabase.from("turespana_leads").insert(row);
       if (insErr) throw insErr;

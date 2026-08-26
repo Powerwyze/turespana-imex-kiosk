@@ -77,7 +77,7 @@ module.exports = async function handler(req, res) {
           <tr><td style="padding:28px 32px 18px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.10)">
             <div style="font-family:Georgia,'Times New Roman',serif;font-size:13px;letter-spacing:0.28em;color:#FFEA00;font-weight:700;text-transform:uppercase">Turespaña</div>
             <div style="font-family:Georgia,'Times New Roman',serif;font-size:28px;font-weight:700;color:#FFFFFF;margin-top:6px;line-height:1.1">Spain is waiting</div>
-            <div style="margin-top:10px;font-size:11px;letter-spacing:0.22em;color:#C8C0A8;text-transform:uppercase">IMEX Las Vegas · AI Portrait</div>
+            <div style="margin-top:10px;font-size:11px;letter-spacing:0.22em;color:#C8C0A8;text-transform:uppercase">IMEX Las Vegas · Oct 13–15 2026 · Hotel Mandalay</div>
           </td></tr>
           <tr><td style="padding:26px 32px 8px;text-align:center">
             <h1 style="margin:0 0 8px;font-size:26px;font-weight:700;color:#FFFFFF;line-height:1.15">Hola, ${greetName}</h1>
@@ -104,7 +104,7 @@ module.exports = async function handler(req, res) {
             </div>
           </td></tr>
           <tr><td style="padding:22px 32px 26px;border-top:1px solid rgba(255,255,255,0.10);text-align:center;font-size:11px;color:#C8C0A8;line-height:1.6">
-            Turespaña · IMEX Las Vegas · ${new Date().getFullYear()}<br/>
+            Turespaña · IMEX Las Vegas · Oct 13–15 2026 · Hotel Mandalay<br/>
             Painted by <strong style="color:#FFFFFF">PowerWyze</strong><br/>
             <span style="color:#8A8274;font-size:10px">You're receiving this because you snapped a portrait at the Turespaña IMEX booth and opted into the newsletter. Reply to unsubscribe.</span>
           </td></tr>
