@@ -48,10 +48,15 @@ for (const count of [1, 2, 3]) {
     assert.equal(await response.text(), 'synthetic-jpeg');
     assert.equal(calls.length, 2, 'one generation + one check; no paid auto-regeneration');
     const payload = JSON.parse(calls[0].init.body);
-    assert.equal(payload.model, 'gpt-image-2'); assert.equal(payload.quality, 'low');
-    assert.equal(payload.size, '768x1152'); assert.equal(payload.n, 1);
+    assert.equal(payload.model, 'gpt-image-2'); assert.equal(payload.quality, 'high');
+    assert.equal(payload.size, '1024x1536'); assert.equal(payload.n, 1);
     assert.equal(payload.images.length, 2);
-    assert.match(payload.prompt,/Image 2 is the actual guest camera photo/);
+    assert.equal(payload.images[0].image_url, "data:image/jpeg;base64,"+Buffer.from("synthetic-source").toString("base64"));
+    assert.match(payload.prompt,/POLISHED ILLUSTRATED POSTER/);
+    assert.match(payload.prompt,/LIKENESS IS THE HIGHEST PRIORITY/);
+    assert.match(payload.prompt,/Preserve source facial geometry/);
+    assert.doesNotMatch(payload.prompt,/hyper-real|beauty-retouched|polished cinematic faces/);
+    assert.match(payload.prompt,/Image 1 is the actual guest camera photo/);
     assert.match(payload.prompt,/Remove ALL reference people completely/);
     assert.notEqual(payload.images[0].image_url,payload.images[1].image_url);
     assert.match(payload.prompt,new RegExp('MANDATORY: Exactly '+count));
@@ -67,7 +72,7 @@ for (const count of [1, 2, 3]) {
     assert.equal(verifier.text.format.strict, true);
     assert.match(verifier.instructions, /Independently count ALL people/);
     assert.match(verifier.instructions, /distant crowds, walkers, posters, screens, or reflections/);
-    assert.equal(verifier.input[0].content[1].image_url, payload.images[1].image_url);
+    assert.equal(verifier.input[0].content[1].image_url, payload.images[0].image_url);
     assert.equal(verifier.input[0].content[2].image_url, 'data:image/jpeg;base64,' + jpeg);
     assert.ok(calls[0].init.signal); assert.ok(calls[1].init.signal);
   });

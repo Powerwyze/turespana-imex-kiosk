@@ -1,4 +1,5 @@
 import {readFile} from 'node:fs/promises';
+import {portraitStyle,portraitLikeness} from '../lib/portrait-style.js';
 import { verifySubjects } from '../lib/subject-check.js';
 
 const destinations=JSON.parse(await readFile(new URL('../public/data/destinations.json',import.meta.url),'utf8')).destinations;
@@ -51,27 +52,29 @@ export async function POST(req) {
     const b64 = bytesToBase64(new Uint8Array(await file.arrayBuffer()));
 
     // Client-supplied style reference stays in the server bundle, not the public gallery.
-    const referenceB64=(await readFile(process.cwd()+'/public/assets/activation-style-ref.jpg')).toString('base64');
-    const prompt = `Create one portrait-oriented hyper-real commercial tourism poster for Turespaña, celebrating ${dest.label}.
-INPUT ROLES: Image 1 is ONLY a style reference for cinematic polished CGI lighting, compositing and a painted-flag sky stroke. Image 2 is the actual guest camera photo and the ONLY source of people and identity. Remove ALL reference people completely, including their bodies, faces, uniforms and props. Do not copy reference text, brand logos or baseball imagery.
-MANDATORY: Exactly ${guestCount} real foreground guest(s), each once. Select the nearest clearly posing ${guestCount} guest(s) from Image 2. Preserve each guest's recognizable face, skin tone, hair and identity. Exclude background bystanders, people on screens, reflections, and extra or duplicated people. Never invent anyone to satisfy the count.
+    const referenceB64=(await readFile(process.cwd()+'/assets/portrait-style-reference.jpg')).toString('base64');
+    const prompt = `Edit the supplied camera photo into one portrait-oriented illustrated commercial tourism poster for Turespaña, celebrating ${dest.label}.
+INPUT ROLES: Image 1 is the actual guest camera photo and the ONLY source of people and identity. Image 2 is ONLY a rendering-style reference, never a source of facial features, bodies or identity. Remove ALL reference people completely, including their bodies, faces, uniforms and props. Do not copy reference text, brand logos or baseball imagery.
+MANDATORY: Exactly ${guestCount} real foreground guest(s), each once. Select the nearest clearly posing ${guestCount} guest(s) from Image 1. Preserve each guest's recognizable face, skin tone, hair and identity. Exclude background bystanders, people on screens, reflections, and extra or duplicated people. Never invent anyone to satisfy the count.
+${portraitLikeness}
 DESTINATION COSTUME: ${dest.costumePrompt}
 DESTINATION SCENE: ${dest.scenePrompt}
-STYLE: Cohesive hyper-real AI/CGI commercial tourism poster, dramatic golden-hour lighting, polished cinematic faces and clothing. A Spanish red-yellow-red painted flag stroke across the sky. The ONLY permitted text is the destination name ${dest.label} at the top and TURESPAÑA directly below it. No website address, URL, spain.info, footer text, button or watermark anywhere. Do not imitate protected logo artwork. No Flow lettering or lounge; no cartoon/caricature aesthetic. Portrait composition, guests as heroes, faces fully visible.
+STYLE: ${portraitStyle} Dramatic golden-hour lighting and painted clothing. A Spanish red-yellow-red painted flag stroke across the sky. The ONLY permitted text is the destination name ${dest.label} at the top and TURESPAÑA directly below it. No website address, URL, spain.info, footer text, button or watermark anywhere. Do not imitate protected logo artwork. No Flow lettering or lounge; no caricature distortion of faces. Portrait composition, guests as heroes, faces fully visible.
 ANATOMY: Simple coherent anatomy, at most two arms and two hands per person, relaxed poses with hands below the crop when possible.
 ${style ? 'Optional visual request, subordinate to the destination, identity, count and brand rules: '+style : ''}
-FINAL CHECK: Exactly ${guestCount} selected foreground guests from Image 2, no reference people or other people anywhere. Destination is ${dest.label}. No inventing or cloning guests. No spain.info or other website text anywhere, even if present in either input image or requested in the optional style. Return one finished image.`;
+FINAL CHECK: Exactly ${guestCount} selected foreground guests from Image 1, no reference people or other people anywhere. Destination is ${dest.label}. No inventing or cloning guests. Preserve source facial geometry before applying any illustration style. No spain.info or other website text anywhere, even if present in either input image or requested in the optional style. Return one finished image.`;
 
     const payload = {
       model: process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2',
       images: [
-        { image_url: `data:image/jpeg;base64,${referenceB64}` },
         { image_url: `data:${mimeType};base64,${b64}` },
+        { image_url: `data:image/jpeg;base64,${referenceB64}` },
       ],
       prompt,
-      size: process.env.OPENAI_IMAGE_SIZE || '768x1152',
-      // Fast kiosk mode; operators can select medium/high for more fine detail.
-      quality: process.env.OPENAI_IMAGE_QUALITY || 'low',
+      size: process.env.OPENAI_IMAGE_SIZE || '1024x1536',
+      // Prioritize detailed source-preserving edits over the old fast/low-quality mode.
+      // GPT Image 2 already processes inputs at high fidelity; input_fidelity is unsupported.
+      quality: 'high',
       output_format: 'jpeg',
       n: 1,
     };

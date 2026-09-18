@@ -32,7 +32,8 @@
   ],
   "functions": {
     "api/banana.js": {
-      "maxDuration": 300
+      "maxDuration": 300,
+      "includeFiles": "{assets/portrait-style-reference.jpg,public/data/destinations.json}"
     },
     "api/send-photo.js": {
       "maxDuration": 30
@@ -48,7 +49,7 @@
     },
     "api/host-photo.js": {
       "maxDuration": 300,
-      "includeFiles": "public/{assets/activation-style-ref.jpg,data/destinations.json}"
+      "includeFiles": "{assets/portrait-style-reference.jpg,public/data/destinations.json}"
     },
     "api/host-email.js": {
       "maxDuration": 30

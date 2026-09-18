@@ -118,7 +118,7 @@ async function ensureCamera(signal){
   if(!cameraPreparation){
     const epoch=cameraEpoch;
     cameraPreparation=(async()=>{
-      const next=sentry.enabled&&sentry.stream?.getVideoTracks().some(t=>t.readyState==='live')?sentry.stream.clone():await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:720}},audio:false});
+      const next=sentry.enabled&&sentry.stream?.getVideoTracks().some(t=>t.readyState==='live')?sentry.stream.clone():await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1920},height:{ideal:1080}},audio:false});
       if(epoch!==cameraEpoch||signal.aborted){next.getTracks().forEach(t=>t.stop());throw new DOMException('Cancelled','AbortError');}
       cameraStream=next;camera.srcObject=next;await camera.play();
       for(let i=0;i<80&&(!camera.videoWidth||!camera.videoHeight||camera.readyState<2);i++){
@@ -160,7 +160,7 @@ const engine=new TurespanaEngine({
       const canvas=$('capture');canvas.width=camera.videoWidth;canvas.height=camera.videoHeight;
       canvas.getContext('2d').drawImage(camera,0,0);
       hideCountdown();
-      const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.9));
+      const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.96));
       canvas.width=canvas.height=0;
       if(!blob)throw new Error('The camera could not capture that photo. Ask me to try again.');
       return blob;

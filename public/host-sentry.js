@@ -8,7 +8,7 @@ export class CameraSentry{
     if(this.enabled)return;this.enabled=true;const epoch=++this.epoch;
     this.gate.reset();this.onStatus('starting');
     try{
-      const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:720}},audio:false});
+      const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1920},height:{ideal:1080}},audio:false});
       if(epoch!==this.epoch){stream.getTracks().forEach(t=>t.stop());return;}
       this.stream=stream;this.video.srcObject=stream;await this.video.play();
       this.worker=new Worker('/host-sentry-worker.js');
@@ -61,7 +61,7 @@ export class CameraSentry{
       if(epoch!==this.epoch||!this.enabled||!this.canGreet()||!this.gate.isFresh(performance.now()))return;
       if(result.personPresent&&typeof result.greeting==='string')await this.onVisitor(result.greeting);
     }catch(error){
-      if(epoch===this.epoch&&error.name!=='AbortError')this.onStatus('watching','Greeting unavailable. Tap the sun to start.');
+      if(epoch===this.epoch&&error.name!=='AbortError')this.onStatus('watching','Greeting unavailable. Tap Lola to start.');
     }finally{
       if(epoch===this.epoch){this.pending=false;this.controller=null;if(this.enabled)this.onStatus('watching');}
     }
