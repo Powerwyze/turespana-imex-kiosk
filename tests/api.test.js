@@ -176,6 +176,8 @@ test('HTML and text email preserve PowerWyze/client links and retry idempotency'
   }
 });
 
-for(const destination of [null,'','unknown','__proto__'])test('invalid destination never triggers generation: '+destination,async()=>{
+for(const destination of [null,'','unknown','__proto__','cataluna','pais-vasco','galicia'])test('invalid destination never triggers generation: '+destination,async()=>{
  const {response,calls}=await generateCase({destination});assert.equal(response.status,400);assert.equal(calls.length,0);
 });
+
+for(const destination of ["canarias","barcelona","bilbao","madrid","andalucia","valencia"])test('current destination generates successfully: '+destination,async()=>{const {response}=await generateCase({destination});assert.equal(response.status,200);});

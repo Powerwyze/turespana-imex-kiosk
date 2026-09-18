@@ -1,14 +1,16 @@
 import {chromium} from 'playwright';
 import fs from 'node:fs/promises';
 const target=process.env.TURESPANA_HOST_PREVIEW_URL;if(!target)throw new Error('Missing preview URL');
-const ids=['andalucia','madrid','cataluna','pais-vasco','galicia','valencia'];
+const ids=(process.env.EXAMPLE_DESTINATIONS||'canarias,barcelona,bilbao').split(',');
+const allowed=["canarias","barcelona","bilbao","madrid","andalucia","valencia"];if(ids.some(id=>!allowed.includes(id)))throw new Error('Invalid example destination');
+const sourceIds={canarias:'galicia',barcelona:'cataluna',bilbao:'pais-vasco'};
 const browser=await chromium.launch();await fs.mkdir('artifacts/illustrated-examples',{recursive:true});
 try{
   async function render(id){
     const page=await browser.newPage();
     try{
       await page.goto(target);
-      const input=await fs.readFile('assets/destination-examples-source/'+id+'.png');
+      const input=await fs.readFile('assets/destination-examples-source/'+(sourceIds[id]||id)+'.png');
       const result=await page.evaluate(async({base64,id})=>{
         const bytes=Uint8Array.from(atob(base64),c=>c.charCodeAt(0));const form=new FormData();
         form.append('image',new Blob([bytes],{type:'image/png'}),'fictional-example.png');form.append('guestCount','1');form.append('destinationId',id);form.append('style','');

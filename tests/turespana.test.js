@@ -5,7 +5,7 @@ test('destination is explicit, guarded during capture, and cleared for the next 
  let release,calls=0;const e=new TurespanaEngine({prepare:()=>new Promise(r=>release=r),capture:async()=>'',generate:async()=>{calls++;return 'image';}});
  await e.execute('set_guest_count',{count:1});assert.match((await e.execute('take_photo',{confirmed:true})).error,/destination/);assert.equal(calls,0);
  assert.ok((await e.execute('set_destination',{destinationId:'unknown'})).error);
- for(const destinationId of ['andalucia','madrid','cataluna','pais-vasco','galicia','valencia'])assert.equal((await e.execute('set_destination',{destinationId})).destinationId,destinationId);
+ for(const destinationId of ["canarias","barcelona","bilbao","madrid","andalucia","valencia"])assert.equal((await e.execute('set_destination',{destinationId})).destinationId,destinationId);
  await e.execute('take_photo',{confirmed:true});assert.ok((await e.execute('set_destination',{destinationId:'madrid'})).error);release();await e.job;
  assert.ok((await e.execute('set_destination',{destinationId:'madrid'})).error);e.reset();assert.equal(e.snapshot().destinationId,null);assert.equal(e.source,null);
 });
@@ -25,3 +25,5 @@ test('existing SMTP provider sends transactional attachment once for exact retri
   assert.match(payload.subject,/Spain/);assert.doesNotMatch(payload.html,/newsletter|subscribed|Damn Good|Flow/);assert.equal(payload.attachments[0].content.toString(),'smtp-fixture');
  }finally{nodemailer.createTransport=original;for(const key of ['RESEND_API_KEY','WYZER_GMAIL_USER','WYZER_APP_PASSWORD']){if(env[key]===undefined)delete process.env[key];else process.env[key]=env[key];}}
 });
+
+test('retired regional IDs are rejected rather than silently redirected',async()=>{const e=new TurespanaEngine({});for(const destinationId of ['cataluna','pais-vasco','galicia'])assert.ok((await e.execute('set_destination',{destinationId})).error);});

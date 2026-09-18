@@ -1,49 +1,17 @@
-# Destination facts for Lola
+# Current destination research
 
-Checked 18 September 2026 against Spain’s official tourism website. Stable cultural information only; the host does not claim current schedules or availability.
+Checked 18 September 2026. Current choices, in order: Canarias, Barcelona, Bilbao, Madrid, Andalucía, Valencia. Barcelona and Bilbao are city experiences. Canarias uses Tenerife/Teide for example scenery; attire varies by island. Cultural wardrobe may change; guest facial features and hair remain source-preserved.
 
-## Andalucía
+- [Canarias](https://www.spain.info/en/region/canary-islands/)
+- [Barcelona](https://www.spain.info/en/destination/barcelona/)
+- [Bilbao](https://www.spain.info/en/destination/bilbao/)
+- [Madrid](https://www.spain.info/en/destination/madrid/)
+- [Andalucía](https://www.spain.info/en/region/andalusia/)
+- [Valencia](https://www.spain.info/en/destination/valencia/)
 
-Granada’s Alhambra, Generalife and Albaicín; Córdoba’s historic centre and Great Mosque; Seville’s Cathedral, Alcázar and Archive of the Indies are UNESCO-listed heritage. Seville’s Plaza de España is the portrait’s architectural inspiration. Andalucía includes the Costa del Sol and Costa de la Luz, Doñana and Sierra Nevada. Olive oil, gazpacho, salmorejo and fried fish are regional food themes; Jerez is known for sherry. Ask whether they prefer palaces, mountain scenery or food.
+Attire references:
+- [Tenerife romerías](https://www.webtenerife.co.uk/what-to-do/culture/pilgrimages/)
+- [Barcelona tourism: casteller clothing](https://www.barcelonaturisme.com/files/11316-25-arxiuCAT/top_attractions_15.pdf)
+- [Basque cultural clothing](https://www.euskadi.eus/web01-s1leheki/es/contenidos/informacion/06_urazandi_coleccion/es_712/adjuntos/urazandi21.pdf)
 
-Source: https://www.spain.info/en/region/andalusia/
-
-## Madrid
-
-The Prado, Reina Sofía and Thyssen-Bornemisza are major art museums. The Royal Palace, Plaza Mayor, Puerta del Sol and Gran Vía are landmarks. The Paseo del Prado and Retiro form the UNESCO-listed Landscape of Light. La Latina is associated with tapas and Las Letras with literary history. San Miguel Market is a food stop; the Temple of Debod is a sunset viewpoint. Ask whether they would choose art museums or a food walk.
-
-Source: https://www.spain.info/en/destination/madrid/
-
-## Cataluña
-
-Barcelona is known for Gaudí architecture including the Sagrada Família, and the Palau de la Música Catalana. Figueres has the Dalí Theatre-Museum. Roman Tarragona, Poblet Monastery and the Romanesque churches of the Boí Valley are UNESCO-listed. Costa Brava, Costa Daurada and towns such as Cadaqués, Tossa de Mar and Sitges offer coastal experiences. The Catalan Pyrenees include Aigüestortes i Estany de Sant Maurici National Park. Pa amb tomàquet is bread with tomato. Ask architecture, coast or mountains.
-
-Source: https://www.spain.info/en/region/catalonia/
-
-## País Vasco
-
-Bilbao is known for the Guggenheim Museum’s architecture. San Sebastián, also called Donostia, has La Concha Bay. Vitoria-Gasteiz is another major city. The Vizcaya transporter bridge is UNESCO-listed. Pintxos are small, elaborate bites served in bars; Rioja Alavesa is a wine area. The region has green landscapes, cliffs and beaches such as Zarautz; a Camino route crosses it. Ask whether they prefer contemporary architecture, the coast or pintxos.
-
-Source: https://www.spain.info/en/region/basque-country/
-
-## Galicia
-
-Santiago de Compostela is the destination of the Camino de Santiago pilgrimage routes. Galicia has green wooded valleys and Atlantic and Cantabrian coastline, including Costa da Morte’s cliffs. The Atlantic Islands of Galicia National Park is a nature highlight. A Coruña’s Tower of Hercules and Lugo’s Roman walls are UNESCO-listed. Food includes seafood, pulpo a feira (octopus) and almond tarta de Santiago. Ribeiro and Albariño are wine names associated with Galicia. Ask whether they prefer Camino history, coastal scenery or seafood.
-
-Source: https://www.spain.info/en/region/galicia/
-
-## Valencia
-
-The City of Arts and Sciences includes architecture by Santiago Calatrava and Félix Candela; its futuristic buildings and reflections inspire the portrait. The old town has the cathedral, Miguelete tower, Central Market and UNESCO-listed Silk Exchange. Valencia is associated with paella and horchata, a tiger-nut drink. Malvarrosa is a city beach; Albufera offers a lake landscape and sunsets. The Turia Gardens occupy the former riverbed. Fallas is known for large artistic sculptures. Ask whether they would choose architecture, paella or a sunset by the water.
-
-Source: https://www.spain.info/en/destination/valencia/
-
-## Avatar inspiration
-
-Lola is an original classical-guitar character. Flamenco combines singing, dancing and instrumental music, including guitar; its roots are especially associated with Andalucía, Murcia and Extremadura. This does not imply that all six regions share one tradition.
-
-Source: https://www.spain.info/en/discover-spain/flamenco-spain/
-
-## Example portraits
-
-The six portraits are AI-generated illustrations with fictional adults, not photographs of previous visitors or documentary depictions. Captions identify them as examples; each guest’s result is unique. Original generated assets are retained under assets/destination-examples-source; cloud builds export optimized WebP thumbnails.
+Lola is an original classical-guitar character inspired by [Spain’s flamenco traditions](https://www.spain.info/en/discover-spain/flamenco-spain/). Do not present flamenco as every region’s tradition. Examples use fictional guests. Tourist answers use lib/turespana-facts.js; no invented prices, hours or availability.

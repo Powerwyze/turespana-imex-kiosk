@@ -1,15 +1,35 @@
 {
-  "_comment": "IMEX activation destinations specified for this kiosk: Andalucía, Madrid, Cataluña, País Vasco, Galicia, Valencia. Costume/scene lines feed /api/banana. Rename here if the client adjusts wording.",
+  "_comment": "Client-specified destination order. Cultural clothing changes are allowed; preserve face and hairstyle. Regional attire is inspiration, not one uniform per destination.",
   "destinations": [
     {
-      "id": "andalucia",
-      "label": "Andalucía",
-      "labelEs": "Andalucía",
-      "tileNote": "Feria & flamenco",
-      "tileNoteEs": "Feria y flamenco",
-      "accent": "#E42719",
-      "costumePrompt": "Tasteful Andalusian festival dress: embroidered short jacket or modest flamenca-inspired look (high neckline, full skirt, never sexualized), sash, Córdoba-style wide-brim hat optional. Smart travel alternative: linen and polished leather, still clearly Andalusian feria energy. NO baseball jerseys, NO sports uniforms.",
-      "scenePrompt": "Composite of Seville's Plaza de España arcades and Giralda tower at fiery golden-hour sunset, palm silhouettes, warm stone, cinematic travel-poster depth. Landmark reads as Andalucía, not a generic plaza."
+      "id": "canarias",
+      "label": "Canarias",
+      "labelEs": "Canarias",
+      "tileNote": "Volcanoes & island traditions",
+      "tileNoteEs": "Volcanes y tradiciones",
+      "accent": "#168FAD",
+      "costumePrompt": "Canarian romería-inspired festive clothing: white blouse or shirt, embroidered waistcoat, woven waist sash and a modest striped skirt or traditional trousers. Island folk dress varies across the islands. Keep the visitor’s exact face and hairstyle visible; no required headwear. NO flamenco costume, baseball jerseys or sports uniforms.",
+      "scenePrompt": "Canary Islands illustrated tourism composition: Tenerife’s distinctive Mount Teide volcanic summit and lava landscape, Atlantic blue water and subtropical island light. Use Tenerife as the specific scenic inspiration for Canarias; do not invent a coastline combining distant islands. No Santiago cathedral or mainland Spanish landmarks."
+    },
+    {
+      "id": "barcelona",
+      "label": "Barcelona",
+      "labelEs": "Barcelona",
+      "tileNote": "Gaudí & Catalan culture",
+      "tileNoteEs": "Gaudí y cultura catalana",
+      "accent": "#7CB165",
+      "costumePrompt": "Barcelona Catalan casteller-inspired festive outfit: solid jewel-coloured collared shirt, broad black faixa waist sash, white trousers and optional patterned neckerchief. Respectful cultural clothing, no team logos. Keep the visitor’s exact face and hairstyle visible. NO baseball jersey or sports uniform.",
+      "scenePrompt": "Barcelona illustrated tourism composition featuring recognizable Sagrada Família towers and Gothic Quarter stone architecture, warm Mediterranean sky. Keep scenery specific to Barcelona, not other Catalan cities."
+    },
+    {
+      "id": "bilbao",
+      "label": "Bilbao",
+      "labelEs": "Bilbao",
+      "tileNote": "Guggenheim & Basque culture",
+      "tileNoteEs": "Guggenheim y cultura vasca",
+      "accent": "#1B161C",
+      "costumePrompt": "Bilbao Basque festival-inspired dress: white shirt or blouse, dark traditional waistcoat, woven red gerriko waist sash, modest skirt or trousers; a txapela beret is optional only if it does not hide the visitor’s hairstyle or face. Respectful Basque folk clothing, not flamenco. NO baseball jerseys or sports uniforms.",
+      "scenePrompt": "Bilbao illustrated tourism composition: Guggenheim Museum titanium curves beside the Nervión river, Bilbao green surrounding hills and hints of Casco Viejo architecture. Bilbao only: no San Sebastián La Concha bay, no beach or invented coastal waterfront."
     },
     {
       "id": "madrid",
@@ -18,38 +38,18 @@
       "tileNote": "Capital chic",
       "tileNoteEs": "Capital chic",
       "accent": "#FFEA00",
-      "costumePrompt": "Madrid chulapo/chulapa-inspired smart look (checked neckerchief, waistcoat, cap) OR contemporary capital travel style: tailored jacket, elegant city-ready outfits. Tasteful, brand-safe. NO baseball jerseys, NO sports uniforms.",
+      "costumePrompt": "Madrid chulapo/chulapa-inspired festival clothing: checked waistcoat over a white shirt with a neckerchief, or a modest traditional patterned dress and embroidered shawl. Cap optional only if it does not hide the visitor’s face or hairstyle. Change clothing while preserving facial identity. NO baseball jerseys or sports uniforms.",
       "scenePrompt": "Composite of Madrid's Palacio Real and Gran Vía dusk glow, grand boulevards, warm street lamps, cinematic skyline. Landmark reads as Madrid."
     },
     {
-      "id": "cataluna",
-      "label": "Cataluña",
-      "labelEs": "Cataluña",
-      "tileNote": "Mediterráneo",
-      "tileNoteEs": "Mediterráneo",
-      "accent": "#7CB165",
-      "costumePrompt": "Catalan traditional cues (barretina, faixa sash, modest festive dress) OR smart Barcelona Mediterranean travel looks: clean tailoring, light fabrics. Tasteful, never sexualized. NO baseball jerseys, NO sports uniforms.",
-      "scenePrompt": "Composite of Barcelona's Sagrada Família silhouette and Gothic Quarter stone streets toward a Mediterranean sunset, cinematic tourism-poster depth. Landmark reads as Cataluña."
-    },
-    {
-      "id": "pais-vasco",
-      "label": "País Vasco",
-      "labelEs": "País Vasco",
-      "tileNote": "Costa vasca",
-      "tileNoteEs": "Costa vasca",
-      "accent": "#1B161C",
-      "costumePrompt": "Basque traditional cues (txapela beret, rustic-smart wool or linen, festive but modest) OR polished Basque-coast travel looks. Tasteful, brand-safe. NO baseball jerseys, NO sports uniforms.",
-      "scenePrompt": "Composite of the Guggenheim Bilbao titanium curves and San Sebastián bay at dramatic sunset, green hills, cinematic coastal light. Landmark reads as País Vasco."
-    },
-    {
-      "id": "galicia",
-      "label": "Galicia",
-      "labelEs": "Galicia",
-      "tileNote": "Atlantic green",
-      "tileNoteEs": "Verde atlántico",
-      "accent": "#7CB165",
-      "costumePrompt": "Galician traditional dress cues (monteira-inspired headpiece, embroidered vest, modest skirt or tailored rural-smart look) OR Atlantic travel layers in wool and linen. Tasteful, never sexualized. NO baseball jerseys, NO sports uniforms.",
-      "scenePrompt": "Composite of Santiago de Compostela cathedral towers and green Atlantic coastline under a luminous sunset, misty hills, cinematic pilgrimage-poster depth. Landmark reads as Galicia."
+      "id": "andalucia",
+      "label": "Andalucía",
+      "labelEs": "Andalucía",
+      "tileNote": "Feria & flamenco",
+      "tileNoteEs": "Feria y flamenco",
+      "accent": "#E42719",
+      "costumePrompt": "Tasteful Andalusian feria-inspired clothing: embroidered short jacket and sash, or a modest flamenca-inspired dress with a high neckline and full skirt. Preserve the visitor’s face and hairstyle; no required hat or hair makeover. NO baseball jerseys or sports uniforms.",
+      "scenePrompt": "Composite of Seville's Plaza de España arcades and Giralda tower at fiery golden-hour sunset, palm silhouettes, warm stone, cinematic travel-poster depth. Landmark reads as Andalucía, not a generic plaza."
     },
     {
       "id": "valencia",
@@ -58,7 +58,7 @@
       "tileNote": "Fallas & light",
       "tileNoteEs": "Fallas y luz",
       "accent": "#C45C26",
-      "costumePrompt": "Valencian fallera/fallero-inspired festive dress (ornate but modest, high neckline) OR smart Mediterranean travel looks with citrus-festival energy. Tasteful, brand-safe. NO baseball jerseys, NO sports uniforms.",
+      "costumePrompt": "Valencian fallera/fallero-inspired festive clothing: ornate brocade waistcoat and sash over a white shirt, or a modest high-necked brocade dress with a decorative shawl. Preserve the visitor’s face and original hairstyle; do not replace it with a traditional coiffure. NO baseball jerseys or sports uniforms.",
       "scenePrompt": "Composite of Valencia's City of Arts and Sciences and Mediterranean orange-grove light at sunset, water reflections, cinematic tourism-poster depth. Landmark reads as Valencia."
     }
   ]

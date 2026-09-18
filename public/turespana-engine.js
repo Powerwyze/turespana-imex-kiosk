@@ -1,5 +1,5 @@
 import {BoothEngine} from './host-engine.js';
-export const destinations=Object.freeze({andalucia:'Andalucía',madrid:'Madrid',cataluna:'Cataluña','pais-vasco':'País Vasco',galicia:'Galicia',valencia:'Valencia'});
+export const destinations=Object.freeze({"canarias":"Canarias","barcelona":"Barcelona","bilbao":"Bilbao","madrid":"Madrid","andalucia":"Andalucía","valencia":"Valencia"});
 export class TurespanaEngine extends BoothEngine {
   constructor(options){super(options);this.destination=null;}
   snapshot(){return {...super.snapshot(),destinationId:this.destination||null,destinationLabel:destinations[this.destination]||null};}

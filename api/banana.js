@@ -202,7 +202,7 @@ export default async function handler(req, res) {
   const dest = destinations.find((d) => d.id === destinationId);
   if (!dest) {
     res.statusCode = 400;
-    return res.end("Unknown destinationId. Use andalucia, madrid, cataluna, pais-vasco, galicia, or valencia.");
+    return res.end("Unknown destinationId. Use canarias, barcelona, bilbao, madrid, andalucia, or valencia.");
   }
 
   const fileField = files?.image;

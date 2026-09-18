@@ -64,7 +64,7 @@ try{
   assert.ok(await page.evaluate(text=>window.__liveEvents.filter(e=>e.type==='session.output_transcript.delta').map(e=>e.delta).join('').includes(text),firstCaption),'Visible captions must match real GPT Live speech.');
   assert.equal(await page.locator('#hostCaptions').isVisible(),true);
   await page.screenshot({path:'artifacts/host-live-captions.png'});
-  await ask('We choose Madrid as our destination. There are exactly two people in our photo. Please record that. We are not ready to take it yet.');
+  await ask('We choose Canarias as our destination. There are exactly two people in our photo. Please record that. We are not ready to take it yet.');
   await page.waitForFunction(()=>document.querySelector('#hint').textContent.startsWith('2 people'),null,{timeout:45000});
   assert.equal(generationCalls,0);
   // A visible selection changes before its function result is sent. Wait until the
@@ -77,15 +77,15 @@ try{
     const terminal=events.findLast(e=>e.type==='response.event'&&e.event?.type==='response.completed');
     return !!lastMessage&&!!terminal&&events.indexOf(terminal)>events.indexOf(lastMessage);
   },null,{timeout:45000});
-  await ask('Yes, the two of us are ready now. Take our photo and generate the standard Madrid tourism poster.');
+  await ask('Yes, the two of us are ready now. Take our photo and generate the standard Canarias tourism poster.');
   await page.waitForFunction(()=>document.body.dataset.phase==='countdown',null,{timeout:45000});
   assert.equal(await page.locator('#viewfinder').isVisible(),true);
   await page.screenshot({path:'artifacts/host-live-countdown.png'});
   await page.waitForFunction(()=>document.body.dataset.phase==='generating',null,{timeout:15000});
   await page.waitForTimeout(5000);
   const tourismStart=await page.evaluate(()=>window.__liveEvents.length);
-  await ask('While the photo is generating, which two art museums could I explore in Madrid?');
-  await page.waitForFunction(start=>/Prado|Reina Sofía|Thyssen/i.test(window.__liveEvents.slice(start).filter(e=>e.type==='session.output_transcript.delta').map(e=>e.delta).join('')),tourismStart,{timeout:30000});
+  await ask('While the photo is generating, which national parks could I explore in the Canary Islands?');
+  await page.waitForFunction(start=>/Teide|Timanfaya|Garajonay|Taburiente/i.test(window.__liveEvents.slice(start).filter(e=>e.type==='session.output_transcript.delta').map(e=>e.delta).join('')),tourismStart,{timeout:30000});
   assert.equal(await page.locator('body').getAttribute('data-phase'),'generating','Tourism questions are answered while generation continues');
   await page.screenshot({path:'artifacts/host-live-tourism.png'});
   await page.waitForFunction(()=>document.body.dataset.phase==='result',null,{timeout:65000});
@@ -121,7 +121,7 @@ try{
     errors:window.__liveEvents.filter(e=>e.type==='error').map(e=>e.error)
   }));
   await page.screenshot({path:'artifacts/host-live-result.png'});
-  assert.match(report.spokenOutput,/Spain|Madrid|Spanish|Turespaña/i,'Generation chatter must discuss the Spain destination.');
+  assert.match(report.spokenOutput,/Spain|Canarias|Spanish|Turespaña/i,'Generation chatter must discuss the Spain destination.');
   assert.doesNotMatch(report.spokenOutput,/rooftop pool|Technogym|coworking|leasing|fitness classes/i,'Do not pitch apartment amenities to residents.');
   console.log('Real GPT Live smoke:',JSON.stringify(report));
   assert.ok(report.captionUpdates>5,'Live captions must stream throughout the conversation.');
