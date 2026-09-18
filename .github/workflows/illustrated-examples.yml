@@ -1,9 +1,6 @@
 name: Refresh illustrated destination examples
 on:
   workflow_dispatch:
-  push:
-    branches: [codex/turespana-voice-host]
-    paths: [.github/workflows/illustrated-examples.yml]
 permissions:
   contents: write
 jobs:
@@ -36,7 +33,9 @@ jobs:
         run: |
           git config user.name 'PowerWyze build'
           git config user.email 'actions@users.noreply.github.com'
-          git add public/assets/examples
+          mkdir -p assets/destination-examples-illustrated
+          cp artifacts/illustrated-examples/*.jpg assets/destination-examples-illustrated/
+          git add public/assets/examples assets/destination-examples-illustrated
           git commit -m "Refresh six examples with illustrated source-preserving portrait renderer"
           git pull --rebase origin codex/turespana-voice-host
           git push origin HEAD:codex/turespana-voice-host
