@@ -1,5 +1,8 @@
 name: Package reviewed destination gallery
 on:
+  push:
+    branches: [codex/turespana-voice-host]
+    paths: [assets/destination-examples-illustrated/**, .github/workflows/package-gallery.yml]
   workflow_dispatch:
 permissions:
   contents: write
