@@ -86,15 +86,15 @@ const tool=async(name,args,duplicate=false)=>{
 try{
   await page.reload();await page.waitForFunction(()=>document.querySelector('#face').dataset.avatar==='ready',null,{timeout:20000});await page.waitForTimeout(1000);await page.screenshot({path:'artifacts/host-idle-portrait.png'});
   await page.locator('#face').click();await page.waitForFunction(()=>document.body.dataset.phase==='listening');
-  // Captions are actual outgoing deltas, safely rendered above Sol at kiosk and phone sizes.
+  // Captions are actual outgoing deltas, safely rendered above Lola at kiosk and phone sizes.
   const say=async delta=>page.evaluate(delta=>window.__channel.emit({type:'session.output_transcript.delta',delta}),delta);
   const captionBounds=async()=>page.evaluate(()=>{
     const caption=document.querySelector('#hostCaptions').getBoundingClientRect(),sun=document.querySelector('#face').getBoundingClientRect();
     return {above:caption.bottom<=sun.top+1,onScreen:caption.top>=74&&caption.left>=0&&caption.right<=innerWidth,width:caption.width,captionBottom:caption.bottom,sunTop:sun.top};
   });
   assert.equal(await page.locator('#hostCaptions').isVisible(),false);
-  await say("Hey, I'm Sol! ");await say("Looking good! How many people are joining your photo?");
-  assert.equal(await page.locator('#hostCaptionText').textContent(),"Hey, I'm Sol! Looking good! How many people are joining your photo?");
+  await say("Hey, I'm Lola! ");await say("Looking good! How many people are joining your photo?");
+  assert.equal(await page.locator('#hostCaptionText').textContent(),"Hey, I'm Lola! Looking good! How many people are joining your photo?");
   for(const [label,viewport] of [
     ['portrait',{width:1080,height:1920}],
     ['mobile',{width:390,height:844}],
@@ -103,7 +103,10 @@ try{
   ]){
     await page.setViewportSize(viewport);
     await page.waitForFunction(()=>{const c=document.querySelector('#hostCaptions').getBoundingClientRect(),s=document.querySelector('#face').getBoundingClientRect();return c.bottom<=s.top+1&&c.top>=74;},null,{timeout:10000});
-    const bounds=await captionBounds();assert.ok(bounds.above&&bounds.onScreen,'Captions must sit above Sol and inside '+label+': '+JSON.stringify(bounds));
+    assert.equal(await page.locator('#destinationExamples img').count(),6);
+    assert.ok(await page.locator('#destinationExamples').evaluate(e=>{const r=e.getBoundingClientRect(),c=document.querySelector('#hostCaptions').getBoundingClientRect();return r.right<=c.left||r.bottom+4<=c.top;}),'Examples must not overlap live captions in '+label);
+    assert.ok(await page.locator('#destinationExamples').evaluate(e=>[...e.querySelectorAll('img')].every(i=>i.complete&&i.naturalWidth>0)),'All six example images must load');
+    const bounds=await captionBounds();assert.ok(bounds.above&&bounds.onScreen,'Captions must sit above Lola and inside '+label+': '+JSON.stringify(bounds));
     await page.screenshot({path:'artifacts/host-captions-'+label+'.png'});
   }
   await page.setViewportSize({width:390,height:844});await page.waitForTimeout(1000);

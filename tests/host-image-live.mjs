@@ -11,7 +11,7 @@ try{
   const origin=new URL(page.url()).origin;
   const input=await fs.readFile('tests/fixtures/sentry-person.jpg');
   const response=await context.request.post(origin+'/api/host-photo',{
-    multipart:{image:{name:'approved-reference-test.jpg',mimeType:'image/jpeg',buffer:input},guestCount:'1',style:'',destinationId:'madrid'},
+    multipart:{image:{name:'approved-reference-test.jpg',mimeType:'image/jpeg',buffer:input},guestCount:'1',style:'',destinationId:'valencia'},
     timeout:190000
   });
   if(!response.ok()){

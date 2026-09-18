@@ -58,6 +58,9 @@ for (const count of [1, 2, 3]) {
     assert.match(payload.prompt,new RegExp('FINAL CHECK: Exactly '+count));
     assert.match(payload.prompt,/background bystanders/);
     assert.match(payload.prompt,/coherent anatomy/);
+    assert.match(payload.prompt,/ONLY permitted text/);
+    assert.match(payload.prompt,/No spain.info or other website text anywhere/);
+    assert.doesNotMatch(payload.prompt,/Brand with the clean words TURESPAÑA and spain.info/);
     const verifier = JSON.parse(calls[1].init.body);
     assert.equal(verifier.model, 'gpt-4.1-mini-2025-04-14');
     assert.equal(verifier.store, false);

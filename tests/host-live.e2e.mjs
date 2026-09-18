@@ -44,7 +44,7 @@ const picture=await fs.readFile('tests/fixtures/sentry-person.jpg');
 await page.route('**/api/host-photo',async route=>{
   generationCalls++;
   assert.match(route.request().postDataBuffer().toString('latin1'),/name="guestCount"\r\n\r\n2/);
-  await new Promise(r=>setTimeout(r,18000));
+  await new Promise(r=>setTimeout(r,45000));
   await route.fulfill({status:200,contentType:'image/jpeg',body:picture});
 });
 const ask=async text=>page.evaluate(text=>{
@@ -81,6 +81,12 @@ try{
   await page.waitForFunction(()=>document.body.dataset.phase==='countdown',null,{timeout:45000});
   assert.equal(await page.locator('#viewfinder').isVisible(),true);
   await page.screenshot({path:'artifacts/host-live-countdown.png'});
+  await page.waitForFunction(()=>document.body.dataset.phase==='generating',null,{timeout:15000});
+  await page.waitForTimeout(5000);
+  await ask('While the photo is generating, which two art museums could I explore in Madrid?');
+  await page.waitForFunction(()=>/Prado|Reina Sofía|Thyssen/i.test(window.__liveEvents.filter(e=>e.type==='session.output_transcript.delta').map(e=>e.delta).join('')),null,{timeout:30000});
+  assert.equal(await page.locator('body').getAttribute('data-phase'),'generating','Tourism questions are answered while generation continues');
+  await page.screenshot({path:'artifacts/host-live-tourism.png'});
   await page.waitForFunction(()=>document.body.dataset.phase==='result',null,{timeout:65000});
   assert.equal(await page.locator('#viewfinder').isVisible(),false);
   const duration=await page.evaluate(()=>window.__captureTiming.captured-window.__captureTiming.start);
