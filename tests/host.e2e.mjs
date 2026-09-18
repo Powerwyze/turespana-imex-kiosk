@@ -162,7 +162,7 @@ try{
   await say('Your portrait is ready! Would you like me to email it? Spell your address aloud, including at and dot.');
   await page.waitForTimeout(1000);assert.ok((await captionBounds()).above&&(await captionBounds()).onScreen);await page.screenshot({path:'artifacts/host-result-portrait.png'});
   assert.ok(await page.locator('#face').evaluate(e=>e.getBoundingClientRect().width<innerWidth*.25));
-  assert.ok(await page.evaluate(()=>window.__sent.some(e=>e.type==='session.commentary.append'&&e.content.includes('Spain'))));
+  assert.ok(await page.evaluate(()=>window.__sent.some(e=>e.type==='session.commentary.append'&&e.content.includes('Madrid'))));
   // A spoken address opens review; no voice tool can send it.
   await tool('show_email_confirmation',{email:'alex@exampl.com'});
   await page.locator('#emailPanel').waitFor({state:'visible'});
