@@ -1,0 +1,26 @@
+name: Browser image smoke
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts
+      - run: npm install --no-save --package-lock=false playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - run: node tests/host-image-live.mjs
+        env:
+          TURESPANA_HOST_PREVIEW_URL: ${{ vars.TURESPANA_HOST_PREVIEW_URL }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-image-check
+          path: artifacts/
+          retention-days: 3
