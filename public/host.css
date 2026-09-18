@@ -78,6 +78,6 @@ body[data-phase=countdown] #destinationExamples,body[data-phase=result] #destina
 }
 
 @media(max-height:740px) and (max-width:600px){
- #destinationExamples{top:160px}.examples-grid img{height:9vh}
+ #destinationExamples{top:175px}.examples-grid img{height:9vh}
  body:not([data-phase=idle]):not([data-phase=error]) .examples-grid img{height:7vh}
 }
