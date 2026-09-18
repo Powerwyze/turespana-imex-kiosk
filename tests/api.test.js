@@ -50,7 +50,10 @@ for (const count of [1, 2, 3]) {
     const payload = JSON.parse(calls[0].init.body);
     assert.equal(payload.model, 'gpt-image-2'); assert.equal(payload.quality, 'high');
     assert.equal(payload.size, '1024x1536'); assert.equal(payload.n, 1);
-    assert.equal(payload.images.length, 2);
+    assert.equal(payload.images.length, 3);
+    assert.match(payload.prompt,/Image 3 is a six-panel wardrobe reference ONLY/);
+    assert.match(payload.prompt,/Ignore the reference models/);
+    assert.notEqual(payload.images[2].image_url,payload.images[0].image_url);
     assert.equal(payload.images[0].image_url, "data:image/jpeg;base64,"+Buffer.from("synthetic-source").toString("base64"));
     assert.match(payload.prompt,/POLISHED ILLUSTRATED POSTER/);
     assert.match(payload.prompt,/LIKENESS IS THE HIGHEST PRIORITY/);

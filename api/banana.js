@@ -11,7 +11,7 @@ const require=createRequire(import.meta.url);
  * OpenAI Image Edit first (guest photo + style-lock ref); Gemini fallback.
  *
  * STYLE LOCK: assets/portrait-style-reference.jpg
- *   Hyper-real AI/CGI commercial tourism poster (GoDR × Marlins look).
+ *   Painted commercial tourism poster, retaining source facial geometry.
  *   Copy LOOK only. SWAP branding to Turespaña and Spain costumes.
  *
  * Env:
@@ -50,6 +50,7 @@ function buildPrompt(dest) {
   return [
     "TASK: Reimagine EVERY person in the FIRST input photo as a Turespaña IMEX Las Vegas activation poster. Match the LOOK of the STYLE REFERENCE image (second image when attached): a polished painted commercial tourism illustration — NOT a raw photobooth snapshot or kiosk UI chrome.",
     portraitStyle,
+    `CLOTHING REFERENCE: Image 3 is a six-panel wardrobe reference ONLY. Use the ${dest.referencePanel} panel labelled ${dest.label}. Copy garment shapes, textile colours, embroidery and layering only. Ignore the reference models’ faces, bodies, skin, hair, poses and photorealistic finish. Do not add any of those people to the portrait. Image 1 remains the ONLY identity source and Image 2 remains the rendering-style reference. Translate the selected clothing into that same illustrated style.`,
     "STYLE REFERENCE IS LOOK-ONLY. Do NOT copy: Dominican Republic branding, Go Dominican Republic logo, Miami Marlins uniforms or wordmarks, baseball bats/gloves/caps, baseball stadium as the default setting, or Dominican Republic flag colors as the sky stroke. Do not invent other tourism boards or sports teams.",
     `DESTINATION: ${label}. Wardrobe and landmark must read clearly as ${label}.`,
     "GROUP HANDLING (CRITICAL): Count the people in the input photo. If there is 1 person, render a solo hero portrait. If there are 2–5 people, render ALL of them together. HARD CAP: never render more than 5 people. If the input shows more than 5, pick the 5 most prominent/centered subjects only. Every rendered person must correspond to a real person in the input. Do not invent extra people.",
@@ -75,7 +76,7 @@ function fieldStr(fields, key) {
   return String(v || "").trim();
 }
 
-async function openaiEdit({ apiKey, model, size, quality, prompt, fileBuffer, mimeType, filename, styleRefBuffer }) {
+async function openaiEdit({ apiKey, model, size, quality, prompt, fileBuffer, mimeType, filename, styleRefBuffer, costumeRefBuffer }) {
   const fd = new FormData();
   fd.append("model", model);
   fd.append("prompt", prompt);
@@ -87,6 +88,7 @@ async function openaiEdit({ apiKey, model, size, quality, prompt, fileBuffer, mi
     fd.append("image", new Blob([styleRefBuffer], { type: "image/jpeg" }), "activation-style-ref.jpg");
   }
 
+  fd.append("image", new Blob([costumeRefBuffer], {type:"image/jpeg"}), "destination-clothing-reference.jpg");
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), 280000);
   let openaiRes;
@@ -118,7 +120,7 @@ async function openaiEdit({ apiKey, model, size, quality, prompt, fileBuffer, mi
   throw new Error("No image data in OpenAI response");
 }
 
-async function geminiEdit({ apiKey, prompt, fileBuffer, mimeType, styleRefBuffer }) {
+async function geminiEdit({ apiKey, prompt, fileBuffer, mimeType, styleRefBuffer, costumeRefBuffer }) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent`;
   const parts = [{ text: prompt }];
   parts.push({
@@ -135,6 +137,7 @@ async function geminiEdit({ apiKey, prompt, fileBuffer, mimeType, styleRefBuffer
       },
     });
   }
+  parts.push({inlineData:{mimeType:"image/jpeg",data:Buffer.from(costumeRefBuffer).toString("base64")}});
   const body = {
     contents: [{ role: "user", parts }],
     generationConfig: { responseModalities: ["IMAGE"] },
@@ -218,6 +221,7 @@ export default async function handler(req, res) {
 
   const prompt = buildPrompt(dest);
   const styleRefBuffer = loadStyleRef();
+  const costumeRefBuffer=fs.readFileSync(path.join(process.cwd(),"assets","costume-reference.jpg"));
   const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-1";
   const size = process.env.OPENAI_IMAGE_SIZE || "1024x1536";
   const quality = "high";
@@ -239,6 +243,7 @@ export default async function handler(req, res) {
         mimeType,
         filename: file.originalFilename || "input.jpg",
         styleRefBuffer,
+        costumeRefBuffer,
       });
       provider = "openai";
     } catch (e) {
@@ -255,6 +260,7 @@ export default async function handler(req, res) {
         fileBuffer,
         mimeType,
         styleRefBuffer,
+        costumeRefBuffer,
       });
       provider = "gemini";
     } catch (e) {
