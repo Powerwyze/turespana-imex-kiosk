@@ -46,7 +46,9 @@ jobs:
           mkdir -p tests/fixtures
           curl -fL https://storage.googleapis.com/mediapipe-assets/pose.jpg -o tests/fixtures/sentry-person.jpg
       - name: Resolve dependencies remotely
-        run: npm install --package-lock-only --ignore-scripts
+        run: |
+          npm install --package-lock-only --ignore-scripts
+          npm ci --ignore-scripts
       - name: Run regression tests
         run: npm test
       - name: Run browser verification remotely
