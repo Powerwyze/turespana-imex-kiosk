@@ -4,11 +4,11 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 const root=path.resolve(import.meta.dirname,'..');
-const allowed=["/assets/examples/andalucia.webp", "/assets/examples/madrid.webp", "/assets/examples/barcelona.webp", "/assets/examples/bilbao.webp", "/assets/examples/canarias.webp", "/assets/examples/valencia.webp"].concat(['/host.html','/host.css','/host.js','/host-engine.js','/turespana-engine.js','/host-countdown.js','/host-idle.js','/host-captions.js','/host-email.js','/host-avatar.js','/host-sentry.js','/host-sentry-gate.js','/host-sentry-worker.js','/assets/person-detector.tflite','/tests/fixtures/sentry-person.jpg','/email-shortcuts.js','/assets/spain-info-logo.png','/assets/flow-event-background.jpg','/assets/fonts/fraunces.woff2','/assets/fonts/borel.woff2']);
+const allowed=["/assets/examples/andalucia.webp", "/assets/examples/madrid.webp", "/assets/examples/barcelona.webp", "/assets/examples/bilbao.webp", "/assets/examples/canarias.webp", "/assets/examples/valencia.webp"].concat(['/host.html','/host.css','/host.js','/host-engine.js','/turespana-engine.js','/host-countdown.js','/host-idle.js','/host-captions.js','/host-email.js','/host-avatar.js','/host-sentry.js','/host-sentry-gate.js','/host-sentry-worker.js','/assets/person-detector.tflite','/tests/fixtures/sentry-person.jpg','/email-shortcuts.js','/assets/spain-sun.glb','/assets/spain-sun-fallback.svg','/assets/flow-event-background.jpg','/assets/fonts/fraunces.woff2','/assets/fonts/borel.woff2']);
 const server=http.createServer(async(req,res)=>{
   const pathname=new URL(req.url,'http://localhost').pathname;
   if(!allowed.includes(pathname)&&!/^\/vendor\/(three|vision)\/[a-zA-Z0-9/_.-]+\.(js|mjs|wasm)$/.test(pathname)){res.writeHead(404);res.end();return;}
-  const type={'.html':'text/html','.css':'text/css','.js':'text/javascript','.jpg':'image/jpeg','.glb':'model/gltf-binary','.webp':'image/webp','.png':'image/png','.mjs':'text/javascript','.wasm':'application/wasm','.tflite':'application/octet-stream','.woff2':'font/woff2'}[path.extname(pathname)];
+  const type={'.html':'text/html','.css':'text/css','.js':'text/javascript','.jpg':'image/jpeg','.glb':'model/gltf-binary','.svg':'image/svg+xml','.webp':'image/webp','.png':'image/png','.mjs':'text/javascript','.wasm':'application/wasm','.tflite':'application/octet-stream','.woff2':'font/woff2'}[path.extname(pathname)];
   res.writeHead(200,{'Content-Type':type});res.end(await fs.readFile(path.join(root,pathname.startsWith('/tests/')?pathname:'public'+pathname)));
 });
 await new Promise(r=>server.listen(4181,'127.0.0.1',r));
@@ -18,17 +18,12 @@ const context=await browser.newContext({viewport:{width:1080,height:1920},permis
 const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
 // Generate a genuine browser SDP artifact for an independent server configuration smoke check.
 await page.goto('http://127.0.0.1:4181/host.html');
-assert.equal(await page.locator('#avatar').getAttribute('src'),'/assets/spain-info-logo.png');
-await page.locator('#avatar').evaluate(image=>image.decode());
-assert.equal(await page.locator('#avatar').evaluate(image=>image.naturalWidth),512);
-assert.equal(await page.locator('#face svg').count(),0,'No guitar fallback remains');
-assert.ok(await page.evaluate(async()=>{
- const face=document.querySelector('#face');
- const {mountAvatar}=await import('/host-avatar.js');
- const logo=await mountAvatar(face,document.querySelector('#avatar'));
- logo.update({time:1000,level:1,brightness:.5});
- return Number(face.style.getPropertyValue('--logo-scale'))>1&&Number(face.style.getPropertyValue('--logo-glow'))>.12;
-}),'Official logo responds to outgoing audio energy');
+await page.waitForFunction(()=>document.querySelector('#face').dataset.avatar==='ready',null,{timeout:20000});
+assert.equal(await page.locator('#avatar').evaluate(e=>e.tagName),'CANVAS');
+assert.equal(await page.locator('#avatarFallback').getAttribute('src'),'/assets/spain-sun-fallback.svg');
+assert.equal(await page.locator('#avatarFallback').evaluate(e=>getComputedStyle(e).visibility),'hidden');
+assert.equal(await page.locator('#face img[src$="spain-info-logo.png"]').count(),0,'No words or white logo card remain');
+
 
 
 const sdp=await page.evaluate(async()=>{

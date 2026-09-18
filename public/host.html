@@ -5,6 +5,7 @@
 <meta name="theme-color" content="#211715">
 <title>Turespaña · Lola Voice Photo Kiosk</title>
 <link rel="stylesheet" href="/host.css">
+<script type="importmap">{"imports":{"three":"/vendor/three/three.module.min.js","three/addons/":"/vendor/three/addons/"}}</script>
 </head>
 <body data-phase="idle">
 <main id="stage" aria-label="Turespaña voice photo experience">
@@ -17,7 +18,8 @@
     <p id="hostCaptionText"></p>
   </section>
   <button id="face" type="button" aria-label="Tap the Spain logo to start talking to your AI photo host">
-    <img id="avatar" src="/assets/spain-info-logo.png" width="512" height="512" alt="España — the official Spain.info sun logo" draggable="false">
+    <canvas id="avatar" aria-label="3D Spain sun symbol"></canvas>
+    <img id="avatarFallback" src="/assets/spain-sun-fallback.svg" alt="Spain sun symbol" draggable="false">
   </button>
   <div id="message" role="status" aria-live="polite"><p id="headline">Hola. Let’s discover Spain.</p><p id="hint">Tap the logo or enable camera sentry · English / Español</p></div>
   <button id="emailOpen" hidden>Email my photo</button>

@@ -82,6 +82,9 @@ body[data-phase=countdown] #destinationExamples,body[data-phase=result] #destina
  body:not([data-phase=idle]):not([data-phase=error]) .examples-grid img{height:7vh}
 }
 
-/* Official logo avatar: preserve the mark and its white clear space. */
-#face #avatar{position:absolute;inset:auto;left:6%;top:50%;display:block;width:88%;height:auto;max-height:88%;object-fit:contain;opacity:1;background:#fff;border-radius:24%;transform:translateY(-50%) scale(var(--logo-scale,1));box-shadow:0 0 52px 8px rgb(255 216 48 / var(--logo-glow,.12)),0 18px 42px #0005;pointer-events:none}
-@media(prefers-reduced-motion:reduce){#face #avatar{transform:translateY(-50%);transition:none}}
+/* Transparent Blender sun: no lettering, backing card, or white fill. */
+#face #avatar{position:absolute;inset:0;width:100%;height:100%;opacity:0;background:transparent;pointer-events:none;filter:drop-shadow(0 14px 24px #0005)}
+#face[data-avatar="ready"] #avatar{opacity:1}
+#avatarFallback{position:absolute;left:8%;top:50%;width:84%;height:auto;transform:translateY(-50%) scale(var(--logo-scale,1));filter:drop-shadow(0 14px 24px #0005);pointer-events:none}
+#face[data-avatar="ready"] #avatarFallback{visibility:hidden}
+@media(prefers-reduced-motion:reduce){#avatarFallback{transform:translateY(-50%)}}
