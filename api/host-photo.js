@@ -53,10 +53,8 @@ export async function POST(req) {
 
     // Client-supplied style reference stays in the server bundle, not the public gallery.
     const referenceB64=(await readFile(process.cwd()+'/assets/portrait-style-reference.jpg')).toString('base64');
-    const costumeB64=(await readFile(process.cwd()+'/assets/costume-reference.jpg')).toString('base64');
     const prompt = `Edit the supplied camera photo into one portrait-oriented illustrated commercial tourism poster for Turespaña, celebrating ${dest.label}.
 INPUT ROLES: Image 1 is the actual guest camera photo and the ONLY source of people and identity. Image 2 is ONLY a rendering-style reference, never a source of facial features, bodies or identity. Remove ALL reference people completely, including their bodies, faces, uniforms and props. Do not copy reference text, brand logos or baseball imagery.
-CLOTHING REFERENCE: Image 3 is a six-panel wardrobe reference ONLY. Use the ${dest.referencePanel} panel labelled ${dest.label}. Copy garment shapes, textile colours, embroidery and layering only. Ignore the reference models’ faces, bodies, skin, hair, poses and photorealistic finish. Do not add any of those people to the portrait. Image 1 remains the ONLY identity source and Image 2 remains the rendering-style reference. Translate the selected clothing into that same illustrated style.
 MANDATORY: Exactly ${guestCount} real foreground guest(s), each once. Select the nearest clearly posing ${guestCount} guest(s) from Image 1. Preserve each guest's recognizable face, skin tone, hair and identity. Exclude background bystanders, people on screens, reflections, and extra or duplicated people. Never invent anyone to satisfy the count.
 ${portraitLikeness}
 DESTINATION COSTUME: ${dest.costumePrompt}
@@ -71,7 +69,6 @@ FINAL CHECK: Exactly ${guestCount} selected foreground guests from Image 1, no r
       images: [
         { image_url: `data:${mimeType};base64,${b64}` },
         { image_url: `data:image/jpeg;base64,${referenceB64}` },
-        { image_url: `data:image/jpeg;base64,${costumeB64}` },
       ],
       prompt,
       size: process.env.OPENAI_IMAGE_SIZE || '1024x1536',
