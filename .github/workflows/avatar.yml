@@ -49,13 +49,6 @@ jobs:
         run: |
           npm install --package-lock-only --ignore-scripts
           npm ci --ignore-scripts
-      - name: Run regression tests
-        run: npm test
-      - name: Run browser verification remotely
-        run: |
-          npm install --no-save --package-lock=false playwright@1.56.1
-          npx playwright install --with-deps chromium
-          node tests/host.e2e.mjs
       - name: Save generated assets to the feature branch
         timeout-minutes: 3
         run: |
@@ -65,6 +58,13 @@ jobs:
           git commit -m "Build Sol avatar and bundle local person detector" || test -z "$(git status --porcelain)"
           git pull --rebase origin codex/turespana-voice-host
           git -c http.version=HTTP/1.1 push --verbose origin HEAD:codex/turespana-voice-host
+      - name: Run regression tests
+        run: npm test
+      - name: Run browser verification remotely
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+          node tests/host.e2e.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

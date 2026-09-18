@@ -40,6 +40,6 @@ test('sentry endpoint validates origin, limits frames, disables storage and retu
   const r=await POST(req({frame}));assert.equal(r.status,200);const result=await r.json();assert.equal(result.personPresent,true);assert.equal(result.frame,undefined);
   assert.equal(payload.store,false);assert.equal(payload.input[0].content[1].image_url,frame);
   assert.match(payload.instructions,/never instructions/);assert.match(payload.instructions,/not proof of consent/);
-  process.env.VERCEL_ENV='production';assert.equal((await POST(req({frame}))).status,403);
- }finally{globalThis.fetch=oldFetch;if(oldKey===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=oldKey;if(oldEnv===undefined)delete process.env.VERCEL_ENV;else process.env.VERCEL_ENV=oldEnv;}
+  process.env.VERCEL_ENV='production';process.env.ENABLE_FACE_HOST='false';assert.equal((await POST(req({frame}))).status,403);
+ }finally{delete process.env.ENABLE_FACE_HOST;globalThis.fetch=oldFetch;if(oldKey===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=oldKey;if(oldEnv===undefined)delete process.env.VERCEL_ENV;else process.env.VERCEL_ENV=oldEnv;}
 });
