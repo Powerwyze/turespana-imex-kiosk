@@ -10,7 +10,7 @@ test('destination is explicit, guarded during capture, and cleared for the next 
  assert.ok((await e.execute('set_destination',{destinationId:'madrid'})).error);e.reset();assert.equal(e.snapshot().destinationId,null);assert.equal(e.source,null);
 });
 test('host offers six Spanish destinations and only touch-confirmed email',()=>{
- const c=liveSessionConfig();assert.ok(c.delegation.responses.tools.find(t=>t.name==='set_destination'));assert.match(c.instructions,/Sol/);assert.match(c.instructions,/English or Spanish/);assert.doesNotMatch(c.instructions,/Damn Good|Fort Lauderdale/);assert.equal(c.delegation.responses.tools.some(t=>t.name==='send_email'),false);
+ const c=liveSessionConfig();assert.ok(c.delegation.responses.tools.find(t=>t.name==='set_destination'));assert.match(c.instructions,/Lola/);assert.match(c.instructions,/English or Spanish/);assert.doesNotMatch(c.instructions,/Damn Good|Fort Lauderdale/);assert.equal(c.delegation.responses.tools.some(t=>t.name==='send_email'),false);
 });
 
 import nodemailer from 'nodemailer';import sendPhoto from '../api/host-email.js';

@@ -11,7 +11,7 @@ export async function mountAvatar(face,canvas){
     const light=new THREE.DirectionalLight(color,intensity);light.position.set(...position);scene.add(light);
   }
   let model;
-  try{model=(await new GLTFLoader().loadAsync('/assets/host-avatar.glb')).scene;}catch(e){renderer.dispose();throw e;}
+  try{model=(await new GLTFLoader().loadAsync('/assets/lola-avatar.glb')).scene;}catch(e){renderer.dispose();throw e;}
   scene.add(model);
   const mouths=[],eyes=[];
   model.traverse(node=>{

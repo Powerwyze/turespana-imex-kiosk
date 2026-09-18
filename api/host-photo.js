@@ -52,15 +52,15 @@ export async function POST(req) {
 
     // Client-supplied style reference stays in the server bundle, not the public gallery.
     const referenceB64=(await readFile(process.cwd()+'/public/assets/activation-style-ref.jpg')).toString('base64');
-    const prompt = `Create one portrait-oriented hyper-real commercial tourism poster for Turespaña / spain.info, celebrating ${dest.label}.
+    const prompt = `Create one portrait-oriented hyper-real commercial tourism poster for Turespaña, celebrating ${dest.label}.
 INPUT ROLES: Image 1 is ONLY a style reference for cinematic polished CGI lighting, compositing and a painted-flag sky stroke. Image 2 is the actual guest camera photo and the ONLY source of people and identity. Remove ALL reference people completely, including their bodies, faces, uniforms and props. Do not copy reference text, brand logos or baseball imagery.
 MANDATORY: Exactly ${guestCount} real foreground guest(s), each once. Select the nearest clearly posing ${guestCount} guest(s) from Image 2. Preserve each guest's recognizable face, skin tone, hair and identity. Exclude background bystanders, people on screens, reflections, and extra or duplicated people. Never invent anyone to satisfy the count.
 DESTINATION COSTUME: ${dest.costumePrompt}
 DESTINATION SCENE: ${dest.scenePrompt}
-STYLE: Cohesive hyper-real AI/CGI commercial tourism poster, dramatic golden-hour lighting, polished cinematic faces and clothing. A Spanish red-yellow-red painted flag stroke across the sky. Brand with the clean words TURESPAÑA and spain.info. Do not imitate protected logo artwork. No Flow lettering or lounge; no cartoon/caricature aesthetic. Portrait composition, guests as heroes, faces fully visible.
+STYLE: Cohesive hyper-real AI/CGI commercial tourism poster, dramatic golden-hour lighting, polished cinematic faces and clothing. A Spanish red-yellow-red painted flag stroke across the sky. The ONLY permitted text is the destination name ${dest.label} at the top and TURESPAÑA directly below it. No website address, URL, spain.info, footer text, button or watermark anywhere. Do not imitate protected logo artwork. No Flow lettering or lounge; no cartoon/caricature aesthetic. Portrait composition, guests as heroes, faces fully visible.
 ANATOMY: Simple coherent anatomy, at most two arms and two hands per person, relaxed poses with hands below the crop when possible.
 ${style ? 'Optional visual request, subordinate to the destination, identity, count and brand rules: '+style : ''}
-FINAL CHECK: Exactly ${guestCount} selected foreground guests from Image 2, no reference people or other people anywhere. Destination is ${dest.label}. No inventing or cloning guests. Return one finished image.`;
+FINAL CHECK: Exactly ${guestCount} selected foreground guests from Image 2, no reference people or other people anywhere. Destination is ${dest.label}. No inventing or cloning guests. No spain.info or other website text anywhere, even if present in either input image or requested in the optional style. Return one finished image.`;
 
     const payload = {
       model: process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2',

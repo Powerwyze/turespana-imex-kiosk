@@ -3,29 +3,34 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#211715">
-<title>Turespaña · Sol Voice Photo Kiosk</title>
+<title>Turespaña · Lola Voice Photo Kiosk</title>
 <link rel="stylesheet" href="/host.css">
 <script type="importmap">{"imports":{"three":"/vendor/three/three.module.min.js","three/addons/":"/vendor/three/addons/"}}</script>
 </head>
 <body data-phase="idle">
 <main id="stage" aria-label="Turespaña voice photo experience">
   <div class="ambient" aria-hidden="true"></div>
-  <header id="intro"><span class="brand" aria-label="Turespaña">TURESPAÑA</span><span class="eyebrow">SPAIN TOURISM BOARD · IMEX LAS VEGAS</span><h1 class="event-title">Your voice.<br>Your Spanish adventure.</h1><p class="event-meta">Andalucía · Madrid · Cataluña<br>País Vasco · Galicia · Valencia</p></header>
+  <header id="intro"><span class="brand" aria-label="Turespaña">TURESPAÑA</span><span class="eyebrow">SPAIN TOURISM BOARD · IMEX LAS VEGAS</span><h1 class="event-title">Meet Lola. Discover Spain.</h1></header>
+  <section id="destinationExamples" aria-label="Destination example portraits"><p class="examples-title">CHOOSE YOUR SPANISH ADVENTURE</p><div class="examples-grid"><figure data-destination="andalucia"><img src="/assets/examples/andalucia.webp" width="400" height="600" alt="Example Andalucía portrait with destination landmarks"><figcaption>Andalucía</figcaption></figure><figure data-destination="madrid"><img src="/assets/examples/madrid.webp" width="400" height="600" alt="Example Madrid portrait with destination landmarks"><figcaption>Madrid</figcaption></figure><figure data-destination="cataluna"><img src="/assets/examples/cataluna.webp" width="400" height="600" alt="Example Cataluña portrait with destination landmarks"><figcaption>Cataluña</figcaption></figure><figure data-destination="pais-vasco"><img src="/assets/examples/pais-vasco.webp" width="400" height="600" alt="Example País Vasco portrait with destination landmarks"><figcaption>País Vasco</figcaption></figure><figure data-destination="galicia"><img src="/assets/examples/galicia.webp" width="400" height="600" alt="Example Galicia portrait with destination landmarks"><figcaption>Galicia</figcaption></figure><figure data-destination="valencia"><img src="/assets/examples/valencia.webp" width="400" height="600" alt="Example Valencia portrait with destination landmarks"><figcaption>Valencia</figcaption></figure></div><p class="examples-note">Example portraits · Your photo will be unique</p></section>
   <img id="picture" alt="Your Spain destination portrait" hidden>
-  <section id="hostCaptions" aria-label="Sol’s live captions" hidden>
-    <span class="caption-speaker">Sol says</span>
+  <section id="hostCaptions" aria-label="Lola’s live captions" hidden>
+    <span class="caption-speaker">Lola says</span>
     <p id="hostCaptionText"></p>
   </section>
   <button id="face" type="button" aria-label="Start talking to your AI photo host">
-    <canvas id="avatar" aria-label="Animated Turespaña geometric sun host"></canvas>
-<svg viewBox="0 0 600 720" role="img" aria-label="Sol, the animated sun wearing sunglasses">
-<defs><radialGradient id="sunshine"><stop stop-color="#ffe58a"/><stop offset="1" stop-color="#f3b748"/></radialGradient><linearGradient id="lenses" x2="1" y2="1"><stop stop-color="#bd241b"/><stop offset="1" stop-color="#57120f"/></linearGradient></defs>
-<g id="head"><path d="M300 135 Q280 95 300 55 Q320 95 300 135Z" transform="rotate(0 300 350)" fill="#e8a840"/><path d="M300 135 Q280 95 300 55 Q320 95 300 135Z" transform="rotate(30 300 350)" fill="#f8b943"/><path d="M300 135 Q280 95 300 55 Q320 95 300 135Z" transform="rotate(60 300 350)" fill="#e8a840"/><path d="M300 135 Q280 95 300 55 Q320 95 300 135Z" transform="rotate(90 300 350)" fill="#f8b943"/><path d="M300 135 Q280 95 300 55 Q320 95 300 135Z" transform="rotate(120 300 350)" fill="#e8a840"/><path d="M300 135 Q280 95 300 55 Q320 95 300 135Z" transform="rotate(150 300 350)" fill="#f8b943"/><path d="M300 135 Q280 95 300 55 Q320 95 300 135Z" transform="rotate(180 300 350)" fill="#e8a840"/><path d="M300 135 Q280 95 300 55 Q320 95 300 135Z" transform="rotate(210 300 350)" fill="#f8b943"/><path d="M300 135 Q280 95 300 55 Q320 95 300 135Z" transform="rotate(240 300 350)" fill="#e8a840"/><path d="M300 135 Q280 95 300 55 Q320 95 300 135Z" transform="rotate(270 300 350)" fill="#f8b943"/><path d="M300 135 Q280 95 300 55 Q320 95 300 135Z" transform="rotate(300 300 350)" fill="#e8a840"/><path d="M300 135 Q280 95 300 55 Q320 95 300 135Z" transform="rotate(330 300 350)" fill="#f8b943"/><circle cx="300" cy="350" r="177" fill="url(#sunshine)"/>
-<g id="eyes"><rect x="154" y="277" width="133" height="94" rx="33" fill="url(#lenses)" stroke="#591b17" stroke-width="13"/><rect x="313" y="277" width="133" height="94" rx="33" fill="url(#lenses)" stroke="#591b17" stroke-width="13"/><path d="M285 302Q300 293 315 302M137 287L158 293M442 293L463 287" fill="none" stroke="#591b17" stroke-width="13" stroke-linecap="round"/><g id="pupils" opacity=".4"><path d="M176 294L197 284M187 318L234 288M336 317L382 287" stroke="#fff0b0" stroke-width="9" stroke-linecap="round"/></g></g>
-<g id="mouth" style="transform-origin:300px 418px"><path d="M239 405Q300 448 361 405Q300 500 239 405Z" fill="#65402b"/><path d="M251 418Q300 443 349 418Q300 451 251 418Z" fill="#fff9df"/></g>
-<ellipse cx="188" cy="403" rx="21" ry="12" fill="#e99753" opacity=".45"/><ellipse cx="412" cy="403" rx="21" ry="12" fill="#e99753" opacity=".45"/></g></svg>
+    <canvas id="avatar" aria-label="Animated Spanish guitar host"></canvas>
+<svg viewBox="0 0 600 720" role="img" aria-label="Lola, a friendly Spanish guitar">
+<defs><linearGradient id="wood" x2="1" y2="1"><stop stop-color="#ffce7c"/><stop offset=".5" stop-color="#cd7d3b"/><stop offset="1" stop-color="#8d421f"/></linearGradient></defs>
+<g id="head"><rect x="277" y="89" width="46" height="255" rx="12" fill="#5d2b1c" stroke="#edba69" stroke-width="5"/><rect x="266" y="28" width="68" height="115" rx="22" fill="#a9562d" stroke="#f4c87c" stroke-width="6"/>
+<path d="M250 291C160 228 110 332 162 405C187 440 140 461 119 513C73 631 202 683 300 666C398 683 527 631 481 513C460 461 413 440 438 405C490 332 440 228 350 291Z" fill="url(#wood)" stroke="#562615" stroke-width="13"/>
+<circle cx="300" cy="445" r="55" fill="#3a1c16" stroke="#ffe3a3" stroke-width="10"/><circle cx="300" cy="445" r="65" fill="none" stroke="#8a3922" stroke-width="5"/>
+<path d="M258 120H342M258 88H342M258 57H342" stroke="#eac581" stroke-width="12" stroke-linecap="round"/>
+<rect x="251" y="543" width="98" height="20" rx="6" fill="#49271e"/><path d="M282 51V548M289 51V548M296 51V548M303 51V548M310 51V548M317 51V548" stroke="#f4deaa" stroke-width="2" opacity=".7"/>
+<g id="eyes"><ellipse cx="236" cy="352" rx="35" ry="42" fill="#fff7df"/><ellipse cx="364" cy="352" rx="35" ry="42" fill="#fff7df"/><g id="pupils"><ellipse cx="243" cy="357" rx="19" ry="26" fill="#37251b"/><ellipse cx="357" cy="357" rx="19" ry="26" fill="#37251b"/><circle cx="236" cy="346" r="7" fill="white"/><circle cx="350" cy="346" r="7" fill="white"/></g></g>
+<g id="mouth" style="transform-origin:300px 605px"><path d="M249 585Q300 618 351 585Q300 659 249 585Z" fill="#4b211b"/><path d="M262 599Q300 615 338 599" fill="none" stroke="#fff4d7" stroke-width="9" stroke-linecap="round"/></g>
+<path d="M269 259Q300 283 331 259L350 285L309 298L335 330L306 339L281 291L253 283Z" fill="#c72f27"/></g></svg>
   </button>
-  <div id="message" role="status" aria-live="polite"><p id="headline">Hola. Let’s discover Spain.</p><p id="hint">Tap Sol or enable camera sentry · English / Español</p></div>
+  <div id="message" role="status" aria-live="polite"><p id="headline">Hola. Let’s discover Spain.</p><p id="hint">Tap Lola or enable camera sentry · English / Español</p></div>
   <button id="emailOpen" hidden>Email my photo</button>
   <div id="emailToast" role="status" hidden>Photo accepted for delivery. Check your inbox.</div>
   <section id="emailPanel" role="dialog" aria-modal="true" aria-labelledby="emailTitle" hidden>

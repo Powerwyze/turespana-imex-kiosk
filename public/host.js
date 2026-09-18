@@ -35,7 +35,7 @@ const sentry=new CameraSentry({
     if(!ready&&!connecting){
       if(status==='watching')text('Looking good starts here.',message||'Walk into view to meet your AI photo host.');
       else if(status==='greeting')text('Hello there.','Your host is getting ready to say hello.');
-      else if(message)text('Tap the sun to begin.',message);
+      else if(message)text('Tap Lola to begin.',message);
     }
   }
 });
@@ -44,7 +44,7 @@ function stopSentry(){
   sentrySetup++;sentryEnabling=false;sentry.disable();sentryAudioContext?.close().catch(()=>{});sentryAudioContext=null;
 }
 $('sentryToggle').addEventListener('click',async()=>{
-  if(sentry.enabled||sentryEnabling){stopSentry();if(ready||connecting)end();else text('Your Spanish story starts here.','Tap the sun to begin · AI photo host');return;}
+  if(sentry.enabled||sentryEnabling){stopSentry();if(ready||connecting)end();else text('Your Spanish story starts here.','Tap Lola to begin · AI photo host');return;}
   if(ready||connecting)return;
   const setup=++sentrySetup;sentryEnabling=true;
   $('sentryToggle').textContent='Stop sentry setup';
@@ -64,11 +64,11 @@ $('sentryToggle').addEventListener('click',async()=>{
 function stopEventTalk(){clearInterval(eventTimer);eventTimer=null;}
 function startEventTalk(){
   stopEventTalk();eventIndex=0;guestInterrupted=false;
-  note('The photo is generating. Share two concise sentences about Spain from your verified tourism facts, invite a light question about their travel interests, and listen. Do not ask for email yet.',true);
+  note('The photo is generating for '+destinations[engine.destination]+'. Share two concise sentences specifically about this destination from your verified facts. Invite a tourism question and listen; answer their follow-up questions while generation continues. Do not ask for email yet.',true);
   eventTimer=setInterval(()=>{
     if(!ready||engine.phase!=='generating'){stopEventTalk();return;}
     if(guestInterrupted||Date.now()-lastVoiceAt<18000||eventIndex>=2)return;
-    const topic=['art and culture in Spain','coast, nature and food as Spanish travel themes'][eventIndex++];
+    const topic=['art and culture in '+destinations[engine.destination],'food or outdoor highlights in '+destinations[engine.destination]][eventIndex++];
     note('The image is still generating. Briefly talk about '+topic+' using only your supplied event facts. Do not invent destination facts. Leave room for questions. Do not repeat yourself or promise timing.',true);
   },30000);
 }
@@ -220,7 +220,7 @@ const toolLoop=new LiveTools({send,execute:async(name,args)=>{
   if(name==='reset_booth'&&args.confirmed===true)clearEmail();
   return engine.execute(name,args);
 }});
-function cleanup(message='Tap the sun to begin · AI photo host'){
+function cleanup(message='Tap Lola to begin · AI photo host'){
   sessionEpoch++;ready=false;connecting=false;ending=false;captions.clear();
   guestIdle.stop();stopEventTalk();clearEmail();sentry.finish({immediate:rearmImmediately});rearmImmediately=false;
   requestController?.abort();requestController=null;
@@ -247,7 +247,7 @@ function end({idle=false}={}){
 async function ice(connection,signal){
   if(connection.iceGatheringState==='complete')return;
   for(let i=0;i<100;i++){await wait(100,signal);if(connection.iceGatheringState==='complete')return;}
-  throw new Error('The voice connection could not reach the network. Tap the sun to retry.');
+  throw new Error('The voice connection could not reach the network. Tap Lola to retry.');
 }
 async function begin({sentryGreeting=null}={}){
   if(connecting||ready||ending)return;
@@ -302,9 +302,9 @@ async function begin({sentryGreeting=null}={}){
         toolLoop.receive(event).catch(()=>text('Let’s try that again.','Please repeat your request.'));
       }
     });
-    channel.addEventListener('close',()=>{if(epoch===sessionEpoch&&!ending)cleanup('Connection ended. Tap the sun to reconnect.');});
+    channel.addEventListener('close',()=>{if(epoch===sessionEpoch&&!ending)cleanup('Connection ended. Tap Lola to reconnect.');});
     connection.addEventListener('connectionstatechange',()=>{
-      if(epoch===sessionEpoch&&connection.connectionState==='failed')cleanup('Connection lost. Tap the sun to reconnect.');
+      if(epoch===sessionEpoch&&connection.connectionState==='failed')cleanup('Connection lost. Tap Lola to reconnect.');
     });
     await connection.setLocalDescription(await connection.createOffer());await ice(connection,requestController.signal);
     const response=await fetch('/api/host-session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sdp:connection.localDescription.sdp}),signal:AbortSignal.any([requestController.signal,AbortSignal.timeout(30000)])});
@@ -312,7 +312,7 @@ async function begin({sentryGreeting=null}={}){
     if(!response.ok)throw new Error(result.error||'Your host could not connect.');
     if(epoch!==sessionEpoch)return;
     await connection.setRemoteDescription({type:'answer',sdp:result.transport.sdp});
-    if(!ready)startTimer=setTimeout(()=>{if(epoch===sessionEpoch&&!ready)cleanup('The host did not connect. Tap the sun to retry.');},20000);
+    if(!ready)startTimer=setTimeout(()=>{if(epoch===sessionEpoch&&!ready)cleanup('The host did not connect. Tap Lola to retry.');},20000);
   }catch(error){
     if(epoch!==sessionEpoch)return;
     const message=error.name==='NotAllowedError'?'Please allow microphone access, then tap the sun again.':error.message;
