@@ -284,7 +284,7 @@ async function begin({sentryGreeting=null}={}){
           let ack;try{ack=JSON.parse(data);}catch{return;}
           if(ack.type==='session.instructions.appended'&&ack.client_event_id===greeting){
             channel.removeEventListener('message',listener);
-            note(sentryGreeting?'A nearby visitor was detected by camera sentry. Deliver the frame-based welcome now, then listen. Do not take a photo yet.':'A new visitor has tapped the sun and is ready to meet the AI photo host. Greet them now and ask how many people are posing.',true);
+            note(sentryGreeting?'A nearby visitor was detected by camera sentry. Deliver the frame-based welcome now, then listen. Do not take a photo yet.':'A new visitor has tapped Lola and is ready to meet the AI photo host. Greet them now and ask how many people are posing.',true);
           }
         };
         channel.addEventListener('message',listener);
@@ -297,7 +297,7 @@ async function begin({sentryGreeting=null}={}){
         if(ready&&!ending&&!['idle','connecting','countdown'].includes(document.body.dataset.phase))captions.append(event.delta);
       }
       else if(event.type==='error'){
-        text('Your host needs a moment.','The connection had a problem. End and tap the sun to reconnect.');
+        text('Your host needs a moment.','The connection had a problem. End and tap Lola to reconnect.');
       } else {
         toolLoop.receive(event).catch(()=>text('Let’s try that again.','Please repeat your request.'));
       }
@@ -315,7 +315,7 @@ async function begin({sentryGreeting=null}={}){
     if(!ready)startTimer=setTimeout(()=>{if(epoch===sessionEpoch&&!ready)cleanup('The host did not connect. Tap Lola to retry.');},20000);
   }catch(error){
     if(epoch!==sessionEpoch)return;
-    const message=error.name==='NotAllowedError'?'Please allow microphone access, then tap the sun again.':error.message;
+    const message=error.name==='NotAllowedError'?'Please allow microphone access, then tap Lola again.':error.message;
     cleanup(message);phase('error');text('Let’s get connected.',message);
   }
 }

@@ -83,8 +83,9 @@ try{
   await page.screenshot({path:'artifacts/host-live-countdown.png'});
   await page.waitForFunction(()=>document.body.dataset.phase==='generating',null,{timeout:15000});
   await page.waitForTimeout(5000);
+  const tourismStart=await page.evaluate(()=>window.__liveEvents.length);
   await ask('While the photo is generating, which two art museums could I explore in Madrid?');
-  await page.waitForFunction(()=>/Prado|Reina Sofía|Thyssen/i.test(window.__liveEvents.filter(e=>e.type==='session.output_transcript.delta').map(e=>e.delta).join('')),null,{timeout:30000});
+  await page.waitForFunction(start=>/Prado|Reina Sofía|Thyssen/i.test(window.__liveEvents.slice(start).filter(e=>e.type==='session.output_transcript.delta').map(e=>e.delta).join('')),tourismStart,{timeout:30000});
   assert.equal(await page.locator('body').getAttribute('data-phase'),'generating','Tourism questions are answered while generation continues');
   await page.screenshot({path:'artifacts/host-live-tourism.png'});
   await page.waitForFunction(()=>document.body.dataset.phase==='result',null,{timeout:65000});
