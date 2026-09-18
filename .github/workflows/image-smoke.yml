@@ -1,6 +1,9 @@
 name: Browser image smoke
 on:
   workflow_dispatch:
+  push:
+    branches: [codex/turespana-voice-host]
+    paths: [.github/workflows/image-smoke.yml]
 permissions:
   contents: read
 jobs:
