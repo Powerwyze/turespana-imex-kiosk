@@ -5,32 +5,21 @@
 <meta name="theme-color" content="#211715">
 <title>Turespaña · Lola Voice Photo Kiosk</title>
 <link rel="stylesheet" href="/host.css">
-<script type="importmap">{"imports":{"three":"/vendor/three/three.module.min.js","three/addons/":"/vendor/three/addons/"}}</script>
 </head>
 <body data-phase="idle">
 <main id="stage" aria-label="Turespaña voice photo experience">
   <div class="ambient" aria-hidden="true"></div>
-  <header id="intro"><span class="brand" aria-label="Turespaña">TURESPAÑA</span><span class="eyebrow">SPAIN TOURISM BOARD · IMEX LAS VEGAS</span><h1 class="event-title">Meet Lola. Discover Spain.</h1></header>
+  <header id="intro"><span class="brand" aria-label="Turespaña">TURESPAÑA</span><span class="eyebrow">SPAIN TOURISM BOARD · IMEX LAS VEGAS</span><h1 class="event-title">Discover Spain with Lola.</h1></header>
   <section id="destinationExamples" aria-label="Destination example portraits"><p class="examples-title">CHOOSE YOUR SPANISH ADVENTURE</p><div class="examples-grid"><figure data-destination="canarias"><img src="/assets/examples/canarias.webp" width="400" height="600" alt="Example Canarias illustrated portrait with destination landmarks"><figcaption>Canarias</figcaption></figure><figure data-destination="barcelona"><img src="/assets/examples/barcelona.webp" width="400" height="600" alt="Example Barcelona illustrated portrait with destination landmarks"><figcaption>Barcelona</figcaption></figure><figure data-destination="bilbao"><img src="/assets/examples/bilbao.webp" width="400" height="600" alt="Example Bilbao illustrated portrait with destination landmarks"><figcaption>Bilbao</figcaption></figure><figure data-destination="madrid"><img src="/assets/examples/madrid.webp" width="400" height="600" alt="Example Madrid illustrated portrait with destination landmarks"><figcaption>Madrid</figcaption></figure><figure data-destination="andalucia"><img src="/assets/examples/andalucia.webp" width="400" height="600" alt="Example Andalucía illustrated portrait with destination landmarks"><figcaption>Andalucía</figcaption></figure><figure data-destination="valencia"><img src="/assets/examples/valencia.webp" width="400" height="600" alt="Example Valencia illustrated portrait with destination landmarks"><figcaption>Valencia</figcaption></figure></div><p class="examples-note">Example portraits · Your photo will be unique</p></section>
   <img id="picture" alt="Your Spain destination portrait" hidden>
   <section id="hostCaptions" aria-label="Lola’s live captions" hidden>
     <span class="caption-speaker">Lola says</span>
     <p id="hostCaptionText"></p>
   </section>
-  <button id="face" type="button" aria-label="Start talking to your AI photo host">
-    <canvas id="avatar" aria-label="Animated Spanish guitar host"></canvas>
-<svg viewBox="0 0 600 720" role="img" aria-label="Lola, a friendly Spanish guitar">
-<defs><linearGradient id="wood" x2="1" y2="1"><stop stop-color="#ffce7c"/><stop offset=".5" stop-color="#cd7d3b"/><stop offset="1" stop-color="#8d421f"/></linearGradient></defs>
-<g id="head"><rect x="277" y="89" width="46" height="255" rx="12" fill="#5d2b1c" stroke="#edba69" stroke-width="5"/><rect x="266" y="28" width="68" height="115" rx="22" fill="#a9562d" stroke="#f4c87c" stroke-width="6"/>
-<path d="M250 291C160 228 110 332 162 405C187 440 140 461 119 513C73 631 202 683 300 666C398 683 527 631 481 513C460 461 413 440 438 405C490 332 440 228 350 291Z" fill="url(#wood)" stroke="#562615" stroke-width="13"/>
-<circle cx="300" cy="445" r="55" fill="#3a1c16" stroke="#ffe3a3" stroke-width="10"/><circle cx="300" cy="445" r="65" fill="none" stroke="#8a3922" stroke-width="5"/>
-<path d="M258 120H342M258 88H342M258 57H342" stroke="#eac581" stroke-width="12" stroke-linecap="round"/>
-<rect x="251" y="543" width="98" height="20" rx="6" fill="#49271e"/><path d="M282 51V548M289 51V548M296 51V548M303 51V548M310 51V548M317 51V548" stroke="#f4deaa" stroke-width="2" opacity=".7"/>
-<g id="eyes"><ellipse cx="236" cy="352" rx="35" ry="42" fill="#fff7df"/><ellipse cx="364" cy="352" rx="35" ry="42" fill="#fff7df"/><g id="pupils"><ellipse cx="243" cy="357" rx="19" ry="26" fill="#37251b"/><ellipse cx="357" cy="357" rx="19" ry="26" fill="#37251b"/><circle cx="236" cy="346" r="7" fill="white"/><circle cx="350" cy="346" r="7" fill="white"/></g></g>
-<g id="mouth" style="transform-origin:300px 605px"><path d="M249 585Q300 618 351 585Q300 659 249 585Z" fill="#4b211b"/><path d="M262 599Q300 615 338 599" fill="none" stroke="#fff4d7" stroke-width="9" stroke-linecap="round"/></g>
-<path d="M269 259Q300 283 331 259L350 285L309 298L335 330L306 339L281 291L253 283Z" fill="#c72f27"/></g></svg>
+  <button id="face" type="button" aria-label="Tap the Spain logo to start talking to your AI photo host">
+    <img id="avatar" src="/assets/spain-info-logo.png" width="512" height="512" alt="España — the official Spain.info sun logo" draggable="false">
   </button>
-  <div id="message" role="status" aria-live="polite"><p id="headline">Hola. Let’s discover Spain.</p><p id="hint">Tap Lola or enable camera sentry · English / Español</p></div>
+  <div id="message" role="status" aria-live="polite"><p id="headline">Hola. Let’s discover Spain.</p><p id="hint">Tap the logo or enable camera sentry · English / Español</p></div>
   <button id="emailOpen" hidden>Email my photo</button>
   <div id="emailToast" role="status" hidden>Photo accepted for delivery. Check your inbox.</div>
   <section id="emailPanel" role="dialog" aria-modal="true" aria-labelledby="emailTitle" hidden>

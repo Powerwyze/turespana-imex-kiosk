@@ -35,7 +35,7 @@ const sentry=new CameraSentry({
     if(!ready&&!connecting){
       if(status==='watching')text('Looking good starts here.',message||'Walk into view to meet your AI photo host.');
       else if(status==='greeting')text('Hello there.','Your host is getting ready to say hello.');
-      else if(message)text('Tap Lola to begin.',message);
+      else if(message)text('Tap the logo to begin.',message);
     }
   }
 });
@@ -44,7 +44,7 @@ function stopSentry(){
   sentrySetup++;sentryEnabling=false;sentry.disable();sentryAudioContext?.close().catch(()=>{});sentryAudioContext=null;
 }
 $('sentryToggle').addEventListener('click',async()=>{
-  if(sentry.enabled||sentryEnabling){stopSentry();if(ready||connecting)end();else text('Your Spanish story starts here.','Tap Lola to begin · AI photo host');return;}
+  if(sentry.enabled||sentryEnabling){stopSentry();if(ready||connecting)end();else text('Your Spanish story starts here.','Tap the logo to begin · AI photo host');return;}
   if(ready||connecting)return;
   const setup=++sentrySetup;sentryEnabling=true;
   $('sentryToggle').textContent='Stop sentry setup';
@@ -220,7 +220,7 @@ const toolLoop=new LiveTools({send,execute:async(name,args)=>{
   if(name==='reset_booth'&&args.confirmed===true)clearEmail();
   return engine.execute(name,args);
 }});
-function cleanup(message='Tap Lola to begin · AI photo host'){
+function cleanup(message='Tap the logo to begin · AI photo host'){
   sessionEpoch++;ready=false;connecting=false;ending=false;captions.clear();
   guestIdle.stop();stopEventTalk();clearEmail();sentry.finish({immediate:rearmImmediately});rearmImmediately=false;
   requestController?.abort();requestController=null;
@@ -247,7 +247,7 @@ function end({idle=false}={}){
 async function ice(connection,signal){
   if(connection.iceGatheringState==='complete')return;
   for(let i=0;i<100;i++){await wait(100,signal);if(connection.iceGatheringState==='complete')return;}
-  throw new Error('The voice connection could not reach the network. Tap Lola to retry.');
+  throw new Error('The voice connection could not reach the network. Tap the logo to retry.');
 }
 async function begin({sentryGreeting=null}={}){
   if(connecting||ready||ending)return;
@@ -284,7 +284,7 @@ async function begin({sentryGreeting=null}={}){
           let ack;try{ack=JSON.parse(data);}catch{return;}
           if(ack.type==='session.instructions.appended'&&ack.client_event_id===greeting){
             channel.removeEventListener('message',listener);
-            note(sentryGreeting?'A nearby visitor was detected by camera sentry. Deliver the frame-based welcome now, then listen. Do not take a photo yet.':'A new visitor has tapped Lola and is ready to meet the AI photo host. Greet them now and ask how many people are posing.',true);
+            note(sentryGreeting?'A nearby visitor was detected by camera sentry. Deliver the frame-based welcome now, then listen. Do not take a photo yet.':'A new visitor has tapped the Spain logo and is ready to meet the AI photo host. Greet them now and ask how many people are posing.',true);
           }
         };
         channel.addEventListener('message',listener);
@@ -297,14 +297,14 @@ async function begin({sentryGreeting=null}={}){
         if(ready&&!ending&&!['idle','connecting','countdown'].includes(document.body.dataset.phase))captions.append(event.delta);
       }
       else if(event.type==='error'){
-        text('Your host needs a moment.','The connection had a problem. End and tap Lola to reconnect.');
+        text('Your host needs a moment.','The connection had a problem. End and tap the logo to reconnect.');
       } else {
         toolLoop.receive(event).catch(()=>text('Let’s try that again.','Please repeat your request.'));
       }
     });
-    channel.addEventListener('close',()=>{if(epoch===sessionEpoch&&!ending)cleanup('Connection ended. Tap Lola to reconnect.');});
+    channel.addEventListener('close',()=>{if(epoch===sessionEpoch&&!ending)cleanup('Connection ended. Tap the logo to reconnect.');});
     connection.addEventListener('connectionstatechange',()=>{
-      if(epoch===sessionEpoch&&connection.connectionState==='failed')cleanup('Connection lost. Tap Lola to reconnect.');
+      if(epoch===sessionEpoch&&connection.connectionState==='failed')cleanup('Connection lost. Tap the logo to reconnect.');
     });
     await connection.setLocalDescription(await connection.createOffer());await ice(connection,requestController.signal);
     const response=await fetch('/api/host-session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sdp:connection.localDescription.sdp}),signal:AbortSignal.any([requestController.signal,AbortSignal.timeout(30000)])});
@@ -312,10 +312,10 @@ async function begin({sentryGreeting=null}={}){
     if(!response.ok)throw new Error(result.error||'Your host could not connect.');
     if(epoch!==sessionEpoch)return;
     await connection.setRemoteDescription({type:'answer',sdp:result.transport.sdp});
-    if(!ready)startTimer=setTimeout(()=>{if(epoch===sessionEpoch&&!ready)cleanup('The host did not connect. Tap Lola to retry.');},20000);
+    if(!ready)startTimer=setTimeout(()=>{if(epoch===sessionEpoch&&!ready)cleanup('The host did not connect. Tap the logo to retry.');},20000);
   }catch(error){
     if(epoch!==sessionEpoch)return;
-    const message=error.name==='NotAllowedError'?'Please allow microphone access, then tap Lola again.':error.message;
+    const message=error.name==='NotAllowedError'?'Please allow microphone access, then tap the logo again.':error.message;
     cleanup(message);phase('error');text('Let’s get connected.',message);
   }
 }
@@ -389,8 +389,6 @@ function animate(t){
   let brightness=0;
   if(analyser&&level>.025){analyser.getByteFrequencyData(frequencies);const total=frequencies.reduce((a,b)=>a+b,0)||1;brightness=frequencies.slice(8,45).reduce((a,b)=>a+b,0)/total;}
   avatar?.update({time:t,level:level<.025?0:level,brightness});
-  $('mouth').style.transform='scaleY('+(1+level*3.5)+') scaleX('+(1-level*.12)+')';
-  $('pupils').style.transform='translate('+Math.sin(t/3500)*2+'px,'+Math.cos(t/4700)*1.5+'px)';
   requestAnimationFrame(animate);
 }
 requestAnimationFrame(animate);
