@@ -85,6 +85,12 @@ const tool=async(name,args,duplicate=false)=>{
 };
 try{
   await page.reload();await page.waitForFunction(()=>document.querySelector('#face').dataset.avatar==='ready',null,{timeout:20000});await page.waitForTimeout(1000);await page.screenshot({path:'artifacts/host-idle-portrait.png'});
+  for(const [name,width,height] of [['kiosk',1080,1920],['phone',390,844],['compact',390,667],['desktop',1280,720],['landscape',844,390]]){
+    await page.setViewportSize({width,height});await page.waitForTimeout(900);
+    assert.ok(await page.locator('#destinationExamples').evaluate(e=>{const r=e.getBoundingClientRect(),f=document.querySelector('#face').getBoundingClientRect(),h=document.querySelector('#intro').getBoundingClientRect();return r.bottom<=innerHeight&&r.top>=h.bottom-1&&(r.right<=f.left||r.bottom<=f.top);}), 'Idle examples clear the heading and avatar on '+name);
+    await page.screenshot({path:'artifacts/host-idle-'+name+'.png'});
+  }
+  await page.setViewportSize({width:1080,height:1920});await page.waitForTimeout(900);
   await page.locator('#face').click();await page.waitForFunction(()=>document.body.dataset.phase==='listening');
   // Captions are actual outgoing deltas, safely rendered above Lola at kiosk and phone sizes.
   const say=async delta=>page.evaluate(delta=>window.__channel.emit({type:'session.output_transcript.delta',delta}),delta);
