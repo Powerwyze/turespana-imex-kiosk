@@ -8,7 +8,7 @@ const jpeg = Buffer.from('synthetic-jpeg').toString('base64');
 const valid = count => ({ person_count: count, only_nearest_guests: true, source_has_requested_guests: true, uncertain: false });
 const envelope = check => ({ status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: JSON.stringify(check) }] }] });
 
-async function generateCase({ count = '1', check = valid(Number(count ?? 1)), verifyBody, verifyStatus = 200, verifyThrows = false, duplicate = false, style = '', imageStatus = 200 } = {}) {
+async function generateCase({ count = '1', check = valid(Number(count ?? 1)), verifyBody, verifyStatus = 200, verifyThrows = false, duplicate = false, style = '', imageStatus = 200, destination='madrid' } = {}) {
   const priorFetch = globalThis.fetch;
   const saved = Object.fromEntries(['OPENAI_API_KEY','OPENAI_IMAGE_MODEL','OPENAI_IMAGE_QUALITY','OPENAI_IMAGE_SIZE'].map(key => [key, process.env[key]]));
   process.env.OPENAI_API_KEY = 'test-only-placeholder';
@@ -28,7 +28,7 @@ async function generateCase({ count = '1', check = valid(Number(count ?? 1)), ve
     fd.append('image', new Blob(['synthetic-source'], { type: 'image/jpeg' }), 'test.jpg');
     if (count !== null) fd.append('guestCount', count);
     if (duplicate) fd.append('guestCount', '3');
-    fd.append('style', style);fd.append('destinationId','madrid');
+    fd.append('style', style);if(destination!==null)fd.append('destinationId',destination);
     const response = await POST(new Request('https://flow-photo.vercel.app/api/host-photo', { method: 'POST', body: fd }));
     return { response, calls };
   } finally {
@@ -166,4 +166,8 @@ test('HTML and text email preserve PowerWyze/client links and retry idempotency'
     globalThis.fetch = originalFetch;
     if (originalKey === undefined) delete process.env.RESEND_API_KEY; else process.env.RESEND_API_KEY = originalKey;
   }
+});
+
+for(const destination of [null,'','unknown','__proto__'])test('invalid destination never triggers generation: '+destination,async()=>{
+ const {response,calls}=await generateCase({destination});assert.equal(response.status,400);assert.equal(calls.length,0);
 });

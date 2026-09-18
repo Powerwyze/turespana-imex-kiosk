@@ -2,6 +2,7 @@ import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
 import { createHash } from 'node:crypto';
 
+const smtpDeliveries=new Map();
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const EMAIL_TEXT = 'Your Spain portrait is attached. Thanks for visiting!\n\nPowered by PowerWyze Smart Stations\nWebsite: https://powerwyze.com/\nInstagram: https://www.instagram.com/powerwyze/\n\nSpain tourism: https://www.spain.info/en/';
@@ -114,10 +115,15 @@ export default async function handler(req, res) {
     else {
       const user=process.env.WYZER_GMAIL_USER || process.env.GMAIL_USER;
       if(!user)return res.status(503).json({ok:false,error:'Photo email is not configured.'});
-      const transport=nodemailer.createTransport({service:'gmail',auth:{user,pass:process.env.WYZER_APP_PASSWORD || process.env.GOOGLE_APP_PASSWORD}});
-      const sent=await transport.sendMail({from:{name:'Turespaña',address:user},to:message.to,subject:message.subject,text:message.text,html:message.html,
+      const transport=nodemailer.createTransport({service:'gmail',connectionTimeout:10000,socketTimeout:20000,auth:{user,pass:process.env.WYZER_APP_PASSWORD || process.env.GOOGLE_APP_PASSWORD}});
+      const task=()=>transport.sendMail({from:{name:'Turespaña',address:user},to:message.to,subject:message.subject,text:message.text,html:message.html,
         messageId:`<turespana-${deliveryId}@powerwyze.com>`,attachments:[{filename:finalFilename,content:bytes,contentType:finalMime,cid:'turespana-portrait'}]});
-      if(!sent.accepted?.length)return res.status(502).json({ok:false,error:'Email delivery was not accepted.'});
+      const now=Date.now();
+      for(const [key,entry] of smtpDeliveries)if(now-entry.at>600000)smtpDeliveries.delete(key);
+      if(smtpDeliveries.size>=100)smtpDeliveries.delete(smtpDeliveries.keys().next().value);
+      if(!smtpDeliveries.has(deliveryId))smtpDeliveries.set(deliveryId,{at:now,promise:task().catch(error=>{smtpDeliveries.delete(deliveryId);throw error;})});
+      const sent=await smtpDeliveries.get(deliveryId).promise;
+      if(!sent.accepted?.length){smtpDeliveries.delete(deliveryId);return res.status(502).json({ok:false,error:'Email delivery was not accepted.'});}
       data={id:sent.messageId};
     }
 
