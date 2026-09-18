@@ -1,6 +1,6 @@
 const embedded = __ASSET_MAP__;
 const BACKEND='https://turespana-imex-kiosk.vercel.app';
-const apiPaths=new Set(['/api/host-session','/api/host-photo','/api/host-email','/api/host-greeting','/api/banana','/api/send-email','/api/lead']);
+const apiPaths=new Set(['/api/host-session','/api/host-photo','/api/host-email','/api/host-greeting','/api/banana','/api/send-photo','/api/lead']);
 const aliases={'/':'/index.html','/host':'/host.html','/classic':'/classic.html'};
 export default {async fetch(request){
  const url=new URL(request.url),path=aliases[url.pathname]||url.pathname;
