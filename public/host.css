@@ -88,3 +88,8 @@ body[data-phase=countdown] #destinationExamples,body[data-phase=result] #destina
 #avatarFallback{position:absolute;left:8%;top:50%;width:84%;height:auto;transform:translateY(-50%) scale(var(--logo-scale,1));filter:drop-shadow(0 14px 24px #0005);pointer-events:none}
 #face[data-avatar="ready"] #avatarFallback{visibility:hidden}
 @media(prefers-reduced-motion:reduce){#avatarFallback{transform:translateY(-50%)}}
+
+/* Spain illustration: keep the center clear for the voice host. */
+#stage{background:#071332 url("/assets/spain-background.png") center/cover no-repeat}
+#stage::before{background:linear-gradient(180deg,rgba(3,10,30,.22),rgba(3,10,30,.06) 70%,rgba(3,10,30,.24))}
+.ambient{opacity:.025}
