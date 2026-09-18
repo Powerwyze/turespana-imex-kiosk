@@ -22,6 +22,14 @@ assert.equal(await page.locator('#avatar').getAttribute('src'),'/assets/spain-in
 await page.locator('#avatar').evaluate(image=>image.decode());
 assert.equal(await page.locator('#avatar').evaluate(image=>image.naturalWidth),512);
 assert.equal(await page.locator('#face svg').count(),0,'No guitar fallback remains');
+assert.ok(await page.evaluate(async()=>{
+ const face=document.querySelector('#face');
+ const {mountAvatar}=await import('/host-avatar.js');
+ const logo=await mountAvatar(face,document.querySelector('#avatar'));
+ logo.update({time:1000,level:1,brightness:.5});
+ return Number(face.style.getPropertyValue('--logo-scale'))>1&&Number(face.style.getPropertyValue('--logo-glow'))>.12;
+}),'Official logo responds to outgoing audio energy');
+
 
 const sdp=await page.evaluate(async()=>{
   const pc=new RTCPeerConnection();const mic=await navigator.mediaDevices.getUserMedia({audio:true});mic.getTracks().forEach(t=>pc.addTrack(t,mic));pc.createDataChannel('oai-events');

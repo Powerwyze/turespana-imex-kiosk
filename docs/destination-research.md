@@ -14,4 +14,4 @@ Attire references:
 - [Barcelona tourism: casteller clothing](https://www.barcelonaturisme.com/files/11316-25-arxiuCAT/top_attractions_15.pdf)
 - [Basque cultural clothing](https://www.euskadi.eus/web01-s1leheki/es/contenidos/informacion/06_urazandi_coleccion/es_712/adjuntos/urazandi21.pdf)
 
-Lola is an original classical-guitar character inspired by [Spain’s flamenco traditions](https://www.spain.info/en/discover-spain/flamenco-spain/). Do not present flamenco as every region’s tradition. Examples use fictional guests. Tourist answers use lib/turespana-facts.js; no invented prices, hours or availability.
+Lola is represented by the [official Spain.info España sun logo](https://www.spain.info/en/); see [logo provenance and animation](logo-avatar.md). Do not present flamenco as every region’s tradition. Examples use fictional guests. Tourist answers use lib/turespana-facts.js; no invented prices, hours or availability.
