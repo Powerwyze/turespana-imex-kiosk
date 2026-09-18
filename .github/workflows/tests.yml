@@ -1,0 +1,57 @@
+name: Booth regression tests
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      live:
+        description: Run a brief paid voice connection smoke test
+        type: boolean
+        default: false
+      sentry:
+        description: Run the paid sentry reactivation smoke test only
+        type: boolean
+        default: false
+      image:
+        description: Run one paid image-generation check
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  test:
+    if: github.event_name != 'push' || !contains(github.event.head_commit.message, 'Bootstrap Turespana')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - name: Install browser tools on the cloud runner
+        run: npm install --no-save --package-lock=false playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - run: node tests/host.e2e.mjs
+      - name: Verify live voice and tool control on the remote preview
+        if: github.event_name == 'workflow_dispatch' && inputs.live
+        env:
+          TURESPANA_HOST_PREVIEW_URL: ${{ vars.TURESPANA_HOST_PREVIEW_URL }}
+        run: node tests/host-live.e2e.mjs
+      - name: Verify live camera greeting and automatic voice start
+        if: github.event_name == 'workflow_dispatch' && (inputs.live || inputs.sentry)
+        env:
+          TURESPANA_HOST_PREVIEW_URL: ${{ vars.TURESPANA_HOST_PREVIEW_URL }}
+        run: node tests/host-sentry-live.mjs
+      - name: Verify one real generated image and its guest check
+        if: github.event_name == 'workflow_dispatch' && inputs.image
+        env:
+          TURESPANA_HOST_PREVIEW_URL: ${{ vars.TURESPANA_HOST_PREVIEW_URL }}
+        run: node tests/host-image-live.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: turespana-host-verification
+          path: artifacts/
+          retention-days: 7

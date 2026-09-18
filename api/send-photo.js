@@ -1,3 +1,5 @@
+import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url);
 /**
  * Turespaña · IMEX — photo email delivery
  *
@@ -38,7 +40,7 @@ const esc = (s) => String(s || "").replace(/[&<>"']/g, (c) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
 }[c]));
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   setCors(res);
   if (req.method === "OPTIONS") { res.statusCode = 204; return res.end(); }
   if (req.method !== "POST") { res.statusCode = 405; return res.end("Method not allowed"); }

@@ -1,0 +1,76 @@
+name: Build Sol remotely
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/turespana-voice-host]
+    paths: [scripts/create-host-avatar.py, .github/workflows/avatar.yml]
+permissions:
+  contents: write
+jobs:
+  avatar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/turespana-voice-host
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install Blender on cloud runner
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y blender python3-numpy python3-yaml
+      - name: Generate editable Blender source and web avatar
+        run: blender --background --python-exit-code 1 --python scripts/create-host-avatar.py
+      - name: Vendor pinned browser renderer
+        run: |
+          mkdir -p public/vendor/three/addons/loaders public/vendor/three/addons/utils
+          npm pack three@0.180.0 --pack-destination "$RUNNER_TEMP"
+          tar -xzf "$RUNNER_TEMP/three-0.180.0.tgz" -C "$RUNNER_TEMP"
+          cp "$RUNNER_TEMP/package/build/three.module.min.js" public/vendor/three/
+          cp "$RUNNER_TEMP/package/build/three.core.min.js" public/vendor/three/
+          cp "$RUNNER_TEMP/package/examples/jsm/loaders/GLTFLoader.js" public/vendor/three/addons/loaders/
+          cp "$RUNNER_TEMP/package/examples/jsm/utils/BufferGeometryUtils.js" public/vendor/three/addons/utils/
+          cp "$RUNNER_TEMP/package/LICENSE" public/vendor/three/LICENSE
+      - name: Vendor camera sentry model and runtime
+        run: |
+          mkdir -p public/vendor/vision
+          npm pack @mediapipe/tasks-vision@0.10.21 --pack-destination "$RUNNER_TEMP"
+          mkdir -p "$RUNNER_TEMP/vision-package"
+          tar -xzf "$RUNNER_TEMP/mediapipe-tasks-vision-0.10.21.tgz" -C "$RUNNER_TEMP/vision-package"
+          cp "$RUNNER_TEMP/vision-package/package/vision_bundle.mjs" public/vendor/vision/
+          cp -R "$RUNNER_TEMP/vision-package/package/wasm" public/vendor/vision/
+          cp "$RUNNER_TEMP/vision-package/package/README.md" public/vendor/vision/README.md
+          curl -fL https://raw.githubusercontent.com/google-ai-edge/mediapipe/master/LICENSE -o public/vendor/vision/LICENSE
+          curl -fL https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/int8/1/efficientdet_lite0.tflite -o public/assets/person-detector.tflite
+          mkdir -p tests/fixtures
+          curl -fL https://storage.googleapis.com/mediapipe-assets/pose.jpg -o tests/fixtures/sentry-person.jpg
+      - name: Resolve dependencies remotely
+        run: npm install --package-lock-only --ignore-scripts
+      - name: Run regression tests
+        run: npm test
+      - name: Run browser verification remotely
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+          node tests/host.e2e.mjs
+      - name: Save generated assets to the feature branch
+        timeout-minutes: 3
+        run: |
+          git config user.name 'PowerWyze build'
+          git config user.email 'actions@users.noreply.github.com'
+          git add design/sol.blend public/assets public/vendor tests/fixtures/sentry-person.jpg package-lock.json
+          git commit -m "Build Sol avatar and bundle local person detector" || test -z "$(git status --porcelain)"
+          git pull --rebase origin codex/turespana-voice-host
+          git -c http.version=HTTP/1.1 push --verbose origin HEAD:codex/turespana-voice-host
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sol-sentry-assets
+          path: |
+            design/sol.blend
+            public/assets/
+            public/vendor/
+            tests/fixtures/
+            artifacts/
+          retention-days: 3

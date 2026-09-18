@@ -1,3 +1,5 @@
+import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url);
 /**
  * Turespaña · IMEX Las Vegas — activation poster generator
  *
@@ -171,7 +173,7 @@ async function geminiEdit({ apiKey, prompt, fileBuffer, mimeType, styleRefBuffer
   throw new Error(`Gemini returned no image. ${textParts || "empty"}`.slice(0, 400));
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   setCors(res);
   if (req.method === "OPTIONS") { res.statusCode = 204; return res.end(); }
   if (req.method !== "POST") { res.statusCode = 405; return res.end("Method not allowed"); }
@@ -274,6 +276,6 @@ module.exports = async function handler(req, res) {
   return res.end(buf);
 };
 
-module.exports.config = {
+export const config = {
   api: { bodyParser: false },
 };
