@@ -24,7 +24,16 @@ export default {async fetch(request){
  if(isApi)headers.set('Origin',BACKEND);
  const target=new URL(BACKEND);target.pathname=path;target.search=url.search;
  try{
-  const upstream=await fetch(target,{method:request.method,headers,body:isApi?request.body:undefined,redirect:'manual',duplex:'half'});
+  // The small voice handshake must have a complete, replay-free body rather than a streaming upload.
+  const body=isApi?(path==='/api/host-session'?await request.text():request.body):undefined;
+  if(path==='/api/host-session'&&body.length>65536)return Response.json({error:'Connection request is too large.'},{status:413});
+  const upstream=await fetch(target,{method:request.method,headers,body,redirect:'manual',duplex:'half'});
+  // Re-encode JSON with fresh headers: never forward an upstream gateway page or stale encoding/length.
+  if(isApi&&(path==='/api/host-session'||!upstream.ok)){
+   const payload=await upstream.json().catch(()=>null);
+   if(payload&&typeof payload==='object')return Response.json(payload,{status:upstream.status,headers:{'Cache-Control':'no-store'}});
+   return Response.json({error:path==='/api/host-session'?'The voice host is temporarily unavailable. Tap the logo to try again.':'The photo service is temporarily unavailable. Please try again.'},{status:upstream.ok?502:upstream.status,headers:{'Cache-Control':'no-store'}});
+  }
   const result=new Headers(upstream.headers);result.delete('set-cookie');result.delete('access-control-allow-origin');
   if(isApi)result.set('Cache-Control','no-store');
   return new Response(upstream.body,{status:upstream.status,headers:result});

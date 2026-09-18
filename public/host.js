@@ -1,3 +1,4 @@
+import {connectVoice} from './host-connection.js';
 import {LiveTools} from './host-engine.js';
 import {TurespanaEngine, destinations} from './turespana-engine.js';
 import {PhotoEmail,validEmail} from './host-email.js';
@@ -307,9 +308,7 @@ async function begin({sentryGreeting=null}={}){
       if(epoch===sessionEpoch&&connection.connectionState==='failed')cleanup('Connection lost. Tap the logo to reconnect.');
     });
     await connection.setLocalDescription(await connection.createOffer());await ice(connection,requestController.signal);
-    const response=await fetch('/api/host-session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sdp:connection.localDescription.sdp}),signal:AbortSignal.any([requestController.signal,AbortSignal.timeout(30000)])});
-    const result=await response.json();
-    if(!response.ok)throw new Error(result.error||'Your host could not connect.');
+    const result=await connectVoice(connection.localDescription.sdp,{signal:AbortSignal.any([requestController.signal,AbortSignal.timeout(30000)])});
     if(epoch!==sessionEpoch)return;
     await connection.setRemoteDescription({type:'answer',sdp:result.transport.sdp});
     if(!ready)startTimer=setTimeout(()=>{if(epoch===sessionEpoch&&!ready)cleanup('The host did not connect. Tap the logo to retry.');},20000);
