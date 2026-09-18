@@ -76,3 +76,8 @@ body[data-phase=countdown] #destinationExamples,body[data-phase=result] #destina
  #destinationExamples,body:not([data-phase=idle]):not([data-phase=error]) #destinationExamples{top:100px;left:4vw;right:auto;width:36vw}.examples-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.examples-grid img{height:15vh}.examples-grid figcaption{font-size:9px;padding-top:3px}.examples-title{font-size:9px;margin-bottom:7px}.examples-note{font-size:9px;margin-top:7px}
  body[data-phase=idle] header{top:75px}.event-title,header .eyebrow{display:none}#message{width:48vw;left:48vw;bottom:3vh}#headline{font-size:17px}#hint{font-size:10px}
 }
+
+@media(max-height:740px) and (max-width:600px){
+ #destinationExamples{top:160px}.examples-grid img{height:9vh}
+ body:not([data-phase=idle]):not([data-phase=error]) .examples-grid img{height:7vh}
+}
