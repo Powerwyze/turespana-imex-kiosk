@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';import app from './dist/server/index.js';
+const origin='https://kiosk.example';
+for(const p of ['/','/host','/classic','/host-avatar.js','/assets/spain-sun.glb','/assets/spain-sun-fallback.svg'])assert.equal((await app.fetch(new Request(origin+p))).status,200,p);
+assert.match(await (await app.fetch(new Request(origin))).text(),/spain-sun-fallback/);
+assert.equal((await app.fetch(new Request(origin+'/api/host-session',{method:'POST',headers:{Origin:'https://other.example'},body:'{}'}))).status,403);
+assert.equal((await app.fetch(new Request(origin+'/api/not-allowed',{method:'POST',body:'{}'}))).status,404);
+const response=await app.fetch(new Request(origin+'/api/host-session',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json',Cookie:'sites-secret=must-not-forward'},body:'{}'}));
+assert.equal(response.status,400,'Existing voice endpoint is reachable through the Sites adapter');
+assert.match(await response.text(),/microphone connection offer/);
+console.log('Routes, 3D assets, origin guard and existing voice service verified.');
