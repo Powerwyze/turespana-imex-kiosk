@@ -32,7 +32,7 @@ for name,paths,hexcolor,color,depth in shapes:
   for point,(x,y) in zip(spline.points,points):point.co=((float(x)-center[0])*scale,(center[1]-float(y))*scale,0,1)
   spline.use_cyclic_u=True
   d.append('M '+' L '.join(str(int(x))+' '+str(int(y)) for x,y in points)+' Z')
- obj=bpy.data.objects.new(name,curve);bpy.context.collection.objects.link(obj);obj.location.z=depth;obj.parent=root;curve.materials.append(material)
+ obj=bpy.data.objects.new(name,curve);bpy.context.collection.objects.link(obj);obj.rotation_euler.x=math.pi/2;obj.location.y=-depth;obj.parent=root;curve.materials.append(material)
  bpy.context.view_layer.objects.active=obj;obj.select_set(True);bpy.ops.object.convert(target='MESH');obj.select_set(False)
  svg.append('<path fill="'+hexcolor+'" fill-rule="evenodd" d="'+' '.join(d)+'"/>')
 os.makedirs('public/assets',exist_ok=True);os.makedirs('design',exist_ok=True)
@@ -43,7 +43,7 @@ bpy.ops.object.select_all(action='DESELECT');root.select_set(True)
 for obj in root.children:obj.select_set(True)
 bpy.ops.export_scene.gltf(filepath=os.path.abspath('public/assets/spain-sun.glb'),export_format='GLB',use_selection=True,export_animations=False)
 # Save an editable, lit Blender scene and a transparent verification render.
-bpy.ops.object.camera_add(location=(.55,.28,7));camera=bpy.context.object;camera.rotation_euler=(Vector((0,0,0))-camera.location).to_track_quat('-Z','Y').to_euler();camera.data.type='ORTHO';camera.data.ortho_scale=3.85;bpy.context.scene.camera=camera
+bpy.ops.object.camera_add(location=(.55,-7,.28));camera=bpy.context.object;camera.rotation_euler=(Vector((0,0,0))-camera.location).to_track_quat('-Z','Y').to_euler();camera.data.type='ORTHO';camera.data.ortho_scale=3.85;bpy.context.scene.camera=camera
 for name,loc,power,size in [('Key',(-3,4,5),450,4),('Fill',(3,1,4),250,3),('Edge',(-1,-3,2),150,3)]:
  bpy.ops.object.light_add(type='AREA',location=loc);lamp=bpy.context.object;lamp.name=name;lamp.data.energy=power;lamp.data.size=size;lamp.rotation_euler=(-lamp.location).to_track_quat('-Z','Y').to_euler()
 scene=bpy.context.scene;scene.render.engine='BLENDER_EEVEE';scene.render.film_transparent=True;scene.render.resolution_x=800;scene.render.resolution_y=800;scene.render.resolution_percentage=100;scene.view_settings.view_transform='Standard';scene.view_settings.look='Medium High Contrast';scene.render.image_settings.file_format='PNG';scene.render.filepath=os.path.abspath('public/assets/spain-sun-preview.png')
