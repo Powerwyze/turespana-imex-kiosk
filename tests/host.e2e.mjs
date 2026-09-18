@@ -86,15 +86,15 @@ const tool=async(name,args,duplicate=false)=>{
 try{
   await page.reload();await page.waitForFunction(()=>document.querySelector('#face').dataset.avatar==='ready',null,{timeout:20000});await page.waitForTimeout(1000);await page.screenshot({path:'artifacts/host-idle-portrait.png'});
   await page.locator('#face').click();await page.waitForFunction(()=>document.body.dataset.phase==='listening');
-  // Captions are actual outgoing deltas, safely rendered above Sunny at kiosk and phone sizes.
+  // Captions are actual outgoing deltas, safely rendered above Sol at kiosk and phone sizes.
   const say=async delta=>page.evaluate(delta=>window.__channel.emit({type:'session.output_transcript.delta',delta}),delta);
   const captionBounds=async()=>page.evaluate(()=>{
     const caption=document.querySelector('#hostCaptions').getBoundingClientRect(),sun=document.querySelector('#face').getBoundingClientRect();
     return {above:caption.bottom<=sun.top+1,onScreen:caption.top>=74&&caption.left>=0&&caption.right<=innerWidth,width:caption.width,captionBottom:caption.bottom,sunTop:sun.top};
   });
   assert.equal(await page.locator('#hostCaptions').isVisible(),false);
-  await say("Hey, I'm Sunny! ");await say("Looking good! How many people are joining your photo?");
-  assert.equal(await page.locator('#hostCaptionText').textContent(),"Hey, I'm Sunny! Looking good! How many people are joining your photo?");
+  await say("Hey, I'm Sol! ");await say("Looking good! How many people are joining your photo?");
+  assert.equal(await page.locator('#hostCaptionText').textContent(),"Hey, I'm Sol! Looking good! How many people are joining your photo?");
   for(const [label,viewport] of [
     ['portrait',{width:1080,height:1920}],
     ['mobile',{width:390,height:844}],
@@ -103,7 +103,7 @@ try{
   ]){
     await page.setViewportSize(viewport);
     await page.waitForFunction(()=>{const c=document.querySelector('#hostCaptions').getBoundingClientRect(),s=document.querySelector('#face').getBoundingClientRect();return c.bottom<=s.top+1&&c.top>=74;},null,{timeout:10000});
-    const bounds=await captionBounds();assert.ok(bounds.above&&bounds.onScreen,'Captions must sit above Sunny and inside '+label+': '+JSON.stringify(bounds));
+    const bounds=await captionBounds();assert.ok(bounds.above&&bounds.onScreen,'Captions must sit above Sol and inside '+label+': '+JSON.stringify(bounds));
     await page.screenshot({path:'artifacts/host-captions-'+label+'.png'});
   }
   await page.setViewportSize({width:390,height:844});await page.waitForTimeout(1000);
@@ -111,7 +111,7 @@ try{
   await say('Thanks! <img src=x onerror=alert(1)>');
   assert.equal(await page.locator('#hostCaptionText').textContent(),'Thanks! <img src=x onerror=alert(1)>');
   assert.equal(await page.locator('#hostCaptionText img').count(),0,'Transcript text is never interpreted as HTML.');
-  await say(' A relaxed night with your Flow neighbors.'.repeat(80)+' Enjoy the event!');
+  await say(' A relaxed night with other IMEX visitors.'.repeat(80)+' Enjoy the event!');
   assert.ok((await page.locator('#hostCaptionText').textContent()).length<=1200);
   assert.equal(await page.locator('#hostCaptionText').evaluate(e=>e.scrollHeight-e.clientHeight-e.scrollTop<2),true,'Keep the newest spoken words visible.');
   assert.equal((await page.locator('#hostCaptionText').textContent()).includes('private-email'),false,'Never display guest microphone/email transcription.');
@@ -145,7 +145,7 @@ try{
   assert.equal(await page.locator('#viewfinder').isVisible(),false);
   assert.equal(await page.locator('#camera').evaluate(e=>e.srcObject===null),true);
   await fs.writeFile('artifacts/countdown-report.json',JSON.stringify({...timing,duration},null,2));
-  await say('While your portrait develops, enjoy the Damn Good Old-Fashioned Cocktail Making Class with your Flow neighbors!');
+  await say('While your portrait develops, enjoy the Spain tourism experience with other IMEX visitors!');
   await page.screenshot({path:'artifacts/host-generating-portrait.png'});assert.equal(generations,1);
   await tool('take_photo',{confirmed:true,style:''});await page.waitForTimeout(100);assert.equal(generations,1);
   release();await page.waitForFunction(()=>document.body.dataset.phase==='result');
@@ -153,7 +153,7 @@ try{
   await say('Your portrait is ready! Would you like me to email it? Spell your address aloud, including at and dot.');
   await page.waitForTimeout(1000);assert.ok((await captionBounds()).above&&(await captionBounds()).onScreen);await page.screenshot({path:'artifacts/host-result-portrait.png'});
   assert.ok(await page.locator('#face').evaluate(e=>e.getBoundingClientRect().width<innerWidth*.25));
-  assert.ok(await page.evaluate(()=>window.__sent.some(e=>e.type==='session.commentary.append'&&e.content.includes('Damn Good Old-Fashioned'))));
+  assert.ok(await page.evaluate(()=>window.__sent.some(e=>e.type==='session.commentary.append'&&e.content.includes('Spain'))));
   // A spoken address opens review; no voice tool can send it.
   await tool('show_email_confirmation',{email:'alex@exampl.com'});
   await page.locator('#emailPanel').waitFor({state:'visible'});
@@ -255,7 +255,7 @@ try{
   await page.route('**/api/host-greeting',async route=>{
     greetings++;const body=route.request().postDataJSON();assert.match(body.frame,/^data:image\/jpeg;base64,/);
     await new Promise(r=>{releaseGreeting=r;greetingReady=greetings;});
-    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({personPresent:true,greeting:"Hey, you're looking great in that blue jacket! I'm your AI photo host. Would you like a Flow photo?"})});
+    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({personPresent:true,greeting:"Hey, you're looking great in that blue jacket! I'm your AI photo host. Would you like a Spain photo?"})});
   });
   await page.evaluate(()=>{
     window.__presence=false;window.__clockAdvance=0;
