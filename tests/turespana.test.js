@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {TurespanaEngine} from '../public/turespana-engine.js';
+import {TurespanaEngine,destinations} from '../public/turespana-engine.js';
 import {liveSessionConfig} from '../lib/host-config.js';
 test('destination is explicit, guarded during capture, and cleared for the next guest',async()=>{
  let release,calls=0;const e=new TurespanaEngine({prepare:()=>new Promise(r=>release=r),capture:async()=>'',generate:async()=>{calls++;return 'image';}});
@@ -27,3 +27,18 @@ test('existing SMTP provider sends transactional attachment once for exact retri
 });
 
 test('retired regional IDs are rejected rather than silently redirected',async()=>{const e=new TurespanaEngine({});for(const destinationId of ['cataluna','pais-vasco','galicia'])assert.ok((await e.execute('set_destination',{destinationId})).error);});
+
+import {readFileSync} from 'node:fs';
+test('voice tools, portrait catalog and example galleries offer the same ordered destinations',()=>{
+ const expected=['canarias','barcelona','bilbao','madrid','andalucia','valencia'];
+ const catalog=JSON.parse(readFileSync(new URL('../public/data/destinations.json',import.meta.url),'utf8')).destinations;
+ assert.deepEqual(catalog.map(d=>d.id),expected);
+ assert.deepEqual(Object.keys(destinations),expected);
+ assert.deepEqual(Object.values(destinations),catalog.map(d=>d.label));
+ const tool=liveSessionConfig().delegation.responses.tools.find(t=>t.name==='set_destination');
+ assert.deepEqual(tool.parameters.properties.destinationId.enum,expected);
+ for(const page of ['index.html','host.html']){
+  const html=readFileSync(new URL('../public/'+page,import.meta.url),'utf8');
+  assert.deepEqual([...html.matchAll(/data-destination="([^"]+)"/g)].map(m=>m[1]),expected);
+ }
+});

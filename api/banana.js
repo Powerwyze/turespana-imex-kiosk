@@ -6,7 +6,7 @@ const require=createRequire(import.meta.url);
  *
  * POST multipart/form-data:
  *   image          jpeg blob (required)
- *   destinationId  andalucia | madrid | cataluna | pais-vasco | galicia | valencia
+ *   destinationId  canarias | barcelona | bilbao | madrid | andalucia | valencia
  *
  * OpenAI Image Edit first (guest photo + style-lock ref); Gemini fallback.
  *

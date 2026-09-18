@@ -43,6 +43,7 @@ await page.route('**/api/host-email',route=>route.fulfill({status:200,contentTyp
 const picture=await fs.readFile('tests/fixtures/sentry-person.jpg');
 await page.route('**/api/host-photo',async route=>{
   generationCalls++;
+  assert.match(route.request().postDataBuffer().toString('latin1'),/name="destinationId"\r\n\r\ncanarias/);
   assert.match(route.request().postDataBuffer().toString('latin1'),/name="guestCount"\r\n\r\n2/);
   await new Promise(r=>setTimeout(r,45000));
   await route.fulfill({status:200,contentType:'image/jpeg',body:picture});
