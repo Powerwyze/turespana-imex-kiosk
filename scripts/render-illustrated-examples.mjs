@@ -22,5 +22,7 @@ try{
       await fs.writeFile('artifacts/illustrated-examples/'+id+'.jpg',Buffer.from(result.base64,'base64'));console.log('Rendered illustrated example:',id);
     }finally{await page.close();}
   }
-  for(let i=0;i<ids.length;i+=2)await Promise.all(ids.slice(i,i+2).map(render));
+  const failures=[];
+  for(let i=0;i<ids.length;i+=2){const results=await Promise.allSettled(ids.slice(i,i+2).map(render));for(const r of results)if(r.status==='rejected'){failures.push(String(r.reason));console.error(String(r.reason));}}
+  if(failures.length)throw new Error(failures.join('\n'));
 }finally{await browser.close();}
