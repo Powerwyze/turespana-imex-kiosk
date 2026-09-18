@@ -13,7 +13,7 @@ assets=stage/'assets';assets.mkdir(exist_ok=True)
 public=repo/'public'
 selected=[p for p in public.iterdir() if p.suffix in ['.js','.html','.css']]
 selected+=list((public/'data').glob('*.json'))
-selected+=[public/'assets'/p for p in ['spain-sun.glb','spain-sun-fallback.svg']]
+selected+=[public/'assets'/p for p in ['spain-sun.glb','spain-sun-fallback.svg','spain-background.png']]
 selected+=list((public/'assets/examples').glob('*.webp'))
 for p in selected:
  target=assets/p.relative_to(public);target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(p,target)
