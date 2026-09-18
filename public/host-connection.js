@@ -6,7 +6,7 @@ export async function connectVoice(sdp,{signal,fetcher=fetch}={}) {
   const result=await response.json().catch(()=>null);
   if(!response.ok){
     const message=typeof result?.error==='string'&&result.error.length<240?result.error:unavailable;
-    throw new Error(message);
+    const error=new Error(message);error.code=result?.code;throw error;
   }
   if(typeof result?.session?.id!=='string'||typeof result?.transport?.sdp!=='string'||!result.transport.sdp.trim())throw new Error('The voice connection was incomplete. Tap the logo to try again.');
   return result;

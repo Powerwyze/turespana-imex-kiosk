@@ -315,7 +315,8 @@ async function begin({sentryGreeting=null}={}){
   }catch(error){
     if(epoch!==sessionEpoch)return;
     const message=error.name==='NotAllowedError'?'Please allow microphone access, then tap the logo again.':error.message;
-    cleanup(message);phase('error');text('Let’s get connected.',message);
+    if(error.code==='VOICE_BILLING_REQUIRED')stopSentry();
+    cleanup(message);phase('error');text(error.code==='VOICE_BILLING_REQUIRED'?'Your host is unavailable.':'Let’s get connected.',message);
   }
 }
 face.addEventListener('click',()=>{if(!ready)begin();else if(audio.paused)audio.play().catch(()=>{$('audioResume').hidden=false;});});

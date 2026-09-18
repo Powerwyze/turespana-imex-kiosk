@@ -22,6 +22,7 @@ export async function POST(req) {
     const data = await upstream.json().catch(()=>({}));
     if (!upstream.ok) {
       console.error('Photo host session failed',{status:upstream.status,code:data.error?.code ?? 'unknown'});
+      if(['credit_balance_exhausted','insufficient_quota','billing_hard_limit_reached'].includes(data.error?.code))return reply({error:'The voice host is unavailable. Please ask the event team for help.',code:'VOICE_BILLING_REQUIRED'},503);
       return reply({error:upstream.status===429?'The voice host is busy. Please try again shortly.':'The voice host could not connect. Please try again.',code:data.error?.code || 'VOICE_UNAVAILABLE'},502);
     }
     if (!data.session?.id || !data.transport?.sdp) return reply({error:'The voice connection was incomplete.'},502);

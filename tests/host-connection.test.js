@@ -6,3 +6,5 @@ test('valid handshake retains session and SDP',async()=>{const value={session:{i
 test('structured backend error is readable',async()=>{await assert.rejects(connectVoice('offer',{fetcher:async()=>Response.json({error:'The voice host is busy. Please try again shortly.'},{status:502})}),/voice host is busy/);});
 test('missing SDP is rejected before WebRTC setup',async()=>{await assert.rejects(connectVoice('offer',{fetcher:async()=>Response.json({session:{id:'s'}})}),/incomplete/);});
 test('network failure has a guest-facing recovery instruction',async()=>{await assert.rejects(connectVoice('offer',{fetcher:async()=>{throw new TypeError('Failed to fetch')}}),/Check your connection and tap the logo/);});
+
+test('billing failure retains its operator-action code',async()=>{await assert.rejects(connectVoice('offer',{fetcher:async()=>Response.json({error:'Please ask the event team for help.',code:'VOICE_BILLING_REQUIRED'},{status:503})}),{code:'VOICE_BILLING_REQUIRED'});});

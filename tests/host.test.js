@@ -72,6 +72,9 @@ test('session endpoint rejects untrusted requests and returns only connection da
     globalThis.fetch=async()=>Response.json({error:{code:'model_not_found',message:'private detail'}},{status:404});
     const failed=await POST(request({sdp:'v=0\r\nm=audio'}));
     assert.equal(failed.status,502);assert.equal((await failed.json()).code,'model_not_found');
+    globalThis.fetch=async()=>Response.json({error:{code:'credit_balance_exhausted'}},{status:429});
+    const billing=await POST(request({sdp:'v=0\r\nm=audio'}));
+    assert.equal(billing.status,503);const billingBody=await billing.json();assert.equal(billingBody.code,'VOICE_BILLING_REQUIRED');assert.match(billingBody.error,/event team/);assert.doesNotMatch(billingBody.error,/busy|try again/);
     process.env.VERCEL_ENV='production';process.env.ENABLE_FACE_HOST='false';
     assert.equal((await POST(request({sdp:'v=0\r\nm=audio'}))).status,403);
   }finally{delete process.env.ENABLE_FACE_HOST;globalThis.fetch=oldFetch;if(previous===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=previous;if(oldEnv===undefined)delete process.env.VERCEL_ENV;else process.env.VERCEL_ENV=oldEnv;}
