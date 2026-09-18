@@ -1,6 +1,9 @@
 name: Refresh illustrated destination examples
 on:
   workflow_dispatch:
+  push:
+    branches: [codex/turespana-voice-host]
+    paths: [.github/workflows/illustrated-examples.yml]
 permissions:
   contents: write
 jobs:
