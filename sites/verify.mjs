@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';import app from './dist/server/index.js';
 const origin='https://kiosk.example';
-for(const p of ['/','/host','/classic','/host-avatar.js','/assets/spain-sun.glb','/assets/spain-sun-fallback.svg'])assert.equal((await app.fetch(new Request(origin+p))).status,200,p);
+for(const p of ['/','/host','/classic','/host-avatar.js','/assets/spain-background.png','/assets/spain-sun.glb','/assets/spain-sun-fallback.svg'])assert.equal((await app.fetch(new Request(origin+p))).status,200,p);
 assert.match(await (await app.fetch(new Request(origin))).text(),/spain-sun-fallback/);
 assert.equal((await app.fetch(new Request(origin+'/api/host-session',{method:'POST',headers:{Origin:'https://other.example'},body:'{}'}))).status,403);
 assert.equal((await app.fetch(new Request(origin+'/api/not-allowed',{method:'POST',body:'{}'}))).status,404);
