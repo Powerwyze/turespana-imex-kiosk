@@ -1,0 +1,8 @@
+node_modules
+tests
+.github
+.codex
+scripts
+artifacts
+design
+**/*.blend

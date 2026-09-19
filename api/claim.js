@@ -1,3 +1,5 @@
+import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url);
 /**
  * Turespaña · IMEX — QR claim lookup
  *
@@ -13,7 +15,7 @@ function setCors(res) {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   setCors(res);
   if (req.method === "OPTIONS") { res.statusCode = 204; return res.end(); }
   if (req.method !== "GET") { res.statusCode = 405; return res.end("Method not allowed"); }

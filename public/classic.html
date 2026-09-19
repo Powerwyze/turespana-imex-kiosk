@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#1B161C" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="format-detection" content="telephone=no" />
+  <title>Turespaña · IMEX Las Vegas Photo Kiosk</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,500&family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="icon" href="/assets/sun.svg" type="image/svg+xml" />
+</head>
+<body class="kiosk-portrait">
+
+  <div class="bg" aria-hidden="true"></div>
+  <div class="bg__glow" aria-hidden="true"></div>
+  <div class="bg__grain" aria-hidden="true"></div>
+
+  <div class="rotate-warn" aria-hidden="true">
+    <div class="rotate-warn__icon">↻</div>
+    <div class="rotate-warn__title" data-i18n="rotateTitle">Please rotate to portrait</div>
+    <div class="rotate-warn__sub" data-i18n="rotateSub">This experience is designed for a 1080×1920 portrait kiosk.</div>
+  </div>
+
+  <div class="app">
+
+    <header class="topbar" role="banner">
+      <div class="brand" aria-label="Turespaña">
+        <svg class="brand__sun" viewBox="0 0 64 64" aria-hidden="true">
+          <circle cx="32" cy="32" r="12" fill="#FFEA00"/>
+          <g stroke="#FFEA00" stroke-width="3" stroke-linecap="round">
+            <line x1="32" y1="4" x2="32" y2="14"/>
+            <line x1="32" y1="50" x2="32" y2="60"/>
+            <line x1="4" y1="32" x2="14" y2="32"/>
+            <line x1="50" y1="32" x2="60" y2="32"/>
+            <line x1="12" y1="12" x2="19" y2="19"/>
+            <line x1="45" y1="45" x2="52" y2="52"/>
+            <line x1="12" y1="52" x2="19" y2="45"/>
+            <line x1="45" y1="19" x2="52" y2="12"/>
+          </g>
+        </svg>
+        <div class="brand__text">
+          <span class="brand__name">TURESPAÑA</span>
+          <span class="brand__sub">Spain Tourism Board</span>
+        </div>
+      </div>
+      <div class="event-meta">
+        <span class="event-meta__day">IMEX LAS VEGAS</span>
+        <span class="event-meta__loc">Hotel Mandalay · Oct 13–15 2026</span>
+      </div>
+      <div class="langtoggle" role="group" aria-label="Language">
+        <button class="langtoggle__btn is-active" type="button" data-lang-set="en" aria-pressed="true">EN</button>
+        <button class="langtoggle__btn" type="button" data-lang-set="es" aria-pressed="false">ES</button>
+      </div>
+    </header>
+
+    <section class="herobar">
+      <h1 class="herobar__title" data-i18n="heroTitle">Pick a destination. Wear Spain.</h1>
+      <p class="herobar__lede" data-i18n="heroLede">Choose Canarias, Barcelona, Bilbao, Madrid, Andalucía, or Valencia. We’ll dress you for that destination and email your poster.</p>
+    </section>
+
+    <main class="stage" role="main">
+
+      <section class="screen screen--dest is-active" id="screenDest" aria-hidden="false">
+        <div class="dest-grid" id="destGrid" role="list"></div>
+      </section>
+
+      <section class="screen screen--booth" id="screenBooth" aria-hidden="true" hidden>
+        <button class="booth__back" id="boothBack" type="button" data-i18n="back">← Destinations</button>
+        <div class="chosen" id="chosenChip"></div>
+        <div class="booth">
+          <div class="booth__cam-wrap">
+            <video class="booth__cam" id="boothCam" playsinline muted autoplay></video>
+            <img class="booth__cam" id="boothPreview" alt="" hidden />
+            <canvas id="boothCanvas" hidden></canvas>
+            <div class="booth__corners" aria-hidden="true"></div>
+            <div class="booth__hud">
+              <span class="booth__hud-chip" data-i18n="hudPortrait">PORTRAIT · 9:16</span>
+              <span class="booth__hud-chip booth__hud-chip--alt">TURESPAÑA · IMEX</span>
+            </div>
+            <div class="booth__countdown" id="boothCountdown">5</div>
+            <div class="booth__flash" id="boothFlash"></div>
+          </div>
+          <div class="booth__cta-row">
+            <button class="btn btn--primary btn--block btn--xl" id="boothCapture" type="button">
+              <span class="btn__icon" aria-hidden="true">☀</span>
+              <span data-i18n="ctaTakePhoto">Take My Photo</span>
+            </button>
+          </div>
+          <div class="booth__steps-mini" aria-label="How it works">
+            <span><b>1</b> <span data-i18n="stepDest">Pick</span></span>
+            <span><b>2</b> <span data-i18n="stepPhoto">Photo</span></span>
+            <span><b>3</b> <span data-i18n="stepEmail">Email</span></span>
+            <span><b>4</b> <span data-i18n="stepPortrait">Portrait</span></span>
+          </div>
+          <div class="booth__err" id="boothErr"></div>
+          <div class="booth__queue" id="boothQueue" aria-hidden="true" role="status"></div>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="footer">
+      <span data-i18n="footerEvent">Turespaña · IMEX Las Vegas · Oct 13–15 2026</span>
+      <span>·</span>
+      <span data-i18n="footerPowered" data-i18n-html="true">Powered by <strong>PowerWyze</strong></span>
+    </footer>
+
+    <div class="toaster" id="toaster" aria-live="polite" aria-atomic="false"></div>
+
+    <div class="genpill" id="genPill" aria-hidden="true" role="status">
+      <span class="genpill__spinner" aria-hidden="true"></span>
+      <span class="genpill__text" data-i18n="genPill">Creating your poster · ~60s</span>
+    </div>
+
+    <div class="modal" id="emailModal" aria-hidden="true" role="dialog" aria-labelledby="emailModalTitle">
+      <div class="modal__panel">
+        <div class="modal__title" id="emailModalTitle" data-i18n="emailTitle">Get your portrait + newsletter</div>
+        <div class="modal__sub" data-i18n="emailSub">We’ll email your costume portrait and add you to the Turespaña newsletter.</div>
+
+        <label class="modal__label" for="nameModalInput" data-i18n="emailNameLabel">Name</label>
+        <input class="modal__input" id="nameModalInput" type="text" autocomplete="given-name" data-i18n-attr-placeholder="emailNamePh" placeholder="Your name" maxlength="60" />
+
+        <label class="modal__label" for="emailModalInput" data-i18n="emailEmailLabel">Email</label>
+        <input class="modal__input" id="emailModalInput" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" />
+
+        <label class="consent" for="newsletterCheck">
+          <input id="newsletterCheck" type="checkbox" checked />
+          <span data-i18n="emailConsent">Yes, send me Turespaña newsletters.</span>
+        </label>
+
+        <div class="modal__err" id="emailModalErr"></div>
+        <div class="modal__row modal__row--center">
+          <button class="btn btn--primary btn--block" id="emailModalOk" type="button" data-i18n="emailContinue">Continue</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal modal--wait" id="waitModal" aria-hidden="true" role="dialog" aria-labelledby="waitTitle">
+      <div class="waitvid">
+        <div class="waitvid__sun" aria-hidden="true"></div>
+        <div class="waitvid__overlay">
+          <div class="waitvid__badge">
+            <span class="waitvid__spinner" aria-hidden="true"></span>
+            <span class="waitvid__label">
+              <strong id="waitTitle" data-i18n="waitTitle">Creating your Spain poster…</strong>
+            </span>
+          </div>
+          <div class="waitvid__sub" data-i18n="waitSub">Hyper-real Spain poster · ~60 seconds</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="resmodal" id="resModal" aria-hidden="true" role="dialog" aria-labelledby="resModalTitle">
+      <div class="resmodal__panel">
+        <div class="resmodal__title" id="resModalTitle" data-i18n="resTitle">Your Spain portrait is ready</div>
+        <img class="resmodal__img" id="resModalImg" alt="Generated Spain portrait" />
+        <div class="resmodal__status" id="resModalStatus" data-i18n="resStatus">Sent to your email</div>
+        <div class="resmodal__qr" id="resQrWrap" hidden>
+          <div class="resmodal__qr-code" id="resQr" aria-label="QR code to save your photo"></div>
+          <div class="resmodal__qr-copy" data-i18n="resQr">Scan to save on your phone</div>
+        </div>
+        <div class="resmodal__cta" id="resModalCta" data-i18n="resCta" data-i18n-html="true">Discover more at <strong>spain.info</strong></div>
+        <div class="resmodal__hint" data-i18n="resHint" data-i18n-html="true">Tap anywhere to dismiss · auto-closes in <span id="resModalTimer">20</span>s</div>
+      </div>
+    </div>
+
+  </div>
+
+  <link rel="stylesheet" href="/assets/osk.css" />
+  <script src="/assets/qrcode.min.js" defer></script>
+  <script src="/assets/osk.js" defer></script>
+  <script src="/app.js" defer></script>
+</body>
+</html>

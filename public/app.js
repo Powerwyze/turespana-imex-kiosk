@@ -12,7 +12,7 @@ const I18N = {
     rotateTitle: "Please rotate to portrait",
     rotateSub: "This experience is designed for a 1080×1920 portrait kiosk.",
     heroTitle: "Pick a destination. Wear Spain.",
-    heroLede: "Choose Andalucía, Madrid, Cataluña, País Vasco, Galicia, or Valencia. We’ll dress you for that destination and email your poster.",
+    heroLede: "Choose Canarias, Barcelona, Bilbao, Madrid, Andalucía, or Valencia. We’ll dress you for that destination and email your poster.",
     back: "← Destinations",
     hudPortrait: "PORTRAIT · 9:16",
     ctaTakePhoto: "Take My Photo",
@@ -48,7 +48,7 @@ const I18N = {
     rotateTitle: "Gira a vertical",
     rotateSub: "Esta experiencia está diseñada para un kiosco vertical 1080×1920.",
     heroTitle: "Elige un destino. Ponte España.",
-    heroLede: "Elige Andalucía, Madrid, Cataluña, País Vasco, Galicia o Valencia. Te vestimos para ese destino y te enviamos el cartel.",
+    heroLede: "Elige Canarias, Barcelona, Bilbao, Madrid, Andalucía o Valencia. Te vestimos para ese destino y te enviamos el cartel.",
     back: "← Destinos",
     hudPortrait: "VERTICAL · 9:16",
     ctaTakePhoto: "Toma mi foto",
@@ -695,13 +695,55 @@ async function boot() {
     DESTINATIONS = Array.isArray(json.destinations) ? json.destinations : [];
   } catch (e) {
     DESTINATIONS = [
-      { id: "andalucia", label: "Andalucía", labelEs: "Andalucía", tileNote: "Feria & flamenco", accent: "#E42719" },
-      { id: "madrid", label: "Madrid", labelEs: "Madrid", tileNote: "Capital chic", accent: "#FFEA00" },
-      { id: "cataluna", label: "Cataluña", labelEs: "Cataluña", tileNote: "Mediterráneo", accent: "#7CB165" },
-      { id: "pais-vasco", label: "País Vasco", labelEs: "País Vasco", tileNote: "Costa vasca", accent: "#1B161C" },
-      { id: "galicia", label: "Galicia", labelEs: "Galicia", tileNote: "Atlantic green", accent: "#7CB165" },
-      { id: "valencia", label: "Valencia", labelEs: "Valencia", tileNote: "Fallas & light", accent: "#C45C26" },
-    ];
+  {
+    "id": "canarias",
+    "label": "Canarias",
+    "labelEs": "Canarias",
+    "tileNote": "Volcanoes & island traditions",
+    "tileNoteEs": "Volcanes y tradiciones",
+    "accent": "#168FAD"
+  },
+  {
+    "id": "barcelona",
+    "label": "Barcelona",
+    "labelEs": "Barcelona",
+    "tileNote": "Gaudí & Catalan culture",
+    "tileNoteEs": "Gaudí y cultura catalana",
+    "accent": "#7CB165"
+  },
+  {
+    "id": "bilbao",
+    "label": "Bilbao",
+    "labelEs": "Bilbao",
+    "tileNote": "Guggenheim & Basque culture",
+    "tileNoteEs": "Guggenheim y cultura vasca",
+    "accent": "#1B161C"
+  },
+  {
+    "id": "madrid",
+    "label": "Madrid",
+    "labelEs": "Madrid",
+    "tileNote": "Capital chic",
+    "tileNoteEs": "Capital chic",
+    "accent": "#FFEA00"
+  },
+  {
+    "id": "andalucia",
+    "label": "Andalucía",
+    "labelEs": "Andalucía",
+    "tileNote": "Feria & flamenco",
+    "tileNoteEs": "Feria y flamenco",
+    "accent": "#E42719"
+  },
+  {
+    "id": "valencia",
+    "label": "Valencia",
+    "labelEs": "Valencia",
+    "tileNote": "Fallas & light",
+    "tileNoteEs": "Fallas y luz",
+    "accent": "#C45C26"
+  }
+];
   }
   renderDestGrid();
   showScreen("screenDest");

@@ -1,15 +1,18 @@
+import {portraitStyle,portraitLikeness} from '../lib/portrait-style.js';
+import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url);
 /**
  * Turespaña · IMEX Las Vegas — activation poster generator
  *
  * POST multipart/form-data:
  *   image          jpeg blob (required)
- *   destinationId  andalucia | madrid | cataluna | pais-vasco | galicia | valencia
+ *   destinationId  canarias | barcelona | bilbao | madrid | andalucia | valencia
  *
  * OpenAI Image Edit first (guest photo + style-lock ref); Gemini fallback.
  *
- * STYLE LOCK: public/assets/activation-style-ref.jpg
- *   Hyper-real AI/CGI commercial tourism poster (GoDR × Marlins look).
- *   Copy LOOK only. SWAP branding to Turespaña / spain.info and Spain costumes.
+ * STYLE LOCK: assets/portrait-style-reference.jpg
+ *   Painted commercial tourism poster, retaining source facial geometry.
+ *   Copy LOOK only. SWAP branding to Turespaña and Spain costumes.
  *
  * Env:
  *   OPENAI_API_KEY, OPENAI_IMAGE_MODEL, OPENAI_IMAGE_SIZE, OPENAI_IMAGE_QUALITY
@@ -23,7 +26,7 @@ const path = require("node:path");
 
 const OPENAI_URL = "https://api.openai.com/v1/images/edits";
 const GEMINI_MODEL = process.env.GEMINI_IMAGE_MODEL || "gemini-2.5-flash-image";
-const STYLE_REF_PATH = path.join(process.cwd(), "public", "assets", "activation-style-ref.jpg");
+const STYLE_REF_PATH = path.join(process.cwd(), "assets", "portrait-style-reference.jpg");
 
 function loadDestinations() {
   const p = path.join(process.cwd(), "public", "data", "destinations.json");
@@ -45,18 +48,18 @@ function buildPrompt(dest) {
   const scene = dest?.scenePrompt || "an iconic Spanish landmark composite at sunset";
 
   return [
-    "TASK: Reimagine EVERY person in the FIRST input photo as a Turespaña / spain.info IMEX Las Vegas activation poster. Match the LOOK of the STYLE REFERENCE image (second image when attached): a hyper-real AI/CGI commercial tourism poster — NOT a raw photobooth snapshot, NOT a flat illustration, NOT kiosk UI chrome.",
-    "STYLE LOCK (copy this energy exactly): polished composited subjects, airbrushed beauty-retouched skin, dramatic high-contrast cinematic lighting, strong rim light on hair and shoulders, saturated commercial color grade, animation/activation poster finish. Composite background (destination landmark + painted FLAG brushstroke in the sky). Commercial poster layout with a typography area.",
+    "TASK: Reimagine EVERY person in the FIRST input photo as a Turespaña IMEX Las Vegas activation poster. Match the LOOK of the STYLE REFERENCE image (second image when attached): a polished painted commercial tourism illustration — NOT a raw photobooth snapshot or kiosk UI chrome.",
+    portraitStyle,
     "STYLE REFERENCE IS LOOK-ONLY. Do NOT copy: Dominican Republic branding, Go Dominican Republic logo, Miami Marlins uniforms or wordmarks, baseball bats/gloves/caps, baseball stadium as the default setting, or Dominican Republic flag colors as the sky stroke. Do not invent other tourism boards or sports teams.",
     `DESTINATION: ${label}. Wardrobe and landmark must read clearly as ${label}.`,
     "GROUP HANDLING (CRITICAL): Count the people in the input photo. If there is 1 person, render a solo hero portrait. If there are 2–5 people, render ALL of them together. HARD CAP: never render more than 5 people. If the input shows more than 5, pick the 5 most prominent/centered subjects only. Every rendered person must correspond to a real person in the input. Do not invent extra people.",
     `WARDROBE (every person): ${costume}`,
     `SETTING: ${scene} Composite that landmark with a large textured oil-paint BRUSHSTROKE of the SPANISH FLAG sweeping the sky (red–gold–red, thick wet paint, NOT a flag on a pole, similar energy to the painted flag stroke in the style reference). Warm Iberian sunset plus dramatic highlight, cinematic tourism-poster depth.`,
-    "POSTER TYPOGRAPHY (allowed in the generated image, commercial layout like the style ref): top-left TURESPAÑA wordmark in clean premium type (no Joan Miró artwork, no Sol de Miró sun drawing — that mark is copyrighted). Optional short destination name. Lower third may include a pill/button with spain.info. Do not add Dominican Republic, Marlins, baseball, or any other brand names.",
-    "Color palette: Turespaña / spain.info tourism energy — sun yellow, Spain red, landscape green, deep black — plus the Spanish flag red/gold sky stroke and fiery sunset oranges. Mood: joyful, welcoming, proud, cinematic, ready-to-travel.",
+    "POSTER TYPOGRAPHY (allowed in the generated image, commercial layout like the style ref): top-left TURESPAÑA wordmark in clean premium type (no Joan Miró artwork, no Sol de Miró sun drawing — that mark is copyrighted). Optional short destination name. Never include spain.info, any URL, website address, footer text, button or watermark. Remove such text from the reference. Do not add Dominican Republic, Marlins, baseball, or any other brand names.",
+    "Color palette: Turespaña tourism energy — sun yellow, Spain red, landscape green, deep black — plus the Spanish flag red/gold sky stroke and fiery sunset oranges. Mood: joyful, welcoming, proud, cinematic, ready-to-travel.",
     "Composition: portrait 9:16 vertical. Solo: centered, waist-up, head fully visible. Group: shoulder-to-shoulder, no cropped faces. Subjects are the hero; landmark + flag stroke fill the sky behind them.",
-    "IDENTITY LOCK (CRITICAL): for each person rendered, keep that person's face shape, hair color and style, skin tone, ethnicity, age, gender presentation, and overall identity clearly recognizable. Do not swap, merge, or generify faces.",
-    "CRITICAL FINISH: one cohesive hyper-real CGI poster from top to bottom — faces, clothes, and background share the same airbrushed commercial treatment. No photo-head-on-painted-body. No raw camera grain. No baseball unless a destination brief explicitly asked (none do).",
+    portraitLikeness,
+    "CRITICAL FINISH: one cohesive illustrated poster, with source facial geometry preserved. Only destination and TURESPAÑA text; no websites. No people or features copied from the style reference.",
   ].join(" ");
 }
 
@@ -171,7 +174,7 @@ async function geminiEdit({ apiKey, prompt, fileBuffer, mimeType, styleRefBuffer
   throw new Error(`Gemini returned no image. ${textParts || "empty"}`.slice(0, 400));
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   setCors(res);
   if (req.method === "OPTIONS") { res.statusCode = 204; return res.end(); }
   if (req.method !== "POST") { res.statusCode = 405; return res.end("Method not allowed"); }
@@ -199,7 +202,7 @@ module.exports = async function handler(req, res) {
   const dest = destinations.find((d) => d.id === destinationId);
   if (!dest) {
     res.statusCode = 400;
-    return res.end("Unknown destinationId. Use andalucia, madrid, cataluna, pais-vasco, galicia, or valencia.");
+    return res.end("Unknown destinationId. Use canarias, barcelona, bilbao, madrid, andalucia, or valencia.");
   }
 
   const fileField = files?.image;
@@ -217,7 +220,7 @@ module.exports = async function handler(req, res) {
   const styleRefBuffer = loadStyleRef();
   const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-1";
   const size = process.env.OPENAI_IMAGE_SIZE || "1024x1536";
-  const quality = process.env.OPENAI_IMAGE_QUALITY || "high";
+  const quality = "high";
   const mimeType = file.mimetype || "image/jpeg";
 
   let buf;
@@ -274,6 +277,6 @@ module.exports = async function handler(req, res) {
   return res.end(buf);
 };
 
-module.exports.config = {
+export const config = {
   api: { bodyParser: false },
 };

@@ -1,0 +1,29 @@
+name: Prepare Sites kiosk remotely
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/turespana-voice-host]
+    paths: [sites/**, .github/workflows/sites-publish.yml]
+permissions:
+  contents: read
+jobs:
+  sites:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Validate and push Sites source remotely
+        env:
+          SITES_SOURCE: ${{ secrets.SITES_TURESPANA_SOURCE }}
+        run: python3 sites/prepare-remote.py
+      - name: Package exact validated source
+        run: bash "$GITHUB_WORKSPACE/sites/tools/package-site.sh" "$RUNNER_TEMP/turespana-sites" "$GITHUB_WORKSPACE/sites-kiosk.tgz"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sites-kiosk-package
+          path: |
+            sites-kiosk.tgz
+            sites-source-sha.txt
+          retention-days: 3
