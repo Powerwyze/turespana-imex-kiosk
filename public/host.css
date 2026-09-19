@@ -122,3 +122,8 @@ body:has(#touchControls:not([hidden])) #message{visibility:hidden}
 /* Display each exact panel of the supplied six-destination reference sheet. */
 .examples-grid .example-frame{position:relative;overflow:hidden;box-sizing:border-box}
 .examples-grid .example-frame img{position:absolute;display:block;width:300%;height:200%;max-width:none;left:calc(var(--column) * -100%);top:calc(var(--row) * -100%);border:0;border-radius:0;object-fit:fill}
+
+.examples-grid .example-frame{margin-inline:auto}
+@media(max-width:600px){.examples-grid .example-frame{width:7.04vh}body:not([data-phase=idle]):not([data-phase=error]) .examples-grid .example-frame{width:5.12vh}}
+@media(orientation:landscape) and (min-width:700px){.examples-grid .example-frame{width:8.32vh}}
+@media(max-height:740px) and (max-width:600px){.examples-grid .example-frame{width:5.76vh}body:not([data-phase=idle]):not([data-phase=error]) .examples-grid .example-frame{width:4.48vh}}
