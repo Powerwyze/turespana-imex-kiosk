@@ -14,7 +14,7 @@ try{
   const result=await page.evaluate(async source=>{
     const data=Uint8Array.from(atob(source),c=>c.charCodeAt(0));
     const form=new FormData();form.append('image',new Blob([data],{type:'image/jpeg'}),'approved-reference-test.jpg');form.append('guestCount','1');form.append('destinationId','valencia');form.append('style','');
-    const response=await fetch('/api/host-photo',{method:'POST',body:form,signal:AbortSignal.timeout(190000)});
+    const response=await fetch(location.origin==='https://turespana-imex-kiosk.powerwyze-2010.chatgpt.site'?'https://turespana-imex-kiosk.vercel.app/api/host-photo':'/api/host-photo',{method:'POST',body:form,signal:AbortSignal.timeout(190000)});
     if(!response.ok)return {status:response.status,error:await response.text()};
     const bytes=new Uint8Array(await response.arrayBuffer());let binary='';for(const byte of bytes)binary+=String.fromCharCode(byte);
     return {status:response.status,type:response.headers.get('content-type'),base64:btoa(binary)};

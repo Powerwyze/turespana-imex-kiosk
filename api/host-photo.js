@@ -18,7 +18,20 @@ function jsonResponse(body, status) {
   });
 }
 
-export async function POST(req) {
+const SITE_ORIGIN='https://turespana-imex-kiosk.powerwyze-2010.chatgpt.site';
+function cors(req){
+ const origin=req.headers.get('origin');
+ return origin===SITE_ORIGIN ? {'Access-Control-Allow-Origin':origin,'Vary':'Origin','Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type','Access-Control-Max-Age':'600'} : {};
+}
+export function OPTIONS(req){return new Response(null,{status:req.headers.get('origin')===SITE_ORIGIN?204:403,headers:cors(req)});}
+export async function POST(req){
+ const origin=req.headers.get('origin');
+ if(origin && origin!==new URL(req.url).origin && origin!==SITE_ORIGIN)return jsonResponse({error:'Please open the kiosk on its official site.'},403);
+ const response=await generatePhoto(req);
+ for(const [key,value] of Object.entries(cors(req)))response.headers.set(key,value);
+ return response;
+}
+async function generatePhoto(req) {
   try {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) return jsonResponse({ error: 'OPENAI_API_KEY is not configured on the server.' }, 500);

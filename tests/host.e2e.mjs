@@ -374,6 +374,7 @@ try{
   const beforeTouch=generations;release=null;fail=false;
   await page.locator('[data-touch=capture]').click();
   await page.waitForFunction(()=>document.body.dataset.phase==='generating',null,{timeout:15000});
+  await new Promise((resolve,reject)=>{const deadline=Date.now()+5000;const poll=()=>generations===beforeTouch+1?resolve():Date.now()>deadline?reject(new Error('Touch capture did not submit an image request')):setTimeout(poll,20);poll();});
   assert.equal(generations,beforeTouch+1);
   assert.equal(await page.locator('[data-touch=capture]').count(),0,'No duplicate capture button during generation');
   release();await page.waitForFunction(()=>document.body.dataset.phase==='result');

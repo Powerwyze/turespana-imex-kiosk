@@ -173,7 +173,7 @@ const engine=new TurespanaEngine({
   },
   generate:async({source,count,style,signal})=>{
     const form=new FormData();form.append('image',source,'guest-photo.jpg');form.append('guestCount',String(count));form.append('style',style);form.append('destinationId',engine.destination);
-    const res=await fetch('/api/host-photo',{method:'POST',body:form,signal:AbortSignal.any([signal,AbortSignal.timeout(185000)])});
+    const res=await fetch(location.origin==='https://turespana-imex-kiosk.powerwyze-2010.chatgpt.site'?'https://turespana-imex-kiosk.vercel.app/api/host-photo':'/api/host-photo',{method:'POST',body:form,signal:AbortSignal.any([signal,AbortSignal.timeout(185000)])});
     if(!res.ok){
       const problem=await res.json().catch(()=>({}));
       if(problem.code==='SUBJECT_COUNT_MISMATCH')throw new Error('That image did not match your group. Tell me the number of people and ask me to try again.');
