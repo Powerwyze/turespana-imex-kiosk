@@ -15,6 +15,7 @@ selected=[p for p in public.iterdir() if p.suffix in ['.js','.html','.css']]
 selected+=list((public/'data').glob('*.json'))
 selected+=[public/'assets'/p for p in ['spain-sun.glb','spain-sun-fallback.svg','spain-background.png']]
 selected+=list((public/'assets/examples').glob('*.webp'))
+selected+=[public/'assets/examples/regional-clothing.jpg']
 for p in selected:
  target=assets/p.relative_to(public);target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(p,target)
 subprocess.run(['node','build.mjs'],cwd=stage,check=True);subprocess.run(['node','--check','dist/server/index.js'],cwd=stage,check=True);subprocess.run(['node','verify.mjs'],cwd=stage,check=True)

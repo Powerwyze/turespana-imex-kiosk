@@ -57,7 +57,7 @@ body[data-phase=result] #face,body[data-email-open=true] #face{transform:none}
 #destinationExamples{position:absolute;z-index:3;top:22vh;left:5vw;right:5vw;text-align:center}
 .examples-title{font-size:clamp(10px,1.5vw,18px);letter-spacing:.2em;color:#ffdf79;margin:0 0 14px}
 .examples-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;max-width:1050px;margin:auto}
-.examples-grid figure{margin:0;min-width:0}.examples-grid img{display:block;width:100%;height:auto;aspect-ratio:2/3;object-fit:contain;border-radius:10px;border:1px solid #e8b86a66;background:#271811}
+.examples-grid figure{margin:0;min-width:0}.examples-grid .example-frame{display:block;width:100%;height:auto;aspect-ratio:2/3;object-fit:contain;border-radius:10px;border:1px solid #e8b86a66;background:#271811}
 .examples-grid figcaption{font-size:clamp(10px,1.5vw,19px);padding-top:9px;color:#fff0d2}.examples-note{font-size:clamp(10px,1.2vw,15px);color:#d6b99a;margin:12px 0 0}
 body:not([data-phase=idle]):not([data-phase=error]) #destinationExamples{top:10vh}
 body[data-phase=countdown] #destinationExamples,body[data-phase=result] #destinationExamples,body[data-email-open=true] #destinationExamples{display:none}
@@ -65,21 +65,21 @@ body[data-phase=countdown] #destinationExamples,body[data-phase=result] #destina
 @media(max-width:600px){
  #stage,body[data-has-captions=true] #stage{--sun-width:min(55vw,25vh);--sun-shift:23vh}
  body[data-phase=idle] header{top:85px;gap:7px}.event-title{font-size:22px}.brand{font-size:25px}
- #destinationExamples{top:180px;left:8vw;right:8vw}.examples-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px 14px;max-width:330px}.examples-grid img{height:11vh}.examples-grid figcaption{font-size:11px;padding-top:4px}.examples-title{font-size:9px;margin-bottom:8px}.examples-note{font-size:9px;margin-top:7px}
+ #destinationExamples{top:180px;left:8vw;right:8vw}.examples-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px 14px;max-width:330px}.examples-grid .example-frame{height:11vh}.examples-grid figcaption{font-size:11px;padding-top:4px}.examples-title{font-size:9px;margin-bottom:8px}.examples-note{font-size:9px;margin-top:7px}
  body:not([data-phase=idle]):not([data-phase=error]) #destinationExamples{top:92px}
- body:not([data-phase=idle]):not([data-phase=error]) .examples-grid img{height:8vh}
+ body:not([data-phase=idle]):not([data-phase=error]) .examples-grid .example-frame{height:8vh}
  #hostCaptionText{font-size:20px;max-height:2.7em}#hostCaptions{padding:12px 15px}
  #message{bottom:4vh}#headline{font-size:22px;margin-bottom:8px}#hint{font-size:11px}
 }
 @media(orientation:landscape) and (min-width:700px){
  #stage{--sun-width:40vh;--sun-shift:16vh;--sun-x:72%}
- #destinationExamples,body:not([data-phase=idle]):not([data-phase=error]) #destinationExamples{top:110px;left:4vw;right:auto;width:36vw}.examples-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.examples-grid img{height:13vh}.examples-grid figcaption{font-size:9px;padding-top:3px}.examples-title{font-size:9px;margin-bottom:7px}.examples-note{font-size:9px;margin-top:7px}
+ #destinationExamples,body:not([data-phase=idle]):not([data-phase=error]) #destinationExamples{top:110px;left:4vw;right:auto;width:36vw}.examples-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.examples-grid .example-frame{height:13vh}.examples-grid figcaption{font-size:9px;padding-top:3px}.examples-title{font-size:9px;margin-bottom:7px}.examples-note{font-size:9px;margin-top:7px}
  body[data-phase=idle] header{top:75px}.event-title,header .eyebrow{display:none}#message{width:48vw;left:48vw;bottom:3vh}#headline{font-size:17px}#hint{font-size:10px}
 }
 
 @media(max-height:740px) and (max-width:600px){
- #destinationExamples{top:175px}.examples-grid img{height:9vh}
- body:not([data-phase=idle]):not([data-phase=error]) .examples-grid img{height:7vh}
+ #destinationExamples{top:175px}.examples-grid .example-frame{height:9vh}
+ body:not([data-phase=idle]):not([data-phase=error]) .examples-grid .example-frame{height:7vh}
 }
 
 /* Transparent Blender sun: no lettering, backing card, or white fill. */
@@ -118,3 +118,7 @@ body:has(#touchControls:not([hidden])) #message{visibility:hidden}
 }
 @media(orientation:landscape) and (min-width:700px){#touchControls{left:4vw;transform:none;width:43vw;max-height:55dvh}body:not([data-phase=idle]):not([data-phase=error]) #destinationExamples{display:none}}
 @media(orientation:landscape) and (max-height:500px) and (min-width:700px){body[data-phase=idle] #touchControls,body[data-phase=error] #touchControls{left:auto;right:3vw;width:48vw}body[data-phase=idle] #face,body[data-phase=error] #face{position:absolute;top:60px;right:20vw;left:auto;width:20vh;transform:none}.touch-help{font-size:12px}.touch-actions button,#touchControls #emailOpen{min-height:52px;font-size:17px}#touchControls{padding:12px}}
+
+/* Display each exact panel of the supplied six-destination reference sheet. */
+.examples-grid .example-frame{position:relative;overflow:hidden;box-sizing:border-box}
+.examples-grid .example-frame img{position:absolute;display:block;width:300%;height:200%;max-width:none;left:calc(var(--column) * -100%);top:calc(var(--row) * -100%);border:0;border-radius:0;object-fit:fill}
