@@ -95,6 +95,8 @@ try{
   await page.reload();await page.waitForFunction(()=>document.querySelector('#face').dataset.avatar==='ready',null,{timeout:20000});await page.waitForTimeout(1000);await page.screenshot({path:'artifacts/host-idle-portrait.png'});
   for(const [name,width,height] of [['kiosk',1080,1920],['phone',390,844],['compact',390,667],['desktop',1280,720],['landscape',844,390]]){
     await page.setViewportSize({width,height});await page.waitForTimeout(900);
+    await page.screenshot({path:'artifacts/host-idle-'+name+'.png'});
+    console.log('Idle layout',name,await page.evaluate(()=>Object.fromEntries(['destinationExamples','face','intro','touchControls'].map(id=>{const r=document.getElementById(id).getBoundingClientRect();return [id,{top:r.top,bottom:r.bottom,left:r.left,right:r.right}]}))));
     assert.ok(await page.locator('#destinationExamples').evaluate(e=>{const r=e.getBoundingClientRect(),f=document.querySelector('#face').getBoundingClientRect(),h=document.querySelector('#intro').getBoundingClientRect();return r.bottom<=innerHeight&&r.top>=h.bottom-1&&(r.right<=f.left||r.bottom<=f.top);}), 'Idle examples clear the heading and avatar on '+name);
     await page.screenshot({path:'artifacts/host-idle-'+name+'.png'});
   }

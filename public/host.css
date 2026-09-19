@@ -112,7 +112,7 @@ body:has(#touchControls:not([hidden])) #message{visibility:hidden}
 @media(max-width:600px){#touchControls{padding:12px;border-radius:18px;bottom:max(12px,env(safe-area-inset-bottom))}.touch-actions{gap:8px}.touch-actions button,#touchControls #emailOpen{min-height:58px;font-size:17px;padding:12px;flex-basis:42%}.touch-actions.destinations button{flex-basis:42%}.destination-pick{min-height:48px;font-size:12px}.examples-grid figcaption{padding-top:4px}.examples-note{margin-top:6px}#touchTitle{font-size:19px}}
 
 @media(max-width:600px){
- body[data-phase=idle] #stage,body[data-phase=error] #stage{--sun-width:min(40vw,16vh);--sun-shift:12vh}
+ body[data-phase=idle] #stage,body[data-phase=error] #stage{--sun-width:min(40vw,16vh);--sun-shift:16vh}
  body:not([data-phase=idle]):not([data-phase=error]):not([data-phase=result]) #destinationExamples{display:none}
  body:not([data-phase=idle]):not([data-phase=error]):not([data-phase=result]) #stage{--sun-width:min(50vw,25vh);--sun-shift:-4vh}
 }
