@@ -13,7 +13,7 @@ export function mountTouchControls({getState,start,voice,action,finish,labels}){
   const button=(label,id,fn,secondary=false)=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.dataset.touch=id;if(secondary)b.className='secondary';b.addEventListener('click',fn);row.append(b);return b;};
   const choose=(name,args)=>{edit=null;action(name,args);};
   if(s.phase==='idle'||(s.phase==='error'&&!s.active)){
-   title.textContent='Your Spanish adventure';hint.textContent=s.phase==='error'?'You can use the buttons or reconnect to your host.':'Choose buttons or speak with Lola.';
+   title.textContent='Your Spanish adventure';hint.textContent=s.phase==='error'?(s.statusMessage||'You can use the buttons or reconnect to your host.'):'Choose buttons or speak with Lola.';
    button('Start photo','start',start);button('Talk to Lola','voice',voice,true);
   }else if(s.phase==='connecting'){
    title.textContent='Connecting to Lola…';button('Cancel','cancel',finish,true);

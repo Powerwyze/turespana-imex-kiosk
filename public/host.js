@@ -388,7 +388,7 @@ async function touchAction(name,args){
  if(ready)note('The visitor explicitly tapped a booth button: '+name+'. Current state: '+JSON.stringify(engine.snapshot())+'. Do not repeat the same action.');
  touchUI?.render();
 }
-touchUI=mountTouchControls({getState:()=>({...engine.snapshot(),phase:document.body.dataset.phase,active:ready||touchMode,emailOpen:!$('emailPanel').hidden,emailSent:photoEmail.status==='sent'}),start:startTouchPhoto,voice:()=>begin(),action:touchAction,finish:()=>end(),labels:destinations});
+touchUI=mountTouchControls({getState:()=>({...engine.snapshot(),phase:document.body.dataset.phase,active:ready||touchMode,statusMessage:$('hint').textContent,emailOpen:!$('emailPanel').hidden,emailSent:photoEmail.status==='sent'}),start:startTouchPhoto,voice:()=>begin(),action:touchAction,finish:()=>end(),labels:destinations});
 for(const button of document.querySelectorAll('.destination-pick'))button.addEventListener('click',()=>{
  if(!ready&&!touchMode)startTouchPhoto();
  touchAction('set_destination',{destinationId:button.dataset.destination});
