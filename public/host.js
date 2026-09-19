@@ -1,3 +1,4 @@
+import {mountTouchControls} from './host-touch.js';
 import {connectVoice} from './host-connection.js';
 import {LiveTools} from './host-engine.js';
 import {TurespanaEngine, destinations} from './turespana-engine.js';
@@ -11,7 +12,7 @@ import('./host-avatar.js').then(m=>m.mountAvatar(document.getElementById('face')
 const $=id=>document.getElementById(id);
 const face=$('face'),camera=$('camera'),audio=$('voice'),picture=$('picture');
 const captions=new HostCaptions($('hostCaptions'),$('hostCaptionText'),$('stage'),face);
-let cameraPreparation=null,cameraEpoch=0;
+let cameraPreparation=null,cameraEpoch=0,touchMode=false,touchUI=null;
 let peer,events,mic,cameraStream,context,analyser,sourceNode,ready=false,connecting=false,ending=false;
 let sessionEpoch=0,startTimer,closeTimer,maxTimer,pictureUrl=null,requestController=null,level=0,lastPhase='',eventTimer,eventIndex=0,lastVoiceAt=0,guestInterrupted=false,sentryAudioContext=null,sentrySetup=0,sentryEnabling=false,rearmImmediately=false;
 const wait=(ms,signal)=>new Promise((resolve,reject)=>{
@@ -21,12 +22,12 @@ const wait=(ms,signal)=>new Promise((resolve,reject)=>{
   signal?.addEventListener('abort',abort,{once:true});
 });
 function text(title,hint=''){ $('headline').textContent=title;$('hint').textContent=hint; }
-function phase(value){if(document.body.dataset.phase!==value)captions.clear();document.body.dataset.phase=value;$('sentryToggle').disabled=!sentry.enabled&&!['idle','error'].includes(value);}
+function phase(value){queueMicrotask(()=>touchUI?.render());if(document.body.dataset.phase!==value)captions.clear();document.body.dataset.phase=value;$('sentryToggle').disabled=!sentry.enabled&&!['idle','error'].includes(value);}
 function send(event){if(!ready||events?.readyState!=='open'||(ending&&event.type!=='session.close'))return;events.send(JSON.stringify({event_id:crypto.randomUUID(),...event}));}
 function note(content,speak=false){send({type:speak?'session.commentary.append':'session.thinking.append',delegation_id:null,content});}
 const sentry=new CameraSentry({
   video:$('sentryCamera'),
-  canGreet:()=>!ready&&!connecting&&!ending&&!document.hidden,
+  canGreet:()=>!touchMode&&!ready&&!connecting&&!ending&&!document.hidden,
   onVisitor:greeting=>begin({sentryGreeting:greeting}),
   onStatus:(status,message='')=>{
     $('sentryToggle').textContent=status==='off'?'Enable camera sentry':status==='starting'?'Stop sentry setup':'Stop camera sentry';
@@ -84,7 +85,7 @@ const photoEmail=new PhotoEmail({
     if(!response.ok||!result.ok)throw new Error('Delivery was not confirmed.');
   },
   onChange:state=>{
-    syncIdle();
+    syncIdle();queueMicrotask(()=>touchUI?.render());
     const open=['review','sending','error'].includes(state.status);
     $('emailPanel').hidden=!open;document.body.dataset.emailOpen=String(open);
     captions.placeIn(open?$('emailPanel'):null);
@@ -111,7 +112,7 @@ function stopCamera(){cameraEpoch++;cameraPreparation=null;cameraStream?.getTrac
 function hidePicture(){picture.hidden=true;picture.removeAttribute('src');if(pictureUrl)URL.revokeObjectURL(pictureUrl);pictureUrl=null;}
 function touch(){guestIdle.touch();}
 function syncIdle(){
-  if(!ready||ending)return;
+  if((!ready&&!touchMode)||ending)return;
   guestIdle.setBusy(['preparing','countdown','generating'].includes(engine.phase)||photoEmail.status==='sending');
 }
 async function ensureCamera(signal){
@@ -222,7 +223,7 @@ const toolLoop=new LiveTools({send,execute:async(name,args)=>{
   return engine.execute(name,args);
 }});
 function cleanup(message='Tap the logo to begin · AI photo host'){
-  sessionEpoch++;ready=false;connecting=false;ending=false;captions.clear();
+  touchMode=false;sessionEpoch++;ready=false;connecting=false;ending=false;captions.clear();
   guestIdle.stop();stopEventTalk();clearEmail();sentry.finish({immediate:rearmImmediately});rearmImmediately=false;
   requestController?.abort();requestController=null;
   clearTimeout(startTimer);clearTimeout(closeTimer);clearTimeout(maxTimer);
@@ -376,6 +377,24 @@ document.addEventListener('keydown',e=>{
 });
 window.addEventListener('pagehide',()=>{stopSentry();send({type:'session.close'});cleanup();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){stopSentry();end();}});
+function startTouchPhoto(){
+ stopSentry();send({type:'session.close'});cleanup();touchMode=true;
+ phase('listening');text('Choose your group size.','Use the large buttons below.');guestIdle.start(150000);syncIdle();
+}
+async function touchAction(name,args){
+ if(photoEmail.status==='sending'||['preparing','countdown','generating'].includes(engine.phase))return;
+ touch();const result=await engine.execute(name,args);
+ if(result.error&&!result.accepted)text('Check your selection.',result.error);
+ if(ready)note('The visitor explicitly tapped a booth button: '+name+'. Current state: '+JSON.stringify(engine.snapshot())+'. Do not repeat the same action.');
+ touchUI?.render();
+}
+touchUI=mountTouchControls({getState:()=>({...engine.snapshot(),phase:document.body.dataset.phase,active:ready||touchMode,emailOpen:!$('emailPanel').hidden,emailSent:photoEmail.status==='sent'}),start:startTouchPhoto,voice:()=>begin(),action:touchAction,finish:()=>end(),labels:destinations});
+for(const button of document.querySelectorAll('.destination-pick'))button.addEventListener('click',()=>{
+ if(!ready&&!touchMode)startTouchPhoto();
+ touchAction('set_destination',{destinationId:button.dataset.destination});
+});
+touchUI.render();
+
 const samples=new Uint8Array(256),frequencies=new Uint8Array(128);
 function animate(t){
   // Keep rendering time available for the live viewfinder and precise capture.

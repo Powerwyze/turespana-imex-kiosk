@@ -100,3 +100,13 @@ body[data-phase=countdown] #destinationExamples,body[data-phase=result] #destina
 /* Sunny daytime sky with legible navy headings. */
 #stage::before{background:none}
 header,header .brand,header .eyebrow,.examples-title,.examples-note,.examples-grid figcaption{color:#071d40;text-shadow:0 1px 3px #ffffffc0,0 0 12px #ffffff80}
+
+/* Big, direct touch actions at every step; voice remains available. */
+#touchControls{position:absolute;z-index:9;bottom:max(18px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:min(92vw,900px);max-height:44dvh;overflow:auto;background:#071d40f2;color:#fff;border:1px solid #ffffff55;border-radius:24px;padding:18px;box-shadow:0 8px 32px #0005;text-align:center}
+#touchTitle{font:600 clamp(19px,2.4vw,30px) Arial,sans-serif;margin:0 0 8px}.touch-help{font-size:clamp(13px,1.4vw,18px);margin:0 0 12px;line-height:1.35}.touch-help:empty{display:none}
+.touch-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}.touch-actions button,#touchControls #emailOpen{position:static;transform:none;flex:1 1 180px;min-height:64px;padding:14px 18px;border:2px solid transparent;border-radius:14px;background:#ffdf39;color:#102039;font:700 clamp(17px,2vw,24px) Arial,sans-serif;cursor:pointer;margin:0;max-width:none;width:auto}
+.touch-actions button.secondary{background:#fff;color:#102039}.touch-actions.destinations button{flex-basis:28%}.touch-actions button:focus-visible,.destination-pick:focus-visible{outline:4px solid #fff;outline-offset:3px}.touch-actions button:active,.destination-pick:active{transform:scale(.98)}
+.destination-pick{width:100%;min-height:54px;padding:8px 5px;border:2px solid #ffffffa0;border-radius:12px;background:#071d40ed;color:white;font:700 clamp(12px,1.6vw,21px) Arial,sans-serif;cursor:pointer;text-shadow:none}.destination-pick[aria-pressed=true]{background:#ffdf39;color:#102039;border-color:#102039}.destination-pick:disabled{opacity:.6;cursor:default}
+body:has(#touchControls:not([hidden])) #message{visibility:hidden}
+#emailConfirm,#emailCancel{min-height:64px;font-size:20px}#end{min-height:56px;min-width:90px;font-size:18px}
+@media(max-width:600px){#touchControls{padding:12px;border-radius:18px;bottom:max(12px,env(safe-area-inset-bottom))}.touch-actions{gap:8px}.touch-actions button,#touchControls #emailOpen{min-height:58px;font-size:17px;padding:12px;flex-basis:42%}.touch-actions.destinations button{flex-basis:42%}.destination-pick{min-height:48px;font-size:12px}.examples-grid figcaption{padding-top:4px}.examples-note{margin-top:6px}#touchTitle{font-size:19px}}
