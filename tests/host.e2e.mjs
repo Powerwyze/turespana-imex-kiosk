@@ -360,5 +360,29 @@ try{
   assert.equal(await page.locator('#sentryToggle').getAttribute('aria-pressed'),'false');
   await fs.writeFile('artifacts/sentry-idle-report.json',JSON.stringify({idleWindowMs:30000,occupiedSceneRearmed:true,speechAndTouchExtend:true,assistantAndStatusDoNotExtend:true,generationProtected:true,emailSendProtected:true,emptySceneNoRequest:true,manualStopStaysOff:true,greetings},null,2));
   assert.deepEqual(errors,[]);
+  // The touch path must work without opening a paid voice session.
+  await page.setViewportSize({width:390,height:844});
+  const voiceBefore=await page.evaluate(()=>window.__sent.length);
+  await page.locator('[data-touch=start]').click();
+  await page.locator('[data-touch=people-2]').click();
+  await page.locator('[data-touch=destination-madrid]').click();
+  await page.locator('[data-touch=capture]').waitFor({state:'visible'});
+  assert.ok(await page.locator('[data-touch=capture]').evaluate(e=>e.getBoundingClientRect().height>=56));
+  await page.screenshot({path:'artifacts/host-touch-ready-mobile.png'});
+  const beforeTouch=generations;release=null;fail=false;
+  await page.locator('[data-touch=capture]').click();
+  await page.waitForFunction(()=>document.body.dataset.phase==='generating',null,{timeout:15000});
+  assert.equal(generations,beforeTouch+1);
+  assert.equal(await page.locator('[data-touch=capture]').count(),0,'No duplicate capture button during generation');
+  release();await page.waitForFunction(()=>document.body.dataset.phase==='result');
+  await page.locator('#emailOpen').click();
+  assert.equal(await page.locator('#emailPanel').isVisible(),true);
+  assert.equal(await page.locator('#touchControls').isVisible(),false,'Only email confirmation controls remain in the dialog');
+  await page.locator('#emailCancel').click();
+  await page.locator('[data-touch=finish]').click();
+  await page.waitForFunction(()=>document.body.dataset.phase==='idle');
+  assert.equal(await page.locator('#picture').isVisible(),false);
+  assert.equal(await page.evaluate(()=>window.__sent.length),voiceBefore,'Touch photos do not need a voice session');
+  assert.deepEqual(errors,[]);
   console.log('Face host browser checks passed: portrait/mobile, readiness, camera warmup/cancellation, five-second countdown, top-left viewfinder, duplicate calls, image reveal, guard rejection, explicit retry, reset, cleanup.');
 }finally{await browser.close();server.close();}

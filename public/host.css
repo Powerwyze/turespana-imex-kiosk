@@ -110,3 +110,11 @@ header,header .brand,header .eyebrow,.examples-title,.examples-note,.examples-gr
 body:has(#touchControls:not([hidden])) #message{visibility:hidden}
 #emailConfirm,#emailCancel{min-height:64px;font-size:20px}#end{min-height:56px;min-width:90px;font-size:18px}
 @media(max-width:600px){#touchControls{padding:12px;border-radius:18px;bottom:max(12px,env(safe-area-inset-bottom))}.touch-actions{gap:8px}.touch-actions button,#touchControls #emailOpen{min-height:58px;font-size:17px;padding:12px;flex-basis:42%}.touch-actions.destinations button{flex-basis:42%}.destination-pick{min-height:48px;font-size:12px}.examples-grid figcaption{padding-top:4px}.examples-note{margin-top:6px}#touchTitle{font-size:19px}}
+
+@media(max-width:600px){
+ body[data-phase=idle] #stage,body[data-phase=error] #stage{--sun-width:min(40vw,16vh);--sun-shift:12vh}
+ body:not([data-phase=idle]):not([data-phase=error]):not([data-phase=result]) #destinationExamples{display:none}
+ body:not([data-phase=idle]):not([data-phase=error]):not([data-phase=result]) #stage{--sun-width:min(50vw,25vh);--sun-shift:-4vh}
+}
+@media(orientation:landscape) and (min-width:700px){#touchControls{left:4vw;transform:none;width:43vw;max-height:55dvh}body:not([data-phase=idle]):not([data-phase=error]) #destinationExamples{display:none}}
+@media(orientation:landscape) and (max-height:500px) and (min-width:700px){body[data-phase=idle] #touchControls,body[data-phase=error] #touchControls{left:auto;right:3vw;width:48vw}body[data-phase=idle] #face,body[data-phase=error] #face{position:absolute;top:60px;right:20vw;left:auto;width:20vh;transform:none}.touch-help{font-size:12px}.touch-actions button,#touchControls #emailOpen{min-height:52px;font-size:17px}#touchControls{padding:12px}}
