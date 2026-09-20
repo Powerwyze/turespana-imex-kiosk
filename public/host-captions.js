@@ -32,7 +32,7 @@ export class HostCaptions {
     const target=panel||this.home;
     if(this.box.parentElement!==target){
       if(panel)panel.prepend(this.box);
-      else this.anchor.before(this.box);
+      else this.home.insertBefore(this.box,this.anchor.parentElement===this.home?this.anchor:null);
       this.scrollToLatest();
     }
   }
