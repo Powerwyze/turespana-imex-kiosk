@@ -401,7 +401,7 @@ try{
     assert.equal(await page.locator('[data-touch=destination-'+id+']').count(),0,'Selected destination skips the destination picker');
     const labels={canarias:'Canarias',barcelona:'Barcelona',bilbao:'Bilbao',madrid:'Madrid',andalucia:'Andalucía',valencia:'Valencia'};
     assert.ok((await page.locator('.touch-help').textContent()).includes(labels[id]));
-    await page.locator('#end').click();await page.waitForFunction(()=>document.body.dataset.phase==='idle');
+    await page.locator('[data-touch=people]').click();await page.locator('[data-touch=back]').click();await page.waitForFunction(()=>document.body.dataset.phase==='idle');
   }
   await page.locator('.destination-pick[data-destination=madrid]').click();
   await page.locator('[data-touch=people-2]').click();
