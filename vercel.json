@@ -36,7 +36,8 @@
       "includeFiles": "{public/data/destinations.json,assets/region-references/*.jpg}"
     },
     "api/send-photo.js": {
-      "maxDuration": 30
+      "maxDuration": 30,
+      "includeFiles": "public/assets/spain-info-logo.png"
     },
     "api/lead.js": {
       "maxDuration": 30
@@ -52,7 +53,8 @@
       "includeFiles": "{public/data/destinations.json,assets/region-references/*.jpg}"
     },
     "api/host-email.js": {
-      "maxDuration": 30
+      "maxDuration": 30,
+      "includeFiles": "public/assets/spain-info-logo.png"
     },
     "api/host-session.js": {
       "maxDuration": 30

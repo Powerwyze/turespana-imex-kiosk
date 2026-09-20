@@ -164,10 +164,18 @@ test('HTML and text email preserve PowerWyze/client links and retry idempotency'
     const first = res(); await sendPhoto(req, first);
     const second = res(); await sendPhoto(req, second);
     assert.equal(first.code, 200); assert.equal(second.code, 200);
-    for (const link of ['https://powerwyze.com/', 'https://www.instagram.com/powerwyze/', 'https://www.spain.info/en/']) {
+    for (const link of ['https://powerwyze.com/', 'https://www.instagram.com/powerwyze/', 'https://www.spain.info/en/', 'https://www.instagram.com/spain?stkn=cm80a2E2dW56MGJw']) {
       assert.ok(calls[0].body.html.includes(link)); assert.ok(calls[0].body.text.includes(link));
     }
     assert.equal(calls[0].body.attachments[0].content_id, 'turespana-portrait');
+    assert.match(calls[0].body.html,/Discover what Spain has to offer/);
+    assert.match(calls[0].body.text,/Spain's official tourism website/);
+    assert.match(calls[0].body.html,/Follow us on Instagram/);
+    assert.equal(calls[0].body.attachments[1].content_id,'spain-tourism-logo');
+    assert.equal(calls[0].body.attachments[1].content,readFileSync('public/assets/spain-info-logo.png').toString('base64'));
+    assert.ok(calls[0].body.html.lastIndexOf('cid:spain-tourism-logo')>calls[0].body.html.lastIndexOf('Follow us on Instagram'));
+    assert.ok(calls[0].body.html.lastIndexOf('cid:spain-tourism-logo')>calls[0].body.html.lastIndexOf('Powered by'));
+
     const key = calls[0].headers.get('idempotency-key');
     assert.ok(key?.startsWith('turespana-photo-')); assert.equal(key, calls[1].headers.get('idempotency-key'));
     // A changed provider payload must never reuse a prior idempotency key.

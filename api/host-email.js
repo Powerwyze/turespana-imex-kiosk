@@ -1,3 +1,4 @@
+import {SPAIN_LOGO,TOURISM_FOOTER_HTML,TOURISM_FOOTER_TEXT} from '../lib/tourism-email.js';
 import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
 import { createHash } from 'node:crypto';
@@ -5,7 +6,7 @@ import { createHash } from 'node:crypto';
 const smtpDeliveries=new Map();
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
-const EMAIL_TEXT = 'Your Spain portrait is attached. Thanks for visiting!\n\nPowered by PowerWyze Smart Stations\nWebsite: https://powerwyze.com/\nInstagram: https://www.instagram.com/powerwyze/\n\nSpain tourism: https://www.spain.info/en/';
+const EMAIL_TEXT = 'Your Spain portrait is attached. Thanks for visiting!\n\n'+TOURISM_FOOTER_TEXT;
 
 const EMAIL_HTML = `
 <!doctype html>
@@ -27,25 +28,7 @@ const EMAIL_HTML = `
                 <img src="cid:turespana-portrait" alt="Your Spain portrait" width="384" style="display:block;width:100%;max-width:384px;height:auto;margin:0 auto;border-radius:12px;border:1px solid #dce4e7;" />
               </td>
             </tr>
-            <tr>
-              <td style="padding:18px 28px 28px;text-align:center;">
-                <p style="margin:0 0 16px;color:#53636b;font-size:14px;line-height:1.5;">A memory of Spain from Turespaña at IMEX.</p>
-                <p style="margin:0 0 8px;font-size:14px;line-height:1.6;">
-                  <a href="https://www.spain.info/en/" style="color:#9a6b18;font-weight:bold;text-decoration:none;">Spain tourism website</a>
-                  
-                </p>
-                <p style="margin:0;font-size:14px;line-height:1.6;">
-                  <a href="https://powerwyze.com/" style="color:#31596b;font-weight:bold;text-decoration:none;">PowerWyze website</a>
-                  <span style="color:#aeb9bd;">&nbsp; · &nbsp;</span>
-                  <a href="https://www.instagram.com/powerwyze/" style="color:#31596b;font-weight:bold;text-decoration:none;">@powerwyze</a>
-                </p>
-              </td>
-            </tr>
-            <tr>
-              <td style="background:#f5f7f8;padding:18px 28px;text-align:center;color:#718087;font-size:12px;line-height:1.5;">
-                Powered by PowerWyze Smart Stations · AI-powered event experiences
-              </td>
-            </tr>
+            ${TOURISM_FOOTER_HTML}
           </table>
         </td>
       </tr>
@@ -107,7 +90,7 @@ export default async function handler(req, res) {
         filename: finalFilename,
         content: bytes.toString('base64'),
         contentId: 'turespana-portrait',
-      }],
+      },{filename:'spain-tourism-logo.png',content:SPAIN_LOGO.toString('base64'),contentId:'spain-tourism-logo',contentType:'image/png'}],
     };
     const deliveryId = createHash('sha256').update(JSON.stringify(message)).digest('hex');
     let data,error;
@@ -117,7 +100,7 @@ export default async function handler(req, res) {
       if(!user)return res.status(503).json({ok:false,error:'Photo email is not configured.'});
       const transport=nodemailer.createTransport({service:'gmail',connectionTimeout:10000,socketTimeout:20000,auth:{user,pass:process.env.WYZER_APP_PASSWORD || process.env.GOOGLE_APP_PASSWORD}});
       const task=()=>transport.sendMail({from:{name:'Turespaña',address:user},to:message.to,subject:message.subject,text:message.text,html:message.html,
-        messageId:`<turespana-${deliveryId}@powerwyze.com>`,attachments:[{filename:finalFilename,content:bytes,contentType:finalMime,cid:'turespana-portrait'}]});
+        messageId:`<turespana-${deliveryId}@powerwyze.com>`,attachments:[{filename:finalFilename,content:bytes,contentType:finalMime,cid:'turespana-portrait'},{filename:'spain-tourism-logo.png',content:SPAIN_LOGO,contentType:'image/png',cid:'spain-tourism-logo',contentDisposition:'inline'}]});
       const now=Date.now();
       for(const [key,entry] of smtpDeliveries)if(now-entry.at>600000)smtpDeliveries.delete(key);
       if(smtpDeliveries.size>=100)smtpDeliveries.delete(smtpDeliveries.keys().next().value);
