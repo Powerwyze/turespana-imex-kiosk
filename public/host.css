@@ -223,3 +223,22 @@ body[data-phase=idle] #touchControls{
  body[data-phase=idle] .examples-note{font-size:10px}
  body[data-phase=idle] .destination-pick{min-height:40px;font-size:12px;padding:6px 3px}
 }
+
+/* Region cards are the homepage action; only the scenery is dimmed. */
+body[data-phase=idle] #stage::before{background:rgba(8,16,28,.40);z-index:0}
+body[data-phase=idle] #intro,body[data-phase=idle] #intro .brand,body[data-phase=idle] #intro .eyebrow,
+body[data-phase=idle] .examples-title,body[data-phase=idle] .examples-note{color:#fff8eb;text-shadow:0 2px 8px #0009}
+body[data-phase=idle] #intro .event-title{display:block;font-size:clamp(38px,5.3vw,66px);line-height:1.06;font-weight:500;margin:8px 0 0}
+body[data-phase=idle] .examples-grid figure{grid-template-rows:minmax(0,1fr);gap:0}
+.examples-grid .destination-pick.example-frame{padding:0;min-height:0;border:1px solid #ffffff80;cursor:pointer;box-shadow:0 10px 28px #0005;touch-action:manipulation;text-align:left;isolation:isolate;transition:box-shadow .2s,border-color .2s}
+.examples-grid .destination-pick.example-frame:hover{border-color:#fff;box-shadow:0 12px 34px #0008}
+.examples-grid .destination-pick.example-frame:focus-visible{outline:3px solid #ffe58a;outline-offset:4px}
+.region-card-caption{position:absolute;z-index:1;left:0;right:0;bottom:0;display:grid;gap:5px;padding:36px 14px 16px;background:linear-gradient(transparent,#071626f2 42%);color:#fff;text-shadow:0 1px 3px #0008;text-align:center;pointer-events:none}
+.region-card-name{font:700 clamp(14px,2.6vw,30px) Arial,sans-serif;line-height:1.1}
+.region-card-action{font:500 clamp(10px,1.5vw,17px) Arial,sans-serif;line-height:1.2;color:#fff3cc}
+body[data-phase=idle] #touchControls{background:none;border:0;box-shadow:none;padding:0;overflow:visible}
+body[data-phase=idle] #touchTitle,body[data-phase=idle] .touch-help{display:none}
+body[data-phase=idle] .touch-actions button.secondary{flex:0 1 250px;min-height:48px;background:#081a2dcc;color:#fff;border:1px solid #ffffff80;font-size:clamp(15px,1.7vw,20px)}
+@media(max-width:600px){.region-card-caption{padding:22px 4px 9px;gap:4px}body[data-phase=idle] #intro .event-title{font-size:38px;margin-top:4px}}
+@media(orientation:landscape) and (min-width:700px){body[data-phase=idle] #intro .event-title{font-size:clamp(36px,4.1vw,56px)}.region-card-name{font-size:clamp(13px,1.8vw,23px)}.region-card-action{font-size:clamp(9px,1.2vw,14px)}}
+@media(orientation:landscape) and (max-height:500px) and (min-width:700px){.region-card-caption{padding:16px 2px 5px;gap:2px}.region-card-name{font-size:11px}.region-card-action{font-size:8px}body[data-phase=idle] #intro .event-title{font-size:34px}}

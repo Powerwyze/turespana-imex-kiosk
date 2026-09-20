@@ -1,3 +1,4 @@
+import {brandPortrait} from './portrait-branding.js';
 import {mountTouchControls} from './host-touch.js';
 import {connectVoice} from './host-connection.js';
 import {LiveTools} from './host-engine.js';
@@ -193,7 +194,7 @@ const engine=new TurespanaEngine({
     const blob=await res.blob();
     if(!blob.size||!blob.type.startsWith('image/'))throw new Error('No picture was returned. Ask me to try again.');
     // Decode before reporting success or revealing the image.
-    const bitmap=await createImageBitmap(blob);bitmap.close();return blob;
+    return await brandPortrait(blob,destinations[engine.destination]);
   },
   onChange:(state,image)=>{
     syncIdle();

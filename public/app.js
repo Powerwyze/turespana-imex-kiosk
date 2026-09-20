@@ -441,38 +441,8 @@ const booth = (() => {
   }
 
   async function watermark(blob, dest) {
-    const img = await createImageBitmap(blob);
-    const c = document.createElement("canvas");
-    c.width = img.width;
-    c.height = img.height;
-    const ctx = c.getContext("2d");
-    ctx.drawImage(img, 0, 0);
-    const W = c.width, H = c.height;
-    const scale = W / 1024;
-    const pad = 28 * scale;
-    const veilH = 220 * scale;
-    const grad = ctx.createLinearGradient(0, H - veilH, 0, H);
-    grad.addColorStop(0, "rgba(0,0,0,0)");
-    grad.addColorStop(1, "rgba(27,22,28,0.72)");
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, H - veilH, W, veilH);
-
-    ctx.save();
-    ctx.textAlign = "left";
-    ctx.textBaseline = "alphabetic";
-    ctx.shadowColor = "rgba(0,0,0,0.55)";
-    ctx.shadowBlur = 8 * scale;
-    ctx.fillStyle = "#FFEA00";
-    ctx.font = `700 ${Math.round(28 * scale)}px Oswald, sans-serif`;
-    ctx.fillText("TURESPAÑA", pad, H - pad - 52 * scale);
-    ctx.fillStyle = "#FFFFFF";
-    ctx.font = `600 ${Math.round(42 * scale)}px Fraunces, Georgia, serif`;
-    ctx.fillText(destLabel(dest) || "Spain", pad, H - pad - 14 * scale);
-    ctx.fillStyle = "#C8C0A8";
-    ctx.font = `500 ${Math.round(20 * scale)}px Inter, sans-serif`;
-        ctx.fillText("spain.info  ·  IMEX Las Vegas  ·  Oct 13–15 2026", pad, H - pad + 10 * scale);
-    ctx.restore();
-    return new Promise((res) => c.toBlob((b) => res(b), "image/jpeg", 0.95));
+    const {brandPortrait}=await import('./portrait-branding.js');
+    return brandPortrait(blob,destLabel(dest));
   }
 
   async function compress(blob) {
@@ -514,9 +484,7 @@ const booth = (() => {
         throw new Error(msg);
       }
       const rawBlob = await r.blob();
-      let generatedBlob;
-      try { generatedBlob = await watermark(rawBlob, job.dest); }
-      catch (_) { generatedBlob = rawBlob; }
+      const generatedBlob = await watermark(rawBlob, job.dest);
       job.generatedBlob = generatedBlob;
       job.status = "ready";
     } catch (e) {

@@ -4,7 +4,7 @@ export function mountTouchControls({getState,start,voice,action,finish,labels}){
  function render(){
   const s=getState(),busy=['preparing','countdown','generating'].includes(s.phase);
   panel.hidden=s.emailOpen;
-  document.querySelectorAll('.destination-pick').forEach(b=>{b.disabled=busy||s.phase==='result'||s.emailOpen||s.phase==='connecting';b.setAttribute('aria-pressed',String(b.dataset.destination===s.destinationId));});
+  document.querySelectorAll('.destination-pick').forEach(b=>{b.disabled=busy||s.phase==='result'||s.emailOpen||s.phase==='connecting';b.removeAttribute('aria-pressed');});
   if(s.phase==='idle')edit=null;
   const signature=JSON.stringify([s,edit]);if(signature===last)return;last=signature;
   const title=document.createElement('h2');title.id='touchTitle';
@@ -14,7 +14,7 @@ export function mountTouchControls({getState,start,voice,action,finish,labels}){
   const choose=(name,args)=>{edit=null;action(name,args);};
   if(s.phase==='idle'||(s.phase==='error'&&!s.active)){
    title.textContent='Your Spanish adventure';hint.textContent=s.phase==='error'?(s.statusMessage||'You can use the buttons or reconnect to your host.'):'Choose buttons or speak with Lola.';
-   button('Start photo','start',start);button('Talk to Lola','voice',voice,true);
+   if(s.phase==='error')button('Start photo','start',start);button('Talk to Lola','voice',voice,true);
   }else if(s.phase==='connecting'){
    title.textContent='Connecting to Lola…';button('Cancel','cancel',finish,true);
   }else if(busy){
@@ -30,7 +30,7 @@ export function mountTouchControls({getState,start,voice,action,finish,labels}){
    if(s.guestCount&&s.destinationId)button('Retake photo','retake',()=>action('take_photo',{confirmed:true,style:''}));
    button('Start over','restart',start,true);
   }else if(!s.guestCount||edit==='people'){
-   title.textContent='How many people?';hint.textContent='Choose everyone who will be in the photo.';
+   title.textContent='How many people?';hint.textContent=(labels[s.destinationId]?labels[s.destinationId]+' · ':'')+'Choose everyone who will be in the photo.';
    for(const count of [1,2,3])button(count+' '+(count===1?'person':'people'),'people-'+count,()=>choose('set_guest_count',{count}));
    button('Back','back',finish,true);
   }else if(!s.destinationId||edit==='destination'){

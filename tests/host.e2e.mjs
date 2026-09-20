@@ -5,7 +5,7 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 const root=path.resolve(import.meta.dirname,'..');
 assert.equal(await fs.readFile(path.join(root,'public/index.html'),'utf8'),await fs.readFile(path.join(root,'public/host.html'),'utf8'),'Root homepage and kiosk entry point must stay in sync');
-const allowed=["/index.html","/assets/examples/regional-clothing.jpg","/assets/spain-background.png", "/assets/examples/andalucia.webp", "/assets/examples/madrid.webp", "/assets/examples/barcelona.webp", "/assets/examples/bilbao.webp", "/assets/examples/canarias.webp", "/assets/examples/valencia.webp"].concat(['/host.html','/host.css','/host.js','/host-engine.js','/host-connection.js','/host-touch.js','/turespana-engine.js','/host-countdown.js','/host-idle.js','/host-captions.js','/host-email.js','/host-avatar.js','/host-sentry.js','/host-sentry-gate.js','/host-sentry-worker.js','/assets/person-detector.tflite','/tests/fixtures/sentry-person.jpg','/email-shortcuts.js','/assets/spain-sun.glb','/assets/spain-sun-fallback.svg','/assets/flow-event-background.jpg','/assets/fonts/fraunces.woff2','/assets/fonts/borel.woff2']);
+const allowed=["/index.html","/assets/examples/regional-clothing.jpg","/assets/spain-background.png", "/assets/examples/andalucia.webp", "/assets/examples/madrid.webp", "/assets/examples/barcelona.webp", "/assets/examples/bilbao.webp", "/assets/examples/canarias.webp", "/assets/examples/valencia.webp"].concat(['/portrait-branding.js','/host.html','/host.css','/host.js','/host-engine.js','/host-connection.js','/host-touch.js','/turespana-engine.js','/host-countdown.js','/host-idle.js','/host-captions.js','/host-email.js','/host-avatar.js','/host-sentry.js','/host-sentry-gate.js','/host-sentry-worker.js','/assets/person-detector.tflite','/tests/fixtures/sentry-person.jpg','/email-shortcuts.js','/assets/spain-sun.glb','/assets/spain-sun-fallback.svg','/assets/flow-event-background.jpg','/assets/fonts/fraunces.woff2','/assets/fonts/borel.woff2']);
 const server=http.createServer(async(req,res)=>{
   const pathname=new URL(req.url,'http://localhost').pathname==='/'?'/index.html':new URL(req.url,'http://localhost').pathname;
   if(!allowed.includes(pathname)&&!/^\/vendor\/(three|vision)\/[a-zA-Z0-9/_.-]+\.(js|mjs|wasm)$/.test(pathname)){res.writeHead(404);res.end();return;}
@@ -78,7 +78,7 @@ const image=await fs.readFile(path.join(root,'tests/fixtures/sentry-person.jpg')
 await page.route('**/api/host-session',route=>route.fulfill({status:201,contentType:'application/json',body:JSON.stringify({session:{id:'live_synthetic'},transport:{sdp:'synthetic answer'}})}));
 await page.route('**/api/host-photo',async route=>{
   generations++;
-  const body=route.request().postDataBuffer().toString('latin1');assert.match(body,/name="guestCount"\r\n\r\n2/);
+  const body=route.request().postDataBuffer().toString('latin1');assert.match(body,/name="guestCount"\r\n\r\n2/);assert.match(body,/name="destinationId"\r\n\r\nmadrid/);
   await new Promise(r=>release=r);
   await route.fulfill(fail?{status:422,contentType:'application/json',body:'{"code":"SUBJECT_COUNT_MISMATCH"}'}:{status:200,contentType:'image/jpeg',body:image});
 });
@@ -190,6 +190,11 @@ try{
   await page.setViewportSize({width:1080,height:1920});
 
   assert.equal(await page.locator('#picture').isVisible(),true);
+  const brandedSize=await page.locator('#picture').evaluate(e=>({width:e.naturalWidth,height:e.naturalHeight}));
+  const originalSize=await page.evaluate(async()=>{const p=await createImageBitmap(await (await fetch('/tests/fixtures/sentry-person.jpg')).blob());const s={width:p.width,height:p.height};p.close();return s;});
+  assert.equal(brandedSize.width,originalSize.width);assert.equal(brandedSize.height,originalSize.height+Math.round(152*originalSize.width/1024),'Brand strip extends image instead of covering a guest');
+  const brandedBytes=await page.locator('#picture').evaluate(async e=>Array.from(new Uint8Array(await (await fetch(e.src)).arrayBuffer())));
+  await fs.writeFile('artifacts/branded-portrait.jpg',Buffer.from(brandedBytes));
   await say('Your portrait is ready! Would you like me to email it? Spell your address aloud, including at and dot.');
   await page.waitForTimeout(1000);assert.ok(await page.locator('#hostCaptions').evaluate(e=>{const r=e.getBoundingClientRect(),p=document.querySelector('#picture').getBoundingClientRect(),c=document.querySelector('#touchControls').getBoundingClientRect();return r.top>=p.bottom&&r.bottom<=c.top&&r.left>=0&&r.right<=innerWidth;}),'Result captions are outside the photograph');await page.screenshot({path:'artifacts/host-result-portrait.png'});
   assert.ok(await page.locator('#face').evaluate(e=>e.getBoundingClientRect().width<innerWidth*.25));
@@ -386,9 +391,20 @@ try{
   // The touch path must work without opening a paid voice session.
   await page.setViewportSize({width:390,height:844});
   const voiceBefore=await page.evaluate(()=>window.__sent.length);
-  await page.locator('[data-touch=start]').click();
+  assert.equal(await page.locator('[data-touch=start]').count(),0,'Homepage uses region cards instead of a separate transformation button');
+  for(const [i,id] of ['canarias','barcelona','bilbao','madrid','andalucia','valencia'].entries()){
+    const card=page.locator('.destination-pick[data-destination='+id+']');
+    assert.match(await card.textContent(),/Tap to Transform/);
+    if(i===1)await card.press('Enter');else if(i===2)await card.press('Space');else await card.click();
+    await page.locator('[data-touch=people-2]').click();
+    await page.locator('[data-touch=capture]').waitFor({state:'visible'});
+    assert.equal(await page.locator('[data-touch=destination-'+id+']').count(),0,'Selected destination skips the destination picker');
+    const labels={canarias:'Canarias',barcelona:'Barcelona',bilbao:'Bilbao',madrid:'Madrid',andalucia:'Andalucía',valencia:'Valencia'};
+    assert.ok((await page.locator('.touch-help').textContent()).includes(labels[id]));
+    await page.locator('#end').click();await page.waitForFunction(()=>document.body.dataset.phase==='idle');
+  }
+  await page.locator('.destination-pick[data-destination=madrid]').click();
   await page.locator('[data-touch=people-2]').click();
-  await page.locator('[data-touch=destination-madrid]').click();
   await page.locator('[data-touch=capture]').waitFor({state:'visible'});
   assert.ok(await page.locator('[data-touch=capture]').evaluate(e=>e.getBoundingClientRect().height>=56));
   await page.screenshot({path:'artifacts/host-touch-ready-mobile.png'});
