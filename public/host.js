@@ -22,7 +22,16 @@ const wait=(ms,signal)=>new Promise((resolve,reject)=>{
   signal?.addEventListener('abort',abort,{once:true});
 });
 function text(title,hint=''){ $('headline').textContent=title;$('hint').textContent=hint; }
-function phase(value){queueMicrotask(()=>touchUI?.render());if(document.body.dataset.phase!==value)captions.clear();document.body.dataset.phase=value;$('sentryToggle').disabled=!sentry.enabled&&!['idle','error'].includes(value);}
+function phase(value){queueMicrotask(()=>touchUI?.render());if(document.body.dataset.phase!==value)captions.clear();document.body.dataset.phase=value;placeHomeLogo();$('sentryToggle').disabled=!sentry.enabled&&!['idle','error'].includes(value);}
+function placeHomeLogo(){
+  const slot=$('homeLogoSlot');
+  if(document.body.dataset.phase==='idle'){
+    if(face.parentElement!==slot)slot.append(face);
+  }else if(face.parentElement!==$('stage')){
+    $('stage').insertBefore(face,$('message'));
+  }
+}
+placeHomeLogo();
 function send(event){if(!ready||events?.readyState!=='open'||(ending&&event.type!=='session.close'))return;events.send(JSON.stringify({event_id:crypto.randomUUID(),...event}));}
 function note(content,speak=false){send({type:speak?'session.commentary.append':'session.thinking.append',delegation_id:null,content});}
 const sentry=new CameraSentry({

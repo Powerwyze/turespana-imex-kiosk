@@ -97,7 +97,15 @@ try{
     await page.setViewportSize({width,height});await page.waitForTimeout(900);
     await page.screenshot({path:'artifacts/host-idle-'+name+'.png'});
     console.log('Idle layout',name,await page.evaluate(()=>Object.fromEntries(['destinationExamples','face','intro','touchControls'].map(id=>{const r=document.getElementById(id).getBoundingClientRect();return [id,{top:r.top,bottom:r.bottom,left:r.left,right:r.right}]}))));
-    assert.ok(await page.locator('#destinationExamples').evaluate(e=>{const r=e.getBoundingClientRect(),f=document.querySelector('#face').getBoundingClientRect(),h=document.querySelector('#intro').getBoundingClientRect();return r.bottom<=innerHeight&&r.top>=h.bottom-1&&(r.right<=f.left||r.bottom<=f.top);}), 'Idle examples clear the heading and avatar on '+name);
+    assert.ok(await page.locator('#destinationExamples').evaluate(e=>{
+      const r=e.getBoundingClientRect(),h=document.querySelector('#intro').getBoundingClientRect(),c=document.querySelector('#touchControls').getBoundingClientRect();
+      const separate=b=>r.right<=b.left+1||r.left>=b.right-1||r.bottom<=b.top+1||r.top>=b.bottom-1;
+      const cards=[...e.querySelectorAll('figure')].map(f=>f.getBoundingClientRect());
+      const logo=document.querySelector('#face').getBoundingClientRect(),brand=document.querySelector('.brand').getBoundingClientRect();
+      return r.top>=0&&r.bottom<=innerHeight&&separate(h)&&separate(c)&&cards.length===6&&
+        Math.abs(cards[0].top-cards[2].top)<2&&cards[3].top>cards[0].bottom&&Math.abs(cards[3].top-cards[5].top)<2&&
+        logo.left>=brand.right&&logo.width<=110&&logo.top<h.bottom;
+    }), 'Homepage has a larger 3x2 gallery and a small logo beside the heading on '+name);
     await page.screenshot({path:'artifacts/host-idle-'+name+'.png'});
   }
   await page.setViewportSize({width:1080,height:1920});await page.waitForTimeout(900);
