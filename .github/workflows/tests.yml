@@ -33,6 +33,8 @@ jobs:
       - name: Install browser tools on the cloud runner
         run: npm install --no-save --package-lock=false playwright@1.56.1
       - run: npx playwright install --with-deps chromium
+      - name: Render the actual photo email without sending
+        run: node scripts/email-preview.mjs
       - run: node tests/host.e2e.mjs
       - name: Verify live voice and tool control on the remote preview
         if: github.event_name == 'workflow_dispatch' && inputs.live
