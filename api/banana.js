@@ -1,5 +1,4 @@
-import {regionalWardrobe} from '../lib/regional-wardrobe.js';
-import {portraitStyle,portraitLikeness} from '../lib/portrait-style.js';
+import {culturalPortraitPrompt} from '../lib/master-transformation.js';
 import {createRequire} from 'node:module';
 const require=createRequire(import.meta.url);
 /**
@@ -43,27 +42,7 @@ function loadStyleRef() {
   }
 }
 
-function buildPrompt(dest) {
-  const label = dest?.label || "Spain";
-  const costume = dest?.costumePrompt || `typical traditional costume associated with ${label}`;
-  const scene = dest?.scenePrompt || "an iconic Spanish landmark composite at sunset";
-
-  return [
-    "TASK: Reimagine EVERY person in the FIRST input photo as a Turespaña IMEX Las Vegas activation poster. Use the second image ONLY as a regional wardrobe reference: a photorealistic travel postcard, with real-looking guests and regional clothing.",
-    portraitStyle,
-    "CLOTHING REFERENCE IS WARDROBE-ONLY. Do NOT copy: Dominican Republic branding, Go Dominican Republic logo, Miami Marlins uniforms or wordmarks, baseball bats/gloves/caps, baseball stadium as the default setting, or Dominican Republic flag colors as the sky stroke. Do not invent other tourism boards or sports teams.",
-    `DESTINATION: ${label}. Wardrobe and landmark must read clearly as ${label}.`,
-    "GROUP HANDLING (CRITICAL): Count the people in the input photo. If there is 1 person, render a solo hero portrait. If there are 2–5 people, render ALL of them together. HARD CAP: never render more than 5 people. If the input shows more than 5, pick the 5 most prominent/centered subjects only. Every rendered person must correspond to a real person in the input. Do not invent extra people.",
-    `WARDROBE (every person): ${costume}`,
-    regionalWardrobe(dest),
-    `SETTING: ${scene} Show a clear blue daytime sky and natural photographic light. Use a tasteful postcard border; no painted brushstrokes or painting effects on people.`,
-    "POSTER TYPOGRAPHY (allowed in the generated image, commercial layout like the style ref): top-left TURESPAÑA wordmark in clean premium type (no Joan Miró artwork, no Sol de Miró sun drawing — that mark is copyrighted). Optional short destination name. Never include spain.info, any URL, website address, footer text, button or watermark. Remove such text from the reference. Do not add Dominican Republic, Marlins, baseball, or any other brand names.",
-    "Color palette: Turespaña tourism energy — sun yellow, Spain red, landscape green, deep black — with natural daytime colors, photographic skin tones and a blue sky. Mood: joyful, welcoming, proud, cinematic, ready-to-travel.",
-    "Composition: portrait 9:16 vertical. Solo: centered, complete head-to-toe outfit visible. Group: side-by-side standing, complete outfits and no cropped faces or feet. Subjects are the hero; landmark + flag stroke fill the sky behind them.",
-    portraitLikeness,
-    "CRITICAL FINISH: one cohesive photographic postcard, with source facial geometry preserved. Only destination and TURESPAÑA text; no websites. No people or features copied from the style reference.",
-  ].join(" ");
-}
+function buildPrompt(dest) { return culturalPortraitPrompt(dest); }
 
 function setCors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -223,7 +202,7 @@ export default async function handler(req, res) {
   const prompt = buildPrompt(dest);
   const styleRefBuffer = null; // The painted style reference is no longer part of photographic postcards.
   const clothingRefBuffer = fs.readFileSync(path.join(process.cwd(),"public/assets/examples/regional-clothing.jpg"));
-  const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-1";
+  const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-2.5-flare";
   const size = process.env.OPENAI_IMAGE_SIZE || "1024x1536";
   const quality = "high";
   const mimeType = file.mimetype || "image/jpeg";

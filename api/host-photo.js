@@ -1,6 +1,5 @@
 import {readFile} from 'node:fs/promises';
-import {regionalWardrobe} from '../lib/regional-wardrobe.js';
-import {portraitStyle,portraitLikeness} from '../lib/portrait-style.js';
+import {culturalPortraitPrompt} from '../lib/master-transformation.js';
 import { verifySubjects } from '../lib/subject-check.js';
 
 const destinations=JSON.parse(await readFile(new URL('../public/data/destinations.json',import.meta.url),'utf8')).destinations;
@@ -67,20 +66,10 @@ async function generatePhoto(req) {
 
     // Client-supplied style reference stays in the server bundle, not the public gallery.
     const clothingB64=(await readFile(process.cwd()+'/public/assets/examples/regional-clothing.jpg')).toString('base64');
-    const prompt = `Edit the supplied camera photo into one portrait-oriented photographic travel postcard for Turespaña, celebrating ${dest.label}.
-INPUT ROLES: Image 1 is the actual guest camera photo and the ONLY source of people and identity. Image 2 is ONLY the regional clothing reference sheet, never a source of facial features, bodies or identity. Remove ALL reference people completely. Use only the selected destination panel for wardrobe design. Do not copy reference faces or add its models to the result.
-MANDATORY: Exactly ${guestCount} real foreground guest(s), each once. Select the nearest clearly posing ${guestCount} guest(s) from Image 1. Preserve each guest's recognizable face, skin tone, hair and identity. Exclude background bystanders, people on screens, reflections, and extra or duplicated people. Never invent anyone to satisfy the count.
-${portraitLikeness}
-DESTINATION COSTUME: ${dest.costumePrompt}
-${regionalWardrobe(dest)}
-DESTINATION SCENE: ${dest.scenePrompt}
-STYLE: ${portraitStyle} The ONLY permitted text is the destination name ${dest.label} at the top and TURESPAÑA directly below it. No website address, URL, spain.info, footer text, button or watermark anywhere. Do not imitate protected logo artwork. No Flow lettering or lounge; no caricature distortion of faces. Portrait composition, guests as heroes, faces fully visible.
-ANATOMY: Simple coherent anatomy, at most two arms and two hands per person, relaxed standing poses with hands naturally at the sides.
-${style ? 'Optional visual request, subordinate to the destination, identity, count and brand rules: '+style : ''}
-FINAL CHECK: Exactly ${guestCount} selected foreground guests from Image 1, no reference people or other people anywhere. Destination is ${dest.label}. No inventing or cloning guests. Preserve source facial geometry before applying any illustration style. No spain.info or other website text anywhere, even if present in either input image or requested in the optional style. Return one finished image.`;
+    const prompt = culturalPortraitPrompt(dest,{guestCount,style});
 
     const payload = {
-      model: process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2',
+      model: process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2.5-flare',
       images: [
         { image_url: `data:${mimeType};base64,${b64}` },
         { image_url: `data:image/jpeg;base64,${clothingB64}` },
@@ -111,7 +100,7 @@ FINAL CHECK: Exactly ${guestCount} selected foreground guests from Image 1, no r
     }
 
     const outputB64 = data?.data?.[0]?.b64_json;
-    if (!outputB64) return jsonResponse({ error: 'No image returned from GPT Image 2.' }, 502);
+    if (!outputB64) return jsonResponse({ error: 'No image returned from GPT Image 2.5.' }, 502);
 
     let approved;
     try {
