@@ -8,8 +8,8 @@
       "tileNote": "Volcanoes & island traditions",
       "tileNoteEs": "Volcanes y tradiciones",
       "accent": "#168FAD",
-      "costumePrompt": "Use the supplied CANARIAS clothing panel: white puff-sleeve blouse, black bodice with colourful embroidered edging and red lacing, white lace apron over a long narrow-striped multicolour skirt; OR white collared shirt, black waistcoat with red/green embroidery, red woven sash, black knee breeches and cream gaiters. Optional straw or black felt hat only if the visitor requests it and it does not obscure source hair or face. These are clothing design cues from the client’s reference, rendered in the established painted poster style. Choose an appropriate dress or trouser option and honor an explicit visitor preference; never copy the reference people, change the guest’s face/body/hair or sexualize the outfit. No baseball or sports uniforms.",
-      "scenePrompt": "Canary Islands illustrated tourism composition: Tenerife’s distinctive Mount Teide volcanic summit and lava landscape, Atlantic blue water and subtropical island light. Use Tenerife as the specific scenic inspiration for Canarias; do not invent a coastline combining distant islands. No Santiago cathedral or mainland Spanish landmarks.",
+      "costumePrompt": "Use the supplied CANARIAS clothing panel: white puff-sleeve blouse, black bodice with colourful embroidered edging and red lacing, white lace apron over a long narrow-striped multicolour skirt; OR white collared shirt, black waistcoat with red/green embroidery, red woven sash, black knee breeches and cream gaiters. Optional straw or black felt hat only if the visitor requests it and it does not obscure source hair or face. These are clothing design cues from the client’s reference, rendered as photorealistic garments with real fabric texture. Choose an appropriate dress or trouser option and honor an explicit visitor preference; never copy the reference people, change the guest’s face/body/hair or sexualize the outfit. No baseball or sports uniforms.",
+      "scenePrompt": "Canary Islands photographic travel postcard scene: Tenerife’s distinctive Mount Teide volcanic summit and lava landscape, Atlantic blue water and subtropical island light. Use Tenerife as the specific scenic inspiration for Canarias; do not invent a coastline combining distant islands. No Santiago cathedral or mainland Spanish landmarks.",
       "referencePanel": "upper-left"
     },
     {
@@ -19,8 +19,8 @@
       "tileNote": "Gaudí & Catalan culture",
       "tileNoteEs": "Gaudí y cultura catalana",
       "accent": "#7CB165",
-      "costumePrompt": "Use the supplied BARCELONA clothing panel: black fitted bodice, full dark skirt with rich red and green floral print, ivory embroidered lace shawl and optional black folding fan; OR white shirt, black waistcoat and trousers, broad red faixa sash and optional red-and-black barretina. Do not substitute the previous plain casteller team shirt. Keep source hairstyle, not the reference model’s bun or hair accessories. These are clothing design cues from the client’s reference, rendered in the established painted poster style. Choose an appropriate dress or trouser option and honor an explicit visitor preference; never copy the reference people, change the guest’s face/body/hair or sexualize the outfit. No baseball or sports uniforms.",
-      "scenePrompt": "Barcelona illustrated tourism composition featuring recognizable Sagrada Família towers and Gothic Quarter stone architecture, warm Mediterranean sky. Keep scenery specific to Barcelona, not other Catalan cities.",
+      "costumePrompt": "Use the supplied BARCELONA clothing panel: black fitted bodice, full dark skirt with rich red and green floral print, ivory embroidered lace shawl and optional black folding fan; OR white shirt, black waistcoat and trousers, broad red faixa sash and optional red-and-black barretina. Do not substitute the previous plain casteller team shirt. Keep source hairstyle, not the reference model’s bun or hair accessories. These are clothing design cues from the client’s reference, rendered as photorealistic garments with real fabric texture. Choose an appropriate dress or trouser option and honor an explicit visitor preference; never copy the reference people, change the guest’s face/body/hair or sexualize the outfit. No baseball or sports uniforms.",
+      "scenePrompt": "Barcelona photographic travel postcard scene featuring recognizable Sagrada Família towers and Gothic Quarter stone architecture, clear blue daytime Mediterranean sky. Keep scenery specific to Barcelona, not other Catalan cities.",
       "referencePanel": "upper-middle"
     },
     {
@@ -30,8 +30,8 @@
       "tileNote": "Guggenheim & Basque culture",
       "tileNoteEs": "Guggenheim y cultura vasca",
       "accent": "#1B161C",
-      "costumePrompt": "Use the supplied BILBAO clothing panel: white puff-sleeve blouse, black lace-up bodice, red full skirt with horizontal black bands and white lace apron; OR white shirt, black tailored jacket and trousers with a wide red sash. A black txapela or red headscarf is optional only if requested; do not cover or change the source hairstyle. These are clothing design cues from the client’s reference, rendered in the established painted poster style. Choose an appropriate dress or trouser option and honor an explicit visitor preference; never copy the reference people, change the guest’s face/body/hair or sexualize the outfit. No baseball or sports uniforms.",
-      "scenePrompt": "Bilbao illustrated tourism composition: Guggenheim Museum titanium curves beside the Nervión river, Bilbao green surrounding hills and hints of Casco Viejo architecture. Bilbao only: no San Sebastián La Concha bay, no beach or invented coastal waterfront.",
+      "costumePrompt": "Use the supplied BILBAO clothing panel: white puff-sleeve blouse, black lace-up bodice, red full skirt with horizontal black bands and white lace apron; OR white shirt, black tailored jacket and trousers with a wide red sash. A black txapela or red headscarf is optional only if requested; do not cover or change the source hairstyle. These are clothing design cues from the client’s reference, rendered as photorealistic garments with real fabric texture. Choose an appropriate dress or trouser option and honor an explicit visitor preference; never copy the reference people, change the guest’s face/body/hair or sexualize the outfit. No baseball or sports uniforms.",
+      "scenePrompt": "Bilbao photographic travel postcard scene: Guggenheim Museum titanium curves beside the Nervión river, Bilbao green surrounding hills and hints of Casco Viejo architecture. Bilbao only: no San Sebastián La Concha bay, no beach or invented coastal waterfront.",
       "referencePanel": "upper-right"
     },
     {
@@ -41,8 +41,8 @@
       "tileNote": "Capital chic",
       "tileNoteEs": "Capital chic",
       "accent": "#FFEA00",
-      "costumePrompt": "Use the supplied MADRID clothing panel: white chulapa-inspired dress with small red spots and ruffled trim, red fringed embroidered shawl; OR white shirt, grey waistcoat with dark piping, charcoal trousers and optional grey checked flat cap. Optional carnation on clothing, not a forced hair change. Preserve source hair; no compulsory white headscarf. These are clothing design cues from the client’s reference, rendered in the established painted poster style. Choose an appropriate dress or trouser option and honor an explicit visitor preference; never copy the reference people, change the guest’s face/body/hair or sexualize the outfit. No baseball or sports uniforms.",
-      "scenePrompt": "Composite of Madrid's Palacio Real and Gran Vía dusk glow, grand boulevards, warm street lamps, cinematic skyline. Landmark reads as Madrid.",
+      "costumePrompt": "Use the supplied MADRID clothing panel: white chulapa-inspired dress with small red spots and ruffled trim, red fringed embroidered shawl; OR white shirt, grey waistcoat with dark piping, charcoal trousers and optional grey checked flat cap. Optional carnation on clothing, not a forced hair change. Preserve source hair; no compulsory white headscarf. These are clothing design cues from the client’s reference, rendered as photorealistic garments with real fabric texture. Choose an appropriate dress or trouser option and honor an explicit visitor preference; never copy the reference people, change the guest’s face/body/hair or sexualize the outfit. No baseball or sports uniforms.",
+      "scenePrompt": "Composite of Madrid's Palacio Real and Gran Vía daylight, grand boulevards, daytime street details, cinematic skyline. Landmark reads as Madrid.",
       "referencePanel": "lower-left"
     },
     {
@@ -52,8 +52,8 @@
       "tileNote": "Feria & flamenco",
       "tileNoteEs": "Feria y flamenco",
       "accent": "#E42719",
-      "costumePrompt": "Use the supplied ANDALUCÍA clothing panel: vivid red flamenca-inspired dress with dramatic layered ruffled sleeves and skirt, black dots or dark ruffle trim; OR black fitted short riding jacket, white shirt, dark trousers, patterned woven waist sash and tall dark boots. A flat Córdoba-style black hat is optional only if requested. Use a relaxed portrait pose; do not copy the dancer’s raised-arm pose or hairstyle. These are clothing design cues from the client’s reference, rendered in the established painted poster style. Choose an appropriate dress or trouser option and honor an explicit visitor preference; never copy the reference people, change the guest’s face/body/hair or sexualize the outfit. No baseball or sports uniforms.",
-      "scenePrompt": "Composite of Seville's Plaza de España arcades and Giralda tower at fiery golden-hour sunset, palm silhouettes, warm stone, cinematic travel-poster depth. Landmark reads as Andalucía, not a generic plaza.",
+      "costumePrompt": "Use the supplied ANDALUCÍA clothing panel: vivid red flamenca-inspired dress with dramatic layered ruffled sleeves and skirt, black dots or dark ruffle trim; OR black fitted short riding jacket, white shirt, dark trousers, patterned woven waist sash and tall dark boots. A flat Córdoba-style black hat is optional only if requested. Use a relaxed portrait pose; do not copy the dancer’s raised-arm pose or hairstyle. These are clothing design cues from the client’s reference, rendered as photorealistic garments with real fabric texture. Choose an appropriate dress or trouser option and honor an explicit visitor preference; never copy the reference people, change the guest’s face/body/hair or sexualize the outfit. No baseball or sports uniforms.",
+      "scenePrompt": "Composite of Seville's Plaza de España arcades and Giralda tower at bright daylight with a blue sky, sunlit palms, warm stone, photographic depth. Landmark reads as Andalucía, not a generic plaza.",
       "referencePanel": "lower-middle"
     },
     {
@@ -63,8 +63,8 @@
       "tileNote": "Fallas & light",
       "tileNoteEs": "Fallas y luz",
       "accent": "#C45C26",
-      "costumePrompt": "Use the supplied VALENCIA clothing panel: ornate cream/gold fallera-inspired floral brocade dress with full skirt, embroidered lace trim and a modest fitted bodice; OR white shirt, colourful floral brocade waistcoat, rich red-and-gold sash, beige knee breeches and white stockings. Preserve the visitor’s original hairstyle instead of adding the reference model’s traditional coiffure or head wrap. These are clothing design cues from the client’s reference, rendered in the established painted poster style. Choose an appropriate dress or trouser option and honor an explicit visitor preference; never copy the reference people, change the guest’s face/body/hair or sexualize the outfit. No baseball or sports uniforms.",
-      "scenePrompt": "Composite of Valencia's City of Arts and Sciences and Mediterranean orange-grove light at sunset, water reflections, cinematic tourism-poster depth. Landmark reads as Valencia.",
+      "costumePrompt": "Use the supplied VALENCIA clothing panel: ornate cream/gold fallera-inspired floral brocade dress with full skirt, embroidered lace trim and a modest fitted bodice; OR white shirt, colourful floral brocade waistcoat, rich red-and-gold sash, beige knee breeches and white stockings. Preserve the visitor’s original hairstyle instead of adding the reference model’s traditional coiffure or head wrap. These are clothing design cues from the client’s reference, rendered as photorealistic garments with real fabric texture. Choose an appropriate dress or trouser option and honor an explicit visitor preference; never copy the reference people, change the guest’s face/body/hair or sexualize the outfit. No baseball or sports uniforms.",
+      "scenePrompt": "Composite of Valencia's City of Arts and Sciences and Mediterranean orange-grove light in bright daylight, water reflections, photographic depth. Landmark reads as Valencia.",
       "referencePanel": "lower-right"
     }
   ]
