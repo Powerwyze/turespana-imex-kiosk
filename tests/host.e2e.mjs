@@ -182,7 +182,7 @@ try{
 
   assert.equal(await page.locator('#picture').isVisible(),true);
   await say('Your portrait is ready! Would you like me to email it? Spell your address aloud, including at and dot.');
-  await page.waitForTimeout(1000);assert.ok((await captionBounds()).above&&(await captionBounds()).onScreen);await page.screenshot({path:'artifacts/host-result-portrait.png'});
+  await page.waitForTimeout(1000);assert.ok(await page.locator('#hostCaptions').evaluate(e=>{const r=e.getBoundingClientRect(),p=document.querySelector('#picture').getBoundingClientRect(),c=document.querySelector('#touchControls').getBoundingClientRect();return r.top>=p.bottom&&r.bottom<=c.top&&r.left>=0&&r.right<=innerWidth;}),'Result captions are outside the photograph');await page.screenshot({path:'artifacts/host-result-portrait.png'});
   assert.ok(await page.locator('#face').evaluate(e=>e.getBoundingClientRect().width<innerWidth*.25));
   assert.ok(await page.evaluate(()=>window.__sent.some(e=>e.type==='session.commentary.append'&&e.content.includes('Madrid'))));
   // A spoken address opens review; no voice tool can send it.
