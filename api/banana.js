@@ -1,3 +1,4 @@
+import {regionalWardrobe} from '../lib/regional-wardrobe.js';
 import {portraitStyle,portraitLikeness} from '../lib/portrait-style.js';
 import {createRequire} from 'node:module';
 const require=createRequire(import.meta.url);
@@ -54,10 +55,11 @@ function buildPrompt(dest) {
     `DESTINATION: ${label}. Wardrobe and landmark must read clearly as ${label}.`,
     "GROUP HANDLING (CRITICAL): Count the people in the input photo. If there is 1 person, render a solo hero portrait. If there are 2–5 people, render ALL of them together. HARD CAP: never render more than 5 people. If the input shows more than 5, pick the 5 most prominent/centered subjects only. Every rendered person must correspond to a real person in the input. Do not invent extra people.",
     `WARDROBE (every person): ${costume}`,
+    regionalWardrobe(dest),
     `SETTING: ${scene} Composite that landmark with a large textured oil-paint BRUSHSTROKE of the SPANISH FLAG sweeping the sky (red–gold–red, thick wet paint, NOT a flag on a pole, similar energy to the painted flag stroke in the style reference). Warm Iberian sunset plus dramatic highlight, cinematic tourism-poster depth.`,
     "POSTER TYPOGRAPHY (allowed in the generated image, commercial layout like the style ref): top-left TURESPAÑA wordmark in clean premium type (no Joan Miró artwork, no Sol de Miró sun drawing — that mark is copyrighted). Optional short destination name. Never include spain.info, any URL, website address, footer text, button or watermark. Remove such text from the reference. Do not add Dominican Republic, Marlins, baseball, or any other brand names.",
     "Color palette: Turespaña tourism energy — sun yellow, Spain red, landscape green, deep black — plus the Spanish flag red/gold sky stroke and fiery sunset oranges. Mood: joyful, welcoming, proud, cinematic, ready-to-travel.",
-    "Composition: portrait 9:16 vertical. Solo: centered, waist-up, head fully visible. Group: shoulder-to-shoulder, no cropped faces. Subjects are the hero; landmark + flag stroke fill the sky behind them.",
+    "Composition: portrait 9:16 vertical. Solo: centered, complete head-to-toe outfit visible. Group: side-by-side standing, complete outfits and no cropped faces or feet. Subjects are the hero; landmark + flag stroke fill the sky behind them.",
     portraitLikeness,
     "CRITICAL FINISH: one cohesive illustrated poster, with source facial geometry preserved. Only destination and TURESPAÑA text; no websites. No people or features copied from the style reference.",
   ].join(" ");
@@ -75,7 +77,7 @@ function fieldStr(fields, key) {
   return String(v || "").trim();
 }
 
-async function openaiEdit({ apiKey, model, size, quality, prompt, fileBuffer, mimeType, filename, styleRefBuffer }) {
+async function openaiEdit({ apiKey, model, size, quality, prompt, fileBuffer, mimeType, filename, styleRefBuffer, clothingRefBuffer }) {
   const fd = new FormData();
   fd.append("model", model);
   fd.append("prompt", prompt);
@@ -87,6 +89,7 @@ async function openaiEdit({ apiKey, model, size, quality, prompt, fileBuffer, mi
     fd.append("image", new Blob([styleRefBuffer], { type: "image/jpeg" }), "activation-style-ref.jpg");
   }
 
+  fd.append("image", new Blob([clothingRefBuffer], {type:"image/jpeg"}), "regional-clothing.jpg");
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), 280000);
   let openaiRes;
@@ -118,7 +121,7 @@ async function openaiEdit({ apiKey, model, size, quality, prompt, fileBuffer, mi
   throw new Error("No image data in OpenAI response");
 }
 
-async function geminiEdit({ apiKey, prompt, fileBuffer, mimeType, styleRefBuffer }) {
+async function geminiEdit({ apiKey, prompt, fileBuffer, mimeType, styleRefBuffer, clothingRefBuffer }) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent`;
   const parts = [{ text: prompt }];
   parts.push({
@@ -135,6 +138,7 @@ async function geminiEdit({ apiKey, prompt, fileBuffer, mimeType, styleRefBuffer
       },
     });
   }
+  parts.push({inlineData:{mimeType:"image/jpeg",data:clothingRefBuffer.toString("base64")}});
   const body = {
     contents: [{ role: "user", parts }],
     generationConfig: { responseModalities: ["IMAGE"] },
@@ -218,6 +222,7 @@ export default async function handler(req, res) {
 
   const prompt = buildPrompt(dest);
   const styleRefBuffer = loadStyleRef();
+  const clothingRefBuffer = fs.readFileSync(path.join(process.cwd(),"public/assets/examples/regional-clothing.jpg"));
   const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-1";
   const size = process.env.OPENAI_IMAGE_SIZE || "1024x1536";
   const quality = "high";
@@ -239,6 +244,7 @@ export default async function handler(req, res) {
         mimeType,
         filename: file.originalFilename || "input.jpg",
         styleRefBuffer,
+        clothingRefBuffer,
       });
       provider = "openai";
     } catch (e) {
@@ -255,6 +261,7 @@ export default async function handler(req, res) {
         fileBuffer,
         mimeType,
         styleRefBuffer,
+        clothingRefBuffer,
       });
       provider = "gemini";
     } catch (e) {
