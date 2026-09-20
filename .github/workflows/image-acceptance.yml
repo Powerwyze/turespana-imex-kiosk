@@ -1,5 +1,8 @@
 name: Regional transformation acceptance
 on:
+  push:
+    branches: [codex/turespana-voice-host]
+    paths: [.github/workflows/image-acceptance.yml]
   workflow_dispatch:
     inputs:
       endpoint:
@@ -10,6 +13,7 @@ permissions:
   contents: read
 jobs:
   images:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
