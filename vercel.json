@@ -33,7 +33,7 @@
   "functions": {
     "api/banana.js": {
       "maxDuration": 300,
-      "includeFiles": "{assets/portrait-style-reference.jpg,public/data/destinations.json,public/assets/examples/regional-clothing.jpg}"
+      "includeFiles": "{public/data/destinations.json,assets/region-references/*.jpg}"
     },
     "api/send-photo.js": {
       "maxDuration": 30
@@ -49,7 +49,7 @@
     },
     "api/host-photo.js": {
       "maxDuration": 300,
-      "includeFiles": "{assets/portrait-style-reference.jpg,public/data/destinations.json,public/assets/examples/regional-clothing.jpg}"
+      "includeFiles": "{public/data/destinations.json,assets/region-references/*.jpg}"
     },
     "api/host-email.js": {
       "maxDuration": 30

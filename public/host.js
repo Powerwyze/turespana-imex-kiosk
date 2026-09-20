@@ -176,6 +176,7 @@ const engine=new TurespanaEngine({
     const res=await fetch(location.origin==='https://turespana-imex-kiosk.powerwyze-2010.chatgpt.site'?'https://turespana-imex-kiosk.vercel.app/api/host-photo':'/api/host-photo',{method:'POST',body:form,signal:AbortSignal.any([signal,AbortSignal.timeout(185000)])});
     if(!res.ok){
       const problem=await res.json().catch(()=>({}));
+      if(problem.code==='PORTRAIT_QUALITY_MISMATCH')throw new Error('That portrait did not meet the outfit, likeness or framing check. Your original photo is saved. Please retry or retake.');
       if(problem.code==='SUBJECT_COUNT_MISMATCH')throw new Error('That image did not match your group. Tell me the number of people and ask me to try again.');
       if(problem.code==='SUBJECT_CHECK_UNAVAILABLE')throw new Error('The image could not be checked. Your original photo is here if you want to retry.');
       throw new Error(res.status===429?'The image service is busy. Ask me to try again shortly.':'The picture could not be created. Ask me to try again.');

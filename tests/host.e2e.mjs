@@ -168,6 +168,18 @@ try{
   await page.screenshot({path:'artifacts/host-generating-portrait.png'});assert.equal(generations,1);
   await tool('take_photo',{confirmed:true,style:''});await page.waitForTimeout(100);assert.equal(generations,1);
   release();await page.waitForFunction(()=>document.body.dataset.phase==='result');
+  // Result area is separate from large actions/captions at kiosk and mobile sizes.
+  for(const [label,width,height] of [['kiosk',1080,1920],['phone',390,844],['compact',390,667]]){
+    await page.setViewportSize({width,height});await page.waitForTimeout(150);
+    const layout=await page.evaluate(()=>{
+      const p=document.querySelector('#picture').getBoundingClientRect(),c=document.querySelector('#touchControls').getBoundingClientRect();
+      return {clear:p.bottom<=c.top+1,onScreen:p.top>=70&&c.bottom<=innerHeight,pictureHeight:p.height};
+    });
+    assert.ok(layout.clear&&layout.onScreen&&layout.pictureHeight>250,'Unobscured result at '+label+': '+JSON.stringify(layout));
+    await page.screenshot({path:'artifacts/host-result-'+label+'.png'});
+  }
+  await page.setViewportSize({width:1080,height:1920});
+
   assert.equal(await page.locator('#picture').isVisible(),true);
   await say('Your portrait is ready! Would you like me to email it? Spell your address aloud, including at and dot.');
   await page.waitForTimeout(1000);assert.ok((await captionBounds()).above&&(await captionBounds()).onScreen);await page.screenshot({path:'artifacts/host-result-portrait.png'});

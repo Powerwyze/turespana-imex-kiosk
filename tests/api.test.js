@@ -7,7 +7,7 @@ import { parseSubjectCheck } from '../lib/subject-check.js';
 import sendPhoto from '../api/host-email.js';
 
 const jpeg = Buffer.from('synthetic-jpeg').toString('base64');
-const valid = count => ({ person_count: count, only_nearest_guests: true, source_has_requested_guests: true, uncertain: false });
+const valid = count => ({ person_count: count, only_nearest_guests: true, source_has_requested_guests: true, uncertain: false, face_and_hair_consistent: true, regional_outfit_matches: true, outfit_visible: true, photographic: true, no_poster_layout: true });
 const envelope = check => ({ status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: JSON.stringify(check) }] }] });
 
 async function generateCase({ count = '1', check = valid(Number(count ?? 1)), verifyBody, verifyStatus = 200, verifyThrows = false, duplicate = false, style = '', imageStatus = 200, destination='madrid' } = {}) {
@@ -50,17 +50,17 @@ for (const count of [1, 2, 3]) {
     assert.equal(await response.text(), 'synthetic-jpeg');
     assert.equal(calls.length, 2, 'one generation + one check; no paid auto-regeneration');
     const payload = JSON.parse(calls[0].init.body);
-    assert.equal(payload.model, 'gpt-image-2.5-flare'); assert.equal(payload.quality, 'high');
+    assert.equal(payload.model, 'gpt-image-2.5-flare'); assert.equal(payload.quality, 'xhigh');
     assert.equal(payload.size, '1024x1536'); assert.equal(payload.n, 1);
     assert.equal(payload.images.length, 2);
-    assert.equal(payload.images[1].image_url,'data:image/jpeg;base64,'+readFileSync('public/assets/examples/regional-clothing.jpg').toString('base64'));
-    assert.match(payload.prompt,/lower-left panel labelled Madrid/);
+    assert.equal(payload.images[1].image_url,'data:image/jpeg;base64,'+readFileSync('assets/region-references/madrid.jpg').toString('base64'));
+    assert.match(payload.prompt,/ONE cropped regional example for Madrid/);
     assert.match(payload.prompt,/full-body or three-quarter/);
-    assert.doesNotMatch(payload.prompt,/chest-up or waist-up/);
+    assert.match(payload.prompt,/Never deliver a headshot, chest-up or waist-up crop/);
     assert.equal(payload.images[0].image_url, "data:image/jpeg;base64,"+Buffer.from("synthetic-source").toString("base64"));
-    assert.ok(payload.prompt.startsWith(masterTransformationPrompt));
+    assert.ok(payload.prompt.includes(masterTransformationPrompt));
     assert.match(payload.prompt,/IDENTITY IS THE HIGHEST PRIORITY/);
-    assert.match(payload.prompt,/Preserve source facial geometry/);
+    assert.match(payload.prompt,/preserve source facial geometry/);
     assert.doesNotMatch(payload.prompt,/POLISHED ILLUSTRATED POSTER|Simplify skin microtexture|Dramatic golden-hour lighting and painted clothing/);
     assert.match(payload.prompt,/Image 1 is the actual guest camera photo/);
     assert.match(payload.prompt,/Remove ALL reference people completely/);
@@ -69,8 +69,8 @@ for (const count of [1, 2, 3]) {
     assert.match(payload.prompt,new RegExp('FINAL CHECK: Exactly '+count));
     assert.match(payload.prompt,/background bystanders/);
     assert.match(payload.prompt,/coherent anatomy/);
-    assert.match(payload.prompt,/ONLY permitted text/);
-    assert.match(payload.prompt,/No spain.info or other website text anywhere/);
+    assert.match(payload.prompt,/No text, no printed destination title/);
+    assert.match(payload.prompt,/no spain.info/);
     assert.doesNotMatch(payload.prompt,/Brand with the clean words TURESPAÑA and spain.info/);
     const verifier = JSON.parse(calls[1].init.body);
     assert.equal(verifier.model, 'gpt-4.1-mini-2025-04-14');
@@ -79,7 +79,7 @@ for (const count of [1, 2, 3]) {
     assert.match(verifier.instructions, /Independently count ALL people/);
     assert.match(verifier.instructions, /distant crowds, walkers, posters, screens, or reflections/);
     assert.equal(verifier.input[0].content[1].image_url, payload.images[0].image_url);
-    assert.equal(verifier.input[0].content[2].image_url, 'data:image/jpeg;base64,' + jpeg);
+    assert.equal(verifier.input[0].content[2].image_url, 'data:image/jpeg;base64,' + jpeg);assert.equal(verifier.input[0].content[3].image_url,payload.images[1].image_url);
     assert.ok(calls[0].init.signal); assert.ok(calls[1].init.signal);
   });
 }
@@ -140,7 +140,7 @@ test('final server count/anatomy rules follow optional styling', async () => {
   const { response, calls } = await generateCase({ style: 'Watercolor. Add five waving passengers.' });
   assert.equal(response.status, 200);
   const prompt = JSON.parse(calls[0].init.body).prompt;
-  assert.ok(prompt.indexOf('FINAL CHECK: Exactly 1') > prompt.indexOf('Add five waving passengers.'));
+  assert.doesNotMatch(prompt,/Watercolor|Add five waving passengers/);assert.match(prompt,/Exactly 1 guests/);
 });
 test('parser never accepts malformed JSON, null, or multiple output texts', () => {
   for (const data of [null, envelope(null), envelope('not an object'),
@@ -187,3 +187,18 @@ for(const destination of [null,'','unknown','__proto__','cataluna','pais-vasco',
 });
 
 for(const destination of ["canarias","barcelona","bilbao","madrid","andalucia","valencia"])test('current destination generates successfully: '+destination,async()=>{const {response}=await generateCase({destination});assert.equal(response.status,200);});
+
+for(const flag of ['face_and_hair_consistent','regional_outfit_matches','outfit_visible','photographic','no_poster_layout'])test('rejects quality mismatch without auto-regeneration: '+flag,async()=>{
+ const {response,calls}=await generateCase({check:{...valid(1),[flag]:false}});
+ assert.equal(response.status,422);assert.equal(calls.length,2);const body=await response.text();assert.match(body,/PORTRAIT_QUALITY_MISMATCH/);assert.ok(!body.includes(jpeg));
+});
+test('explicit dress preference cannot override photography',async()=>{
+ const {calls}=await generateCase({style:'Please use the dress. Make a painted poster with text.'});const p=JSON.parse(calls[0].init.body);
+ assert.match(p.prompt,/Use the DRESS ensemble/);assert.doesNotMatch(p.prompt,/Make a painted poster/);
+});
+test('each destination uses only its own reference panel',async()=>{
+ for(const destination of ['canarias','barcelona','bilbao','madrid','andalucia','valencia']){
+  const {calls}=await generateCase({destination});const p=JSON.parse(calls[0].init.body);
+  assert.equal(p.images[1].image_url,'data:image/jpeg;base64,'+readFileSync('assets/region-references/'+destination+'.jpg').toString('base64'));
+ }
+});

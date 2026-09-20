@@ -1,136 +1,26 @@
-import {readFile} from 'node:fs/promises';
-import {culturalPortraitPrompt} from '../lib/master-transformation.js';
-import { verifySubjects } from '../lib/subject-check.js';
-
-const destinations=JSON.parse(await readFile(new URL('../public/data/destinations.json',import.meta.url),'utf8')).destinations;
-const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
-
-function bytesToBase64(bytes) {
-  let binary = '';
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-  return btoa(binary);
-}
-
-function jsonResponse(body, status) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
-  });
-}
-
+import {generatePortrait,PortraitError} from '../lib/portrait-pipeline.js';
 const SITE_ORIGIN='https://turespana-imex-kiosk.powerwyze-2010.chatgpt.site';
+function json(body,status){return new Response(JSON.stringify(body),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store'}});}
 function cors(req){
- const origin=req.headers.get('origin');
- return origin===SITE_ORIGIN ? {'Access-Control-Allow-Origin':origin,'Vary':'Origin','Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type','Access-Control-Max-Age':'600'} : {};
+  const origin=req.headers.get('origin');
+  return origin===SITE_ORIGIN?{'Access-Control-Allow-Origin':origin,'Vary':'Origin','Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type','Access-Control-Expose-Headers':'X-Portrait-Pipeline, X-Image-Model','Access-Control-Max-Age':'600'}:{};
 }
 export function OPTIONS(req){return new Response(null,{status:req.headers.get('origin')===SITE_ORIGIN?204:403,headers:cors(req)});}
 export async function POST(req){
- const origin=req.headers.get('origin');
- if(origin && origin!==new URL(req.url).origin && origin!==SITE_ORIGIN)return jsonResponse({error:'Please open the kiosk on its official site.'},403);
- const response=await generatePhoto(req);
- for(const [key,value] of Object.entries(cors(req)))response.headers.set(key,value);
- return response;
-}
-async function generatePhoto(req) {
-  try {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) return jsonResponse({ error: 'OPENAI_API_KEY is not configured on the server.' }, 500);
-
-    const fd = await req.formData();
-    const file = fd.get('image');
-    const destinationId=fd.get('destinationId');
-    const dest=destinations.find(d=>d.id===destinationId);
-    if(!dest || fd.getAll('destinationId').length!==1)return jsonResponse({code:'INVALID_DESTINATION',error:'Choose one of the six Spanish destinations.'},400);
-    const style = (fd.get('style') || '').toString().trim().slice(0, 600);
-    // Old cached kiosk pages omit this field: safely default to one guest.
-    const countField = fd.get('guestCount') ?? '1';
-    if (fd.getAll('guestCount').length > 1 || typeof countField !== 'string' || !/^[123]$/.test(countField)) {
-      return jsonResponse({ code: 'INVALID_GUEST_COUNT', error: 'Choose 1, 2, or 3 people.' }, 400);
-    }
-    const guestCount = Number(countField);
-    // One total deadline covers reference, generation, and the verification gate.
-    const signal = AbortSignal.any([req.signal, AbortSignal.timeout(175000)]);
-
-    if (!file || typeof file.arrayBuffer !== 'function') {
-      return jsonResponse({ error: 'Missing image.' }, 400);
-    }
-    if (file.size > MAX_UPLOAD_BYTES) {
-      return jsonResponse({ error: 'Image is too large.' }, 413);
-    }
-
-    const mimeType = file.type || 'image/jpeg';
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(mimeType) || !file.size) {
-      return jsonResponse({ error: 'Please take a new photo.' }, 400);
-    }
-    const b64 = bytesToBase64(new Uint8Array(await file.arrayBuffer()));
-
-    // Client-supplied style reference stays in the server bundle, not the public gallery.
-    const clothingB64=(await readFile(process.cwd()+'/public/assets/examples/regional-clothing.jpg')).toString('base64');
-    const prompt = culturalPortraitPrompt(dest,{guestCount,style});
-
-    const payload = {
-      model: process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2.5-flare',
-      images: [
-        { image_url: `data:${mimeType};base64,${b64}` },
-        { image_url: `data:image/jpeg;base64,${clothingB64}` },
-      ],
-      prompt,
-      size: process.env.OPENAI_IMAGE_SIZE || '1024x1536',
-      // Prioritize detailed source-preserving edits over the old fast/low-quality mode.
-      // GPT Image 2 already processes inputs at high fidelity; input_fidelity is unsupported.
-      quality: 'high',
-      output_format: 'jpeg',
-      n: 1,
-    };
-
-    const response = await fetch('https://api.openai.com/v1/images/edits', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-      signal,
-    });
-
-    const data = await response.json();
-    if (!response.ok) {
-      console.error('OpenAI image edit failed', { status: response.status });
-      return jsonResponse({ error: 'Image generation failed. Please try again.' }, response.status);
-    }
-
-    const outputB64 = data?.data?.[0]?.b64_json;
-    if (!outputB64) return jsonResponse({ error: 'No image returned from GPT Image 2.5.' }, 502);
-
-    let approved;
-    try {
-      approved = await verifySubjects({
-        apiKey, guestCount, signal,
-        sourceUrl: `data:${mimeType};base64,${b64}`,
-        outputUrl: `data:image/jpeg;base64,${outputB64}`,
-      });
-    } catch {
-      // Never leak rejected/unverified bytes to the browser or email flow.
-      console.warn('Turespana subject check unavailable');
-      return jsonResponse({ code: 'SUBJECT_CHECK_UNAVAILABLE', error: 'We could not check the people in this picture. Your original photo is saved for retry.' }, 503);
-    }
-    if (!approved) {
-      return jsonResponse({
-        code: 'SUBJECT_COUNT_MISMATCH',
-        error: 'The picture did not pass the guest check. Confirm the number of people, then try again or retake with your group closer.',
-      }, 422);
-    }
-
-    const outputBinary = atob(outputB64);
-    const outputBytes = new Uint8Array(outputBinary.length);
-    for (let i = 0; i < outputBinary.length; i++) outputBytes[i] = outputBinary.charCodeAt(i);
-
-    return new Response(outputBytes, {
-      status: 200,
-      headers: { 'Content-Type': 'image/jpeg', 'Cache-Control': 'no-store' },
-    });
-  } catch (error) {
-    console.error('Unexpected image generation error', { name: error?.name });
-    return jsonResponse({ error: 'Unexpected image generation error.' }, 500);
+  const origin=req.headers.get('origin');
+  if(origin&&origin!==new URL(req.url).origin&&origin!==SITE_ORIGIN)return json({error:'Please open the kiosk on its official site.'},403);
+  let response;
+  try{
+    let fd;try{fd=await req.formData();}catch{throw new PortraitError('INVALID_UPLOAD','Please take a new photo.',400);}
+    if(fd.getAll('destinationId').length!==1)throw new PortraitError('INVALID_DESTINATION','Choose one of the six Spanish destinations.',400);
+    const count=fd.get('guestCount')??'1';
+    if(fd.getAll('guestCount').length>1||typeof count!=='string'||!/^[123]$/.test(count))throw new PortraitError('INVALID_GUEST_COUNT','Choose 1, 2, or 3 people.',400);
+    if(fd.getAll('image').length!==1)throw new PortraitError('INVALID_PHOTO','Please take a new photo.',400);
+    const result=await generatePortrait({file:fd.get('image'),destinationId:fd.get('destinationId'),guestCount:Number(count),style:String(fd.get('style')||'').slice(0,600),signal:req.signal});
+    response=new Response(result.bytes,{status:200,headers:{'Content-Type':result.mimeType,'Cache-Control':'no-store','X-Portrait-Pipeline':result.pipeline,'X-Image-Model':result.model}});
+  }catch(e){
+    response=e instanceof PortraitError?json({code:e.code,error:e.message},e.status):json({code:'GENERATION_UNAVAILABLE',error:'The portrait could not be completed. Your original photo is saved for retry.'},503);
   }
+  for(const [key,value] of Object.entries(cors(req)))response.headers.set(key,value);
+  return response;
 }
