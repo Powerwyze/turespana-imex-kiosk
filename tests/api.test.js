@@ -87,7 +87,7 @@ for (const count of [1, 2, 3]) {
 test('old cached clients without count default safely to one', async () => {
   const { response, calls } = await generateCase({ count: null });
   assert.equal(response.status, 200);
-  assert.match(JSON.parse(calls[0].init.body).prompt, /Exactly 1 real foreground/);
+  assert.match(JSON.parse(calls[0].init.body).prompt, /Exactly 1 posed foreground/);
 });
 
 for (const count of ['', '0', '4', '-1', '1.5', '01', '2 people', ' 1', 'NaN']) {
