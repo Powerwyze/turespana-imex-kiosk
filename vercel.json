@@ -5,21 +5,64 @@
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(self), microphone=(self), geolocation=()" }
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(self), microphone=(self), geolocation=()"
+        }
       ]
     }
   ],
   "rewrites": [
-    { "source": "/favicon.ico", "destination": "/assets/sun.svg" },
-    { "source": "/claim", "destination": "/claim.html" }
+    {
+      "source": "/favicon.ico",
+      "destination": "/assets/sun.svg"
+    },
+    {
+      "source": "/claim",
+      "destination": "/claim.html"
+    }
   ],
   "functions": {
-    "api/banana.js": { "maxDuration": 300 },
-    "api/send-photo.js": { "maxDuration": 30 },
-    "api/lead.js": { "maxDuration": 30 },
-    "api/claim.js": { "maxDuration": 15 },
-    "api/health.js": { "maxDuration": 10 }
-  }
+    "api/banana.js": {
+      "maxDuration": 300,
+      "includeFiles": "{public/data/destinations.json,assets/region-references/*.jpg}"
+    },
+    "api/send-photo.js": {
+      "maxDuration": 30,
+      "includeFiles": "public/assets/spain-info-logo.png"
+    },
+    "api/lead.js": {
+      "maxDuration": 30
+    },
+    "api/claim.js": {
+      "maxDuration": 15
+    },
+    "api/health.js": {
+      "maxDuration": 10
+    },
+    "api/host-photo.js": {
+      "maxDuration": 300,
+      "includeFiles": "{public/data/destinations.json,assets/region-references/*.jpg}"
+    },
+    "api/host-email.js": {
+      "maxDuration": 30,
+      "includeFiles": "public/assets/spain-info-logo.png"
+    },
+    "api/host-session.js": {
+      "maxDuration": 30
+    },
+    "api/host-greeting.js": {
+      "maxDuration": 15
+    }
+  },
+  "outputDirectory": "public",
+  "installCommand": "npm ci --ignore-scripts"
 }

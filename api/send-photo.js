@@ -1,3 +1,6 @@
+import {SPAIN_LOGO,TOURISM_FOOTER_HTML,TOURISM_FOOTER_TEXT} from '../lib/tourism-email.js';
+import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url);
 /**
  * Turespaña · IMEX — photo email delivery
  *
@@ -38,7 +41,7 @@ const esc = (s) => String(s || "").replace(/[&<>"']/g, (c) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
 }[c]));
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   setCors(res);
   if (req.method === "OPTIONS") { res.statusCode = 204; return res.end(); }
   if (req.method !== "POST") { res.statusCode = 405; return res.end("Method not allowed"); }
@@ -96,18 +99,7 @@ module.exports = async function handler(req, res) {
               </p>
             </div>
           </td></tr>
-          <tr><td style="padding:18px 32px 6px">
-            <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:18px 20px;text-align:center">
-              <p style="margin:0 0 14px;font-size:14px;color:#FFFFFF;line-height:1.5">
-                Plan the trip: <a href="https://www.spain.info/en/" style="color:#FFEA00;text-decoration:none">spain.info</a>
-              </p>
-            </div>
-          </td></tr>
-          <tr><td style="padding:22px 32px 26px;border-top:1px solid rgba(255,255,255,0.10);text-align:center;font-size:11px;color:#C8C0A8;line-height:1.6">
-            Turespaña · IMEX Las Vegas · Oct 13–15 2026 · Hotel Mandalay<br/>
-            Painted by <strong style="color:#FFFFFF">PowerWyze</strong><br/>
-            <span style="color:#8A8274;font-size:10px">You're receiving this because you snapped a portrait at the Turespaña IMEX booth and opted into the newsletter. Reply to unsubscribe.</span>
-          </td></tr>
+          ${TOURISM_FOOTER_HTML}
         </table>
       </td></tr>
     </table>
@@ -122,9 +114,9 @@ module.exports = async function handler(req, res) {
     destLabel ? `Destination: ${destLabel}` : "",
     "",
     "You're on the Turespaña newsletter list from the IMEX Las Vegas booth.",
-    "https://www.spain.info/en/",
+    TOURISM_FOOTER_TEXT,
     "",
-    "— Turespaña · IMEX Las Vegas · Painted by PowerWyze",
+    "— Turespaña · IMEX Las Vegas",
   ].filter((line) => line !== undefined).join("\n");
 
   try {
@@ -140,7 +132,7 @@ module.exports = async function handler(req, res) {
         filename: safeFilename,
         content: Buffer.from(imageBase64, "base64"),
         contentType: mimeType || "image/jpeg",
-      }],
+      },{filename:"spain-tourism-logo.png",content:SPAIN_LOGO,contentType:"image/png",cid:"spain-tourism-logo",contentDisposition:"inline"}],
     });
   } catch (e) {
     console.error("smtp error", e);

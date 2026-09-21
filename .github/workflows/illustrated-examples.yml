@@ -1,0 +1,53 @@
+name: Refresh illustrated destination examples
+on:
+  workflow_dispatch:
+    inputs:
+      destinations:
+        description: Comma-separated destination IDs
+        default: canarias,barcelona,bilbao
+        type: string
+permissions:
+  contents: write
+jobs:
+  examples:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/turespana-voice-host
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts
+      - run: npm install --no-save --package-lock=false playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/render-illustrated-examples.mjs
+        env:
+          EXAMPLE_DESTINATIONS: ${{ inputs.destinations }}
+          TURESPANA_HOST_PREVIEW_URL: ${{ vars.TURESPANA_HOST_PREVIEW_URL }}
+      - run: |
+          python -m pip install Pillow
+          python - <<'PYTHON'
+          from PIL import Image
+          from pathlib import Path
+          for p in Path('artifacts/illustrated-examples').glob('*.jpg'):
+              image=Image.open(p).convert('RGB');image.thumbnail((400,600))
+              image.save(Path('public/assets/examples')/(p.stem+'.webp'),'WEBP',quality=86,method=6)
+          PYTHON
+      - name: Persist selected illustrated examples
+        run: |
+          git config user.name 'PowerWyze build'
+          git config user.email 'actions@users.noreply.github.com'
+          mkdir -p assets/destination-examples-illustrated
+          cp artifacts/illustrated-examples/*.jpg assets/destination-examples-illustrated/
+          git add public/assets/examples assets/destination-examples-illustrated
+          git commit -m "Refresh selected illustrated destination examples"
+          git pull --rebase origin codex/turespana-voice-host
+          git push origin HEAD:codex/turespana-voice-host
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: illustrated-destination-examples
+          path: artifacts/
+          retention-days: 3

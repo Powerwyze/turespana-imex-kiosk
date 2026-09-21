@@ -12,7 +12,7 @@ const I18N = {
     rotateTitle: "Please rotate to portrait",
     rotateSub: "This experience is designed for a 1080×1920 portrait kiosk.",
     heroTitle: "Pick a destination. Wear Spain.",
-    heroLede: "Choose Andalucía, Madrid, Cataluña, País Vasco, Galicia, or Valencia. We’ll dress you for that destination and email your poster.",
+    heroLede: "Choose Canarias, Barcelona, Bilbao, Madrid, Andalucía, or Valencia. We’ll dress you for that destination and email your poster.",
     back: "← Destinations",
     hudPortrait: "PORTRAIT · 9:16",
     ctaTakePhoto: "Take My Photo",
@@ -48,7 +48,7 @@ const I18N = {
     rotateTitle: "Gira a vertical",
     rotateSub: "Esta experiencia está diseñada para un kiosco vertical 1080×1920.",
     heroTitle: "Elige un destino. Ponte España.",
-    heroLede: "Elige Andalucía, Madrid, Cataluña, País Vasco, Galicia o Valencia. Te vestimos para ese destino y te enviamos el cartel.",
+    heroLede: "Elige Canarias, Barcelona, Bilbao, Madrid, Andalucía o Valencia. Te vestimos para ese destino y te enviamos el cartel.",
     back: "← Destinos",
     hudPortrait: "VERTICAL · 9:16",
     ctaTakePhoto: "Toma mi foto",
@@ -441,38 +441,8 @@ const booth = (() => {
   }
 
   async function watermark(blob, dest) {
-    const img = await createImageBitmap(blob);
-    const c = document.createElement("canvas");
-    c.width = img.width;
-    c.height = img.height;
-    const ctx = c.getContext("2d");
-    ctx.drawImage(img, 0, 0);
-    const W = c.width, H = c.height;
-    const scale = W / 1024;
-    const pad = 28 * scale;
-    const veilH = 220 * scale;
-    const grad = ctx.createLinearGradient(0, H - veilH, 0, H);
-    grad.addColorStop(0, "rgba(0,0,0,0)");
-    grad.addColorStop(1, "rgba(27,22,28,0.72)");
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, H - veilH, W, veilH);
-
-    ctx.save();
-    ctx.textAlign = "left";
-    ctx.textBaseline = "alphabetic";
-    ctx.shadowColor = "rgba(0,0,0,0.55)";
-    ctx.shadowBlur = 8 * scale;
-    ctx.fillStyle = "#FFEA00";
-    ctx.font = `700 ${Math.round(28 * scale)}px Oswald, sans-serif`;
-    ctx.fillText("TURESPAÑA", pad, H - pad - 52 * scale);
-    ctx.fillStyle = "#FFFFFF";
-    ctx.font = `600 ${Math.round(42 * scale)}px Fraunces, Georgia, serif`;
-    ctx.fillText(destLabel(dest) || "Spain", pad, H - pad - 14 * scale);
-    ctx.fillStyle = "#C8C0A8";
-    ctx.font = `500 ${Math.round(20 * scale)}px Inter, sans-serif`;
-        ctx.fillText("spain.info  ·  IMEX Las Vegas  ·  Oct 13–15 2026", pad, H - pad + 10 * scale);
-    ctx.restore();
-    return new Promise((res) => c.toBlob((b) => res(b), "image/jpeg", 0.95));
+    const {brandPortrait}=await import('./portrait-branding.js');
+    return brandPortrait(blob,destLabel(dest));
   }
 
   async function compress(blob) {
@@ -514,9 +484,7 @@ const booth = (() => {
         throw new Error(msg);
       }
       const rawBlob = await r.blob();
-      let generatedBlob;
-      try { generatedBlob = await watermark(rawBlob, job.dest); }
-      catch (_) { generatedBlob = rawBlob; }
+      const generatedBlob = await watermark(rawBlob, job.dest);
       job.generatedBlob = generatedBlob;
       job.status = "ready";
     } catch (e) {
@@ -695,13 +663,55 @@ async function boot() {
     DESTINATIONS = Array.isArray(json.destinations) ? json.destinations : [];
   } catch (e) {
     DESTINATIONS = [
-      { id: "andalucia", label: "Andalucía", labelEs: "Andalucía", tileNote: "Feria & flamenco", accent: "#E42719" },
-      { id: "madrid", label: "Madrid", labelEs: "Madrid", tileNote: "Capital chic", accent: "#FFEA00" },
-      { id: "cataluna", label: "Cataluña", labelEs: "Cataluña", tileNote: "Mediterráneo", accent: "#7CB165" },
-      { id: "pais-vasco", label: "País Vasco", labelEs: "País Vasco", tileNote: "Costa vasca", accent: "#1B161C" },
-      { id: "galicia", label: "Galicia", labelEs: "Galicia", tileNote: "Atlantic green", accent: "#7CB165" },
-      { id: "valencia", label: "Valencia", labelEs: "Valencia", tileNote: "Fallas & light", accent: "#C45C26" },
-    ];
+  {
+    "id": "canarias",
+    "label": "Canarias",
+    "labelEs": "Canarias",
+    "tileNote": "Volcanoes & island traditions",
+    "tileNoteEs": "Volcanes y tradiciones",
+    "accent": "#168FAD"
+  },
+  {
+    "id": "barcelona",
+    "label": "Barcelona",
+    "labelEs": "Barcelona",
+    "tileNote": "Gaudí & Catalan culture",
+    "tileNoteEs": "Gaudí y cultura catalana",
+    "accent": "#7CB165"
+  },
+  {
+    "id": "bilbao",
+    "label": "Bilbao",
+    "labelEs": "Bilbao",
+    "tileNote": "Guggenheim & Basque culture",
+    "tileNoteEs": "Guggenheim y cultura vasca",
+    "accent": "#1B161C"
+  },
+  {
+    "id": "madrid",
+    "label": "Madrid",
+    "labelEs": "Madrid",
+    "tileNote": "Capital chic",
+    "tileNoteEs": "Capital chic",
+    "accent": "#FFEA00"
+  },
+  {
+    "id": "andalucia",
+    "label": "Andalucía",
+    "labelEs": "Andalucía",
+    "tileNote": "Feria & flamenco",
+    "tileNoteEs": "Feria y flamenco",
+    "accent": "#E42719"
+  },
+  {
+    "id": "valencia",
+    "label": "Valencia",
+    "labelEs": "Valencia",
+    "tileNote": "Fallas & light",
+    "tileNoteEs": "Fallas y luz",
+    "accent": "#C45C26"
+  }
+];
   }
   renderDestGrid();
   showScreen("screenDest");
