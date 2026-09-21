@@ -1,3 +1,4 @@
+import {homeText} from './home-language.js';
 export function mountTouchControls({getState,start,voice,action,finish,labels}){
  const panel=document.getElementById('touchControls'),email=document.getElementById('emailOpen');
  let edit=null,last='';
@@ -6,15 +7,15 @@ export function mountTouchControls({getState,start,voice,action,finish,labels}){
   panel.hidden=s.emailOpen;
   document.querySelectorAll('.destination-pick').forEach(b=>{b.disabled=busy||s.phase==='result'||s.emailOpen||s.phase==='connecting';b.removeAttribute('aria-pressed');});
   if(s.phase==='idle')edit=null;
-  const signature=JSON.stringify([s,edit]);if(signature===last)return;last=signature;
+  const signature=JSON.stringify([s,edit,document.documentElement.lang]);if(signature===last)return;last=signature;
   const title=document.createElement('h2');title.id='touchTitle';
   const hint=document.createElement('p');hint.className='touch-help';
   const row=document.createElement('div');row.className='touch-actions';
   const button=(label,id,fn,secondary=false)=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.dataset.touch=id;if(secondary)b.className='secondary';b.addEventListener('click',fn);row.append(b);return b;};
   const choose=(name,args)=>{edit=null;action(name,args);};
   if(s.phase==='idle'||(s.phase==='error'&&!s.active)){
-   title.textContent='Your Spanish adventure';hint.textContent=s.phase==='error'?(s.statusMessage||'You can use the buttons or reconnect to your host.'):'Choose buttons or speak with Lola.';
-   if(s.phase==='error')button('Start photo','start',start);button('Talk to Lola','voice',voice,true);
+   title.textContent=homeText('adventure');hint.textContent=s.phase==='error'?(s.statusMessage||'You can use the buttons or reconnect to your host.'):homeText('help');
+   if(s.phase==='error')button('Start photo','start',start);button(homeText('talk'),'voice',voice,true);
   }else if(s.phase==='connecting'){
    title.textContent='Connecting to Lola…';button('Cancel','cancel',finish,true);
   }else if(busy){

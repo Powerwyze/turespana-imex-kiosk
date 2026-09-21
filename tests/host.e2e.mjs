@@ -5,7 +5,7 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 const root=path.resolve(import.meta.dirname,'..');
 assert.equal(await fs.readFile(path.join(root,'public/index.html'),'utf8'),await fs.readFile(path.join(root,'public/host.html'),'utf8'),'Root homepage and kiosk entry point must stay in sync');
-const allowed=["/index.html","/assets/examples/regional-clothing.jpg","/assets/spain-background.png", "/assets/examples/andalucia.webp", "/assets/examples/madrid.webp", "/assets/examples/barcelona.webp", "/assets/examples/bilbao.webp", "/assets/examples/canarias.webp", "/assets/examples/valencia.webp"].concat(['/portrait-branding.js','/host.html','/host.css','/host.js','/host-engine.js','/host-connection.js','/host-touch.js','/turespana-engine.js','/host-countdown.js','/host-idle.js','/host-captions.js','/host-email.js','/host-avatar.js','/host-sentry.js','/host-sentry-gate.js','/host-sentry-worker.js','/assets/person-detector.tflite','/tests/fixtures/sentry-person.jpg','/email-shortcuts.js','/assets/spain-sun.glb','/assets/spain-sun-fallback.svg','/assets/flow-event-background.jpg','/assets/fonts/fraunces.woff2','/assets/fonts/borel.woff2']);
+const allowed=["/index.html","/assets/examples/regional-clothing.jpg","/assets/spain-background.png", "/assets/examples/andalucia.webp", "/assets/examples/madrid.webp", "/assets/examples/barcelona.webp", "/assets/examples/bilbao.webp", "/assets/examples/canarias.webp", "/assets/examples/valencia.webp"].concat(['/home-language.js','/portrait-branding.js','/host.html','/host.css','/host.js','/host-engine.js','/host-connection.js','/host-touch.js','/turespana-engine.js','/host-countdown.js','/host-idle.js','/host-captions.js','/host-email.js','/host-avatar.js','/host-sentry.js','/host-sentry-gate.js','/host-sentry-worker.js','/assets/person-detector.tflite','/tests/fixtures/sentry-person.jpg','/email-shortcuts.js','/assets/spain-sun.glb','/assets/spain-sun-fallback.svg','/assets/flow-event-background.jpg','/assets/fonts/fraunces.woff2','/assets/fonts/borel.woff2']);
 const server=http.createServer(async(req,res)=>{
   const pathname=new URL(req.url,'http://localhost').pathname==='/'?'/index.html':new URL(req.url,'http://localhost').pathname;
   if(!allowed.includes(pathname)&&!/^\/vendor\/(three|vision)\/[a-zA-Z0-9/_.-]+\.(js|mjs|wasm)$/.test(pathname)){res.writeHead(404);res.end();return;}
@@ -108,7 +108,39 @@ try{
         logo.left>=brand.right&&logo.width<=110&&logo.top<h.bottom;
     }), 'Homepage has a larger 3x2 gallery and a small logo beside the heading on '+name);
     await page.screenshot({path:'artifacts/host-idle-'+name+'.png'});
+    const language=page.locator('#homeLanguageToggle');
+    assert.ok(await language.evaluate(el=>{const r=el.getBoundingClientRect(),s=document.querySelector('#sentryToggle').getBoundingClientRect();return r.top>=0&&r.bottom<90&&r.right<=innerWidth&&r.left>=innerWidth/2&&r.left>s.right+4;}),'Top-right language control must not overlap the camera control');
+    await language.click();
+    assert.equal(await page.locator('html').getAttribute('lang'),'es');
+    assert.equal(await page.locator('.event-title').textContent(),'Descubre España');
+    assert.equal(await page.locator('[data-touch=voice]').textContent(),'Habla con Lola');
+    assert.equal(await page.locator('.region-card-action').first().textContent(),'Toca para transformar');
+    assert.equal(await page.locator('#sentryToggle').textContent(),'Activar cámara');
+    assert.equal(await page.locator('.destination-pick').count(),6);
+    assert.ok(await page.locator('#touchControls').evaluate(e=>e.getBoundingClientRect().bottom<=innerHeight));
+    assert.ok(await page.locator('#stage').evaluate(e=>{
+      const b=getComputedStyle(e,'::before');
+      return b.backgroundImage.includes('0.45')&&b.filter==='saturate(0.55)'&&
+        [...document.querySelectorAll('.destination-pick,.destination-pick img,#intro,#face')].every(el=>getComputedStyle(el).opacity==='1'&&getComputedStyle(el).filter==='none');
+    }),'Only the background is muted; foreground elements stay fully opaque');
+    await page.screenshot({path:'artifacts/host-home-spanish-'+name+'.png'});
+    await language.press('Enter');
+    assert.equal(await page.locator('html').getAttribute('lang'),'en');
+    assert.equal(await page.locator('.event-title').textContent(),'Discover Spain');
   }
+  await page.locator('#homeLanguageToggle').click();await page.reload();
+  await page.waitForFunction(()=>document.documentElement.lang==='es'&&document.querySelector('#face').dataset.avatar==='ready');
+  assert.equal(await page.locator('[data-touch=voice]').textContent(),'Habla con Lola','Language preference survives reload');
+  await page.locator('.destination-pick[data-destination=barcelona]').click();
+  await page.locator('[data-touch=people-2]').click();
+  await page.locator('[data-touch=capture]').waitFor({state:'visible'});
+  assert.ok((await page.locator('.touch-help').textContent()).includes('Barcelona'),'Spanish card starts the correct destination');
+  assert.equal(await page.locator('#homeLanguageToggle').isVisible(),false,'Homepage-only toggle stays out of the photo controls');
+  await page.locator('[data-touch=people]').click();await page.locator('[data-touch=back]').click();
+  await page.waitForFunction(()=>document.body.dataset.phase==='idle');
+  assert.equal(await page.locator('.event-title').textContent(),'Descubre España','Home language is retained when a guest returns');
+  await page.locator('#homeLanguageToggle').click();
+
   await page.setViewportSize({width:1080,height:1920});await page.waitForTimeout(900);
   await page.locator('#face').click();await page.waitForFunction(()=>document.body.dataset.phase==='listening');
   // Captions are actual outgoing deltas, safely rendered above Lola at kiosk and phone sizes.

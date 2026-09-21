@@ -1,3 +1,4 @@
+import {mountHomeLanguage,homeText} from './home-language.js';
 import {brandPortrait} from './portrait-branding.js';
 import {mountTouchControls} from './host-touch.js';
 import {connectVoice} from './host-connection.js';
@@ -14,6 +15,7 @@ const $=id=>document.getElementById(id);
 const face=$('face'),camera=$('camera'),audio=$('voice'),picture=$('picture');
 const captions=new HostCaptions($('hostCaptions'),$('hostCaptionText'),$('stage'),face);
 let cameraPreparation=null,cameraEpoch=0,touchMode=false,touchUI=null;
+const homeLanguage=mountHomeLanguage({onChange:()=>touchUI?.render()});
 let peer,events,mic,cameraStream,context,analyser,sourceNode,ready=false,connecting=false,ending=false;
 let sessionEpoch=0,startTimer,closeTimer,maxTimer,pictureUrl=null,requestController=null,level=0,lastPhase='',eventTimer,eventIndex=0,lastVoiceAt=0,guestInterrupted=false,sentryAudioContext=null,sentrySetup=0,sentryEnabling=false,rearmImmediately=false;
 const wait=(ms,signal)=>new Promise((resolve,reject)=>{
@@ -23,7 +25,7 @@ const wait=(ms,signal)=>new Promise((resolve,reject)=>{
   signal?.addEventListener('abort',abort,{once:true});
 });
 function text(title,hint=''){ $('headline').textContent=title;$('hint').textContent=hint; }
-function phase(value){queueMicrotask(()=>touchUI?.render());if(document.body.dataset.phase!==value)captions.clear();document.body.dataset.phase=value;placeHomeLogo();$('sentryToggle').disabled=!sentry.enabled&&!['idle','error'].includes(value);}
+function phase(value){queueMicrotask(()=>touchUI?.render());if(document.body.dataset.phase!==value)captions.clear();document.body.dataset.phase=value;placeHomeLogo();homeLanguage.refresh();$('sentryToggle').disabled=!sentry.enabled&&!['idle','error'].includes(value);}
 function placeHomeLogo(){
   const slot=$('homeLogoSlot');
   if(document.body.dataset.phase==='idle'){
@@ -40,10 +42,10 @@ const sentry=new CameraSentry({
   canGreet:()=>!touchMode&&!ready&&!connecting&&!ending&&!document.hidden,
   onVisitor:greeting=>begin({sentryGreeting:greeting}),
   onStatus:(status,message='')=>{
-    $('sentryToggle').textContent=status==='off'?'Enable camera sentry':status==='starting'?'Stop sentry setup':'Stop camera sentry';
+    $('sentryToggle').dataset.sentryStatus=status;homeLanguage.refresh();
     $('sentryToggle').setAttribute('aria-pressed',String(status!=='off'));
     $('sentryNotice').hidden=status==='off';
-    $('sentryNotice').textContent=status==='starting'?'Preparing camera sentry…':'Camera sentry on · A snapshot is used for your greeting';
+    $('sentryNotice').textContent=homeText(status==='starting'?'preparingSentry':'sentryNotice');
     if(!ready&&!connecting){
       if(status==='watching')text('Looking good starts here.',message||'Walk into view to meet your AI photo host.');
       else if(status==='greeting')text('Hello there.','Your host is getting ready to say hello.');
@@ -70,7 +72,7 @@ $('sentryToggle').addEventListener('click',async()=>{
     if(setup!==sentrySetup)return;
     await sentry.enable();
   }catch(error){
-    if(setup===sentrySetup){stopSentry();$('sentryToggle').textContent='Enable camera sentry';text('Camera sentry needs permission.',error.name==='NotAllowedError'?'Allow microphone and camera access, then enable sentry again.':'Tap Enable camera sentry to try again.');}
+    if(setup===sentrySetup){stopSentry();$('sentryToggle').textContent=homeText('enableSentry');text('Camera sentry needs permission.',error.name==='NotAllowedError'?'Allow microphone and camera access, then enable sentry again.':'Tap Enable camera sentry to try again.');}
   }finally{if(setup===sentrySetup)sentryEnabling=false;}
 });
 function stopEventTalk(){clearInterval(eventTimer);eventTimer=null;}

@@ -242,3 +242,16 @@ body[data-phase=idle] .touch-actions button.secondary{flex:0 1 250px;min-height:
 @media(max-width:600px){.region-card-caption{padding:22px 4px 9px;gap:4px}body[data-phase=idle] #intro .event-title{font-size:38px;margin-top:4px}}
 @media(orientation:landscape) and (min-width:700px){body[data-phase=idle] #intro .event-title{font-size:clamp(36px,4.1vw,56px)}.region-card-name{font-size:clamp(13px,1.8vw,23px)}.region-card-action{font-size:clamp(9px,1.2vw,14px)}}
 @media(orientation:landscape) and (max-height:500px) and (min-width:700px){.region-card-caption{padding:16px 2px 5px;gap:2px}.region-card-name{font-size:11px}.region-card-action{font-size:8px}body[data-phase=idle] #intro .event-title{font-size:34px}}
+
+/* Muted homepage scenery lives entirely below the foreground UI. */
+body[data-phase=idle] #stage{background:#151f2a;isolation:isolate}
+body[data-phase=idle] #stage::before{
+ content:'';position:absolute;inset:0;z-index:0;pointer-events:none;opacity:1;
+ background:linear-gradient(rgba(10,16,24,.45),rgba(10,16,24,.45)),url('/assets/spain-background.png') center/cover no-repeat;
+ filter:saturate(.55);
+}
+body[data-phase=idle] .ambient{display:none}
+#homeLanguageToggle{position:absolute;z-index:10;top:max(20px,env(safe-area-inset-top));right:max(24px,env(safe-area-inset-right));display:flex;align-items:center;justify-content:center;gap:8px;min-width:126px;min-height:48px;padding:10px 16px;border:1px solid #ffffff80;border-radius:99px;background:#0e1d2ee8;color:#fff;font:600 clamp(14px,1.5vw,20px) Arial,sans-serif;cursor:pointer;touch-action:manipulation}
+#homeLanguageToggle:focus-visible{outline:3px solid #ffe58a;outline-offset:4px}
+#homeLanguageToggle:hover{background:#20354b}
+@media(max-width:360px){#homeLanguageToggle{right:12px;min-width:108px;padding:10px 12px;font-size:13px}#sentryToggle{left:12px;padding:10px 12px}}
