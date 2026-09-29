@@ -21,7 +21,7 @@ try{
   },input.toString('base64'));
   if(result.status!==200){console.log('Image smoke failed:',JSON.stringify(result));throw new Error('Image generation or guest verification did not succeed.');}
   assert.match(result.type,/^image\//);
-  assert.equal(result.pipeline,'regional-photo-v2');assert.equal(result.model,'gpt-image-2.5-flare');
+  assert.equal(result.pipeline,'regional-photo-v3');assert.equal(result.model,'gpt-image-2.5-flare');
   const bytes=Buffer.from(result.base64,'base64');assert.ok(bytes.length>1000);
   await fs.mkdir('artifacts',{recursive:true});await fs.writeFile('artifacts/live-generated-test.jpg',bytes);
   const dimensions=await page.evaluate(async base64=>{

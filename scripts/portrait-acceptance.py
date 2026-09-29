@@ -26,7 +26,7 @@ for name,data,style in sources:
     req=urllib.request.Request(origin+"/api/host-photo",data=body,headers={"Content-Type":"multipart/form-data; boundary="+boundary,"Origin":"https://turespana-imex-kiosk.powerwyze-2010.chatgpt.site"})
     try:
         with urllib.request.urlopen(req,timeout=195) as r:
-            assert r.headers.get("X-Portrait-Pipeline")=="regional-photo-v2"
+            assert r.headers.get("X-Portrait-Pipeline")=="regional-photo-v3"
             assert r.headers.get("X-Image-Model")=="gpt-image-2.5-flare"
             image=r.read();result=Image.open(io.BytesIO(image));result.verify()
             (out/("portrait-"+name+".jpg")).write_bytes(image)

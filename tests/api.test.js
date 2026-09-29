@@ -7,7 +7,7 @@ import { parseSubjectCheck } from '../lib/subject-check.js';
 import sendPhoto from '../api/host-email.js';
 
 const jpeg = Buffer.from('synthetic-jpeg').toString('base64');
-const valid = count => ({ person_count: count, only_nearest_guests: true, source_has_requested_guests: true, uncertain: false, face_and_hair_consistent: true, regional_outfit_matches: true, outfit_visible: true, photographic: true, no_poster_layout: true });
+const valid = count => ({ person_count: count, only_nearest_guests: true, source_has_requested_guests: true, uncertain: false, face_and_hair_consistent: true, regional_outfit_matches: true, regional_hair_accessories_match: true, outfit_visible: true, photographic: true, no_poster_layout: true });
 const envelope = check => ({ status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: JSON.stringify(check) }] }] });
 
 async function generateCase({ count = '1', check = valid(Number(count ?? 1)), verifyBody, verifyStatus = 200, verifyThrows = false, duplicate = false, style = '', imageStatus = 200, destination='madrid' } = {}) {
@@ -196,7 +196,7 @@ for(const destination of [null,'','unknown','__proto__','cataluna','pais-vasco',
 
 for(const destination of ["canarias","barcelona","bilbao","madrid","andalucia","valencia"])test('current destination generates successfully: '+destination,async()=>{const {response}=await generateCase({destination});assert.equal(response.status,200);});
 
-for(const flag of ['face_and_hair_consistent','regional_outfit_matches','outfit_visible','photographic','no_poster_layout'])test('rejects quality mismatch without auto-regeneration: '+flag,async()=>{
+for(const flag of ['face_and_hair_consistent','regional_outfit_matches','regional_hair_accessories_match','outfit_visible','photographic','no_poster_layout'])test('rejects quality mismatch without auto-regeneration: '+flag,async()=>{
  const {response,calls}=await generateCase({check:{...valid(1),[flag]:false}});
  assert.equal(response.status,422);assert.equal(calls.length,2);const body=await response.text();assert.match(body,/PORTRAIT_QUALITY_MISMATCH/);assert.ok(!body.includes(jpeg));
 });
@@ -208,5 +208,18 @@ test('each destination uses only its own reference panel',async()=>{
  for(const destination of ['canarias','barcelona','bilbao','madrid','andalucia','valencia']){
   const {calls}=await generateCase({destination});const p=JSON.parse(calls[0].init.body);
   assert.equal(p.images[1].image_url,'data:image/jpeg;base64,'+readFileSync('assets/region-references/'+destination+'.jpg').toString('base64'));
+ }
+});
+
+test('regional hairstyles are required by both generation and the independent check',async()=>{
+ for(const destination of ['canarias','barcelona','bilbao','madrid','andalucia','valencia']){
+  const {response,calls}=await generateCase({destination});assert.equal(response.status,200);
+  const prompt=JSON.parse(calls[0].init.body).prompt,verifier=JSON.parse(calls[1].init.body);
+  assert.match(prompt,/REGIONAL HAIR AND ACCESSORIES/);assert.match(prompt,/10–15% beauty retouching/);
+  assert.doesNotMatch(prompt,/Do not add hats, caps or headscarves|Preserve source hair; no compulsory|preserve source facial geometry and the source hairstyle/);
+  assert.match(verifier.instructions,/MUST NOT count as identity drift/);
+  assert.ok(verifier.text.format.schema.required.includes('regional_hair_accessories_match'));
+  if(destination==='valencia'){assert.match(prompt,/two proportionate braided spiral side coils/);assert.match(verifier.instructions,/three-bun Fallera coiffure is MANDATORY/);}
+  if(destination==='madrid'){assert.match(prompt,/BOTH the white pañuelo AND the red rose are REQUIRED/);assert.match(verifier.instructions,/BOTH the white pañuelo AND the red rose are REQUIRED/);}
  }
 });
