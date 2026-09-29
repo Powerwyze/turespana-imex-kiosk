@@ -13,7 +13,7 @@ assets=stage/'assets';assets.mkdir(exist_ok=True)
 public=repo/'public'
 selected=[p for p in public.iterdir() if p.suffix in ['.js','.html','.css']]
 selected+=list((public/'data').glob('*.json'))
-selected+=[public/'assets'/p for p in ['spain-sun.glb','spain-sun-fallback.svg','spain-background.png']]
+selected+=[public/'assets'/p for p in ['spain-sun.glb','spain-sun-fallback.svg','spain-info-logo.png','spain-background.png']]
 selected+=list((public/'assets/examples').glob('*.webp'))
 selected+=[public/'assets/examples/regional-clothing.jpg']
 for p in selected:

@@ -5,7 +5,7 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 const root=path.resolve(import.meta.dirname,'..');
 assert.equal(await fs.readFile(path.join(root,'public/index.html'),'utf8'),await fs.readFile(path.join(root,'public/host.html'),'utf8'),'Root homepage and kiosk entry point must stay in sync');
-const allowed=["/index.html","/assets/examples/regional-clothing.jpg","/assets/spain-background.png", "/assets/examples/andalucia.webp", "/assets/examples/madrid.webp", "/assets/examples/barcelona.webp", "/assets/examples/bilbao.webp", "/assets/examples/canarias.webp", "/assets/examples/valencia.webp"].concat(['/home-language.js','/portrait-branding.js','/host.html','/host.css','/host.js','/host-engine.js','/host-connection.js','/host-touch.js','/turespana-engine.js','/host-countdown.js','/host-idle.js','/host-captions.js','/host-email.js','/host-avatar.js','/host-sentry.js','/host-sentry-gate.js','/host-sentry-worker.js','/assets/person-detector.tflite','/tests/fixtures/sentry-person.jpg','/email-shortcuts.js','/assets/spain-sun.glb','/assets/spain-sun-fallback.svg','/assets/flow-event-background.jpg','/assets/fonts/fraunces.woff2','/assets/fonts/borel.woff2']);
+const allowed=["/index.html","/assets/examples/regional-clothing.jpg","/assets/spain-background.png", "/assets/examples/andalucia.webp", "/assets/examples/madrid.webp", "/assets/examples/barcelona.webp", "/assets/examples/bilbao.webp", "/assets/examples/canarias.webp", "/assets/examples/valencia.webp"].concat(['/assets/spain-info-logo.png','/home-language.js','/portrait-branding.js','/host.html','/host.css','/host.js','/host-engine.js','/host-connection.js','/host-touch.js','/turespana-engine.js','/host-countdown.js','/host-idle.js','/host-captions.js','/host-email.js','/host-avatar.js','/host-sentry.js','/host-sentry-gate.js','/host-sentry-worker.js','/assets/person-detector.tflite','/tests/fixtures/sentry-person.jpg','/email-shortcuts.js','/assets/spain-sun.glb','/assets/spain-sun-fallback.svg','/assets/flow-event-background.jpg','/assets/fonts/fraunces.woff2','/assets/fonts/borel.woff2']);
 const server=http.createServer(async(req,res)=>{
   const pathname=new URL(req.url,'http://localhost').pathname==='/'?'/index.html':new URL(req.url,'http://localhost').pathname;
   if(!allowed.includes(pathname)&&!/^\/vendor\/(three|vision)\/[a-zA-Z0-9/_.-]+\.(js|mjs|wasm)$/.test(pathname)){res.writeHead(404);res.end();return;}
@@ -224,9 +224,33 @@ try{
   assert.equal(await page.locator('#picture').isVisible(),true);
   const brandedSize=await page.locator('#picture').evaluate(e=>({width:e.naturalWidth,height:e.naturalHeight}));
   const originalSize=await page.evaluate(async()=>{const p=await createImageBitmap(await (await fetch('/tests/fixtures/sentry-person.jpg')).blob());const s={width:p.width,height:p.height};p.close();return s;});
-  assert.equal(brandedSize.width,originalSize.width);assert.equal(brandedSize.height,originalSize.height+Math.round(152*originalSize.width/1024),'Brand strip extends image instead of covering a guest');
+  assert.equal(brandedSize.width,originalSize.width);assert.equal(brandedSize.height,originalSize.height+Math.round(116*originalSize.width/1024)+Math.round(188*originalSize.width/1024),'Brand bands extend image instead of covering a guest');
   const brandedBytes=await page.locator('#picture').evaluate(async e=>Array.from(new Uint8Array(await (await fetch(e.src)).arrayBuffer())));
   await fs.writeFile('artifacts/branded-portrait.jpg',Buffer.from(brandedBytes));
+  // Inspect actual canvas draw calls for all six destinations; text stays out of the photo.
+  const brandReport=await page.evaluate(async()=>{
+    const {brandPortrait,CAMPAIGN_PHRASE,PORTRAIT_LOGO}=await import('/portrait-branding.js');
+    const raw=await (await fetch('/tests/fixtures/sentry-person.jpg')).blob();
+    const nativeText=CanvasRenderingContext2D.prototype.fillText,nativeImage=CanvasRenderingContext2D.prototype.drawImage;
+    const records=[];let current;
+    CanvasRenderingContext2D.prototype.fillText=function(text,x,y,...rest){current.text.push({text,x,y});return nativeText.call(this,text,x,y,...rest);};
+    CanvasRenderingContext2D.prototype.drawImage=function(image,...args){current.images.push({src:image.src||'guest',args});return nativeImage.call(this,image,...args);};
+    try{for(const label of ['Canarias','Barcelona','Bilbao','Madrid','Andalucía','Valencia']){
+      current={label,text:[],images:[]};const branded=await brandPortrait(raw,label);const bitmap=await createImageBitmap(branded);current.width=bitmap.width;current.height=bitmap.height;bitmap.close();records.push(current);
+    }}finally{CanvasRenderingContext2D.prototype.fillText=nativeText;CanvasRenderingContext2D.prototype.drawImage=nativeImage;}
+    return {records,phrase:CAMPAIGN_PHRASE,logo:PORTRAIT_LOGO};
+  });
+  assert.equal(brandReport.phrase,'Think You Know Spain? Think Again.');
+  assert.equal(brandReport.logo,'/assets/spain-info-logo.png');
+  for(const r of brandReport.records){
+    assert.deepEqual(r.text.map(t=>t.text),[r.label.toLocaleUpperCase('es-ES'),'Think You Know Spain? Think Again.']);
+    const top=Math.round(116*r.width/1024),bottom=top+originalSize.height;
+    assert.ok(r.text[0].y<top&&r.text[1].y>bottom,'Only destination above; campaign below');
+    assert.equal(r.images[0].src,'guest');assert.equal(r.images[0].args[1],top,'Entire guest photo is offset below the header');
+    assert.ok(r.images[1].src.endsWith('/assets/spain-info-logo.png'));assert.ok(r.images[1].args[1]>=bottom,'Original logo belongs in the footer');
+  }
+  await fs.writeFile('artifacts/portrait-branding-report.json',JSON.stringify(brandReport,null,2));
+
   await say('Your portrait is ready! Would you like me to email it? Spell your address aloud, including at and dot.');
   await page.waitForTimeout(1000);assert.ok(await page.locator('#hostCaptions').evaluate(e=>{const r=e.getBoundingClientRect(),p=document.querySelector('#picture').getBoundingClientRect(),c=document.querySelector('#touchControls').getBoundingClientRect();return r.top>=p.bottom&&r.bottom<=c.top&&r.left>=0&&r.right<=innerWidth;}),'Result captions are outside the photograph');await page.screenshot({path:'artifacts/host-result-portrait.png'});
   assert.ok(await page.locator('#face').evaluate(e=>e.getBoundingClientRect().width<innerWidth*.25));
