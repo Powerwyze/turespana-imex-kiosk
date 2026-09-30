@@ -35,9 +35,10 @@
     <label for="emailInput">Email address</label>
     <input id="emailInput" type="text" inputmode="none" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" maxlength="254" aria-describedby="emailHelp emailStatus">
     <p id="emailStatus" role="status"></p>
+    <div class="marketing-choice"><label for="marketingOptIn"><input id="marketingOptIn" type="checkbox"><span id="marketingCopy"></span></label><p class="marketing-note">Optional. You can receive your photo without marketing messages. This kiosk collects email only; no text-message subscription.</p></div>
+    <button id="contactKeyboardToggle" type="button" aria-controls="emailKeyboard emailDomains" aria-expanded="true">Hide touch keyboard</button>
     <div id="emailKeyboard" aria-label="Name and email keyboard"></div>
     <div id="emailDomains" aria-label="Common email endings"></div>
-    <div class="marketing-choice"><label for="marketingOptIn"><input id="marketingOptIn" type="checkbox"><span id="marketingCopy"></span></label><p class="marketing-note">Optional. You can receive your photo without marketing messages. This kiosk collects email only; no text-message subscription.</p></div>
     <button id="emailConfirm" type="button" disabled>Confirm &amp; email photo</button>
     <p class="email-note">Your name, email and marketing choice are saved for this photo experience.</p>
   </section>

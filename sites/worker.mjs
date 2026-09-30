@@ -27,7 +27,19 @@ export default {async fetch(request,env={}){
  const target=new URL(BACKEND);target.pathname=path;target.search=url.search;
  try{
   // The small voice handshake must have a complete, replay-free body rather than a streaming upload.
-  const body=isApi?(path==='/api/host-session'?await request.text():request.body):undefined;
+  let body=isApi?(path==='/api/host-session'?await request.text():request.body):undefined;
+  if(isApi&&['/api/host-email','/api/send-photo'].includes(path)){
+   if(Number(request.headers.get('content-length')||0)>12000000)return Response.json({error:'Photo is too large'},{status:413});
+   body=await request.text();
+   if(body.length>12000000)return Response.json({error:'Photo is too large'},{status:413});
+   let details;try{details=JSON.parse(body);}catch{return Response.json({error:'Invalid contact details'},{status:400});}
+   if(typeof details.imageBase64!=='string')return Response.json({error:'Photo required'},{status:400});
+   let bytes;try{bytes=Uint8Array.from(atob(details.imageBase64.replace(/^data:[^;]+;base64,/,'')),c=>c.charCodeAt(0));}catch{return Response.json({error:'Invalid photo'},{status:400});}
+   if(!bytes.length||bytes.length>8*1024*1024)return Response.json({error:'Invalid photo size'},{status:400});
+   const portraitHash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),v=>v.toString(16).padStart(2,'0')).join('');
+   const saved=await saveKioskContact(new Request(url.origin+'/api/kiosk-contact',{method:'POST',headers:{Origin:url.origin,'Content-Type':'application/json'},body:JSON.stringify({name:details.name,email:details.email,destinationId:details.destinationId,marketingOptIn:details.marketingOptIn,consentVersion:details.consentVersion,portraitHash})}),env,url);
+   if(!saved.ok)return saved;
+  }
   if(path==='/api/host-session'&&body.length>65536)return Response.json({error:'Connection request is too large.'},{status:413});
   const upstream=await fetch(target,{method:request.method,headers,body,redirect:'manual',duplex:'half'});
   // Re-encode JSON with fresh headers: never forward an upstream gateway page or stale encoding/length.

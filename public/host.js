@@ -15,7 +15,18 @@ import('./host-avatar.js').then(m=>m.mountAvatar(document.getElementById('face')
 const $=id=>document.getElementById(id);
 const face=$('face'),camera=$('camera'),audio=$('voice'),picture=$('picture');
 $('marketingCopy').innerHTML=consentLabelMarkup();
-let activeContactInput=$('guestNameInput'),keyboardShift=false;
+let activeContactInput=$('guestNameInput'),keyboardShift=false,contactKeyboardOpen=innerWidth>600;
+function contactKeyboardLayout(reset=false){
+ if(reset)contactKeyboardOpen=innerWidth>600;
+ $('emailKeyboard').hidden=!contactKeyboardOpen;
+ $('emailDomains').hidden=!contactKeyboardOpen||activeContactInput!==$('emailInput');
+ $('contactKeyboardToggle').textContent=contactKeyboardOpen?'Hide touch keyboard':'Show touch keyboard';
+ $('contactKeyboardToggle').setAttribute('aria-expanded',String(contactKeyboardOpen));
+ $('guestNameInput').inputMode=contactKeyboardOpen?'none':'text';
+ $('emailInput').inputMode=contactKeyboardOpen?'none':'email';
+}
+$('contactKeyboardToggle').addEventListener('click',()=>{contactKeyboardOpen=!contactKeyboardOpen;contactKeyboardLayout();});
+window.addEventListener('resize',()=>contactKeyboardLayout(true));contactKeyboardLayout();
 const captions=new HostCaptions($('hostCaptions'),$('hostCaptionText'),$('stage'),face);
 let cameraPreparation=null,cameraEpoch=0,touchMode=false,touchUI=null;
 const homeLanguage=mountHomeLanguage({onChange:()=>touchUI?.render()});
@@ -349,7 +360,7 @@ $('emailOpen').addEventListener('click',()=>{
 $('emailCancel').addEventListener('click',()=>{photoEmail.cancel();$('emailInput').value='';$('emailOpen').hidden=false;note('The visitor skipped email. Do not ask for their email again unless they request it.');$('emailOpen').focus();});
 $('guestNameInput').addEventListener('input',()=>{photoEmail.editName($('guestNameInput').value);touch();});
 $('marketingOptIn').addEventListener('change',()=>{photoEmail.chooseMarketing($('marketingOptIn').checked);touch();});
-for(const id of ['guestNameInput','emailInput'])$(id).addEventListener('focus',()=>{activeContactInput=$(id);$('emailDomains').hidden=id!=='emailInput';});
+for(const id of ['guestNameInput','emailInput'])$(id).addEventListener('focus',()=>{activeContactInput=$(id);$('emailDomains').hidden=!contactKeyboardOpen||id!=='emailInput';});
 $('emailInput').addEventListener('input',()=>{photoEmail.edit($('emailInput').value);touch();});
 $('emailPanel').addEventListener('pointerdown',touch);
 $('emailPanel').addEventListener('keydown',touch);

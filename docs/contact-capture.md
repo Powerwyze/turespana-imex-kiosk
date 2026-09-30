@@ -13,3 +13,5 @@ Official policy sources checked 2026-09-30:
 - Turespaña data protection (Spanish): https://www.tourspain.es/es/proteccion-datos/
 
 The homepage uses the existing official España PNG, including its original lettering. The animated sun remains the voice host during the active visit.
+
+Transactional mail uses the authorized shared Resend configuration (Production/Preview), verified sender wyzer@powerwyze.com. Project Reply-To is losangeles@tourspain.es, the official Turespaña office serving Nevada; checked 2026-09-30 at https://www.spain.info/en/outside/spanish-tourist-office-los-angeles-united-states/. Reply-To does not CC that office.

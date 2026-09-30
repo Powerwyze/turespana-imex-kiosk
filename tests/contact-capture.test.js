@@ -68,3 +68,14 @@ test('photo delivery requires a confirmed name and successful durable save, neve
   storageFails=false;r=res();await sendPhoto({method:'POST',body},r);assert.equal(r.code,200);assert.equal(r.data.stored,true);assert.equal(sends,1);
  }finally{globalThis.fetch=fetchOriginal;if(key===undefined)delete process.env.RESEND_API_KEY;else process.env.RESEND_API_KEY=key;}
 });
+
+test('Sites saves contact before email proxy and refuses to forward when persistence fails',async()=>{
+ const original=globalThis.fetch;let forwarded=0;globalThis.fetch=async()=>{forwarded++;return Response.json({ok:true});};
+ const {db,env}=database();
+ const req=()=>new Request(origin+'/api/host-email',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:JSON.stringify({...contact,imageBase64:Buffer.from('photo').toString('base64')})});
+ try{
+  assert.equal((await app.fetch(req(),{})).status,503);assert.equal(forwarded,0);
+  assert.equal((await app.fetch(req(),env)).status,200);assert.equal(forwarded,1);
+  assert.equal(db.prepare('SELECT count(*) n FROM kiosk_contacts').get().n,1);
+ }finally{globalThis.fetch=original;db.close();}
+});
