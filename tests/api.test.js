@@ -156,6 +156,7 @@ test('HTML and text email preserve PowerWyze/client links and retry idempotency'
   process.env.RESEND_API_KEY = 'test-only-placeholder';
   const calls = [];
   globalThis.fetch = async (url, init) => {
+    if(String(url).includes('/api/kiosk-contact'))return Response.json({ok:true,stored:true,id:'synthetic-contact'});
     calls.push({ url: String(url), body: JSON.parse(init.body), headers: new Headers(init.headers) });
     return Response.json({ id: 'synthetic-email-id' });
   };

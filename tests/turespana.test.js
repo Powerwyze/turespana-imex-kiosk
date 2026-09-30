@@ -15,15 +15,16 @@ test('host offers six Spanish destinations and only touch-confirmed email',()=>{
 
 import nodemailer from 'nodemailer';import sendPhoto from '../api/host-email.js';
 test('existing SMTP provider sends transactional attachment once for exact retries',async()=>{
- const original=nodemailer.createTransport,env={...process.env};let calls=0,payload;
+ const original=nodemailer.createTransport,originalFetch=globalThis.fetch,env={...process.env};
+ globalThis.fetch=async()=>Response.json({stored:true,id:'test-contact'});let calls=0,payload;
  delete process.env.RESEND_API_KEY;process.env.WYZER_GMAIL_USER='sender@example.test';process.env.WYZER_APP_PASSWORD='test-only';
  nodemailer.createTransport=()=>({sendMail:async message=>{calls++;payload=message;return {accepted:message.to,messageId:'test-id'};}});
  const response=()=>({status(code){this.code=code;return this;},json(body){this.body=body;return this;},send(body){this.body=body;return this;}});
  try{
-  const req={method:'POST',body:{email:'test@example.test',imageBase64:Buffer.from('smtp-fixture').toString('base64'),mimeType:'image/jpeg'}};
+  const req={method:'POST',body:{name:'Test Guest',destinationId:'madrid',marketingOptIn:false,email:'test@example.test',imageBase64:Buffer.from('smtp-fixture').toString('base64'),mimeType:'image/jpeg'}};
   const a=response(),b=response();await Promise.all([sendPhoto(req,a),sendPhoto(req,b)]);assert.equal(a.code,200);assert.equal(b.code,200);assert.equal(calls,1);
   assert.match(payload.subject,/Spain/);assert.doesNotMatch(payload.html,/newsletter|subscribed|Damn Good|Flow/);assert.equal(payload.attachments[0].content.toString(),'smtp-fixture');
- }finally{nodemailer.createTransport=original;for(const key of ['RESEND_API_KEY','WYZER_GMAIL_USER','WYZER_APP_PASSWORD']){if(env[key]===undefined)delete process.env[key];else process.env[key]=env[key];}}
+ }finally{globalThis.fetch=originalFetch;nodemailer.createTransport=original;for(const key of ['RESEND_API_KEY','WYZER_GMAIL_USER','WYZER_APP_PASSWORD']){if(env[key]===undefined)delete process.env[key];else process.env[key]=env[key];}}
 });
 
 test('retired regional IDs are rejected rather than silently redirected',async()=>{const e=new TurespanaEngine({});for(const destinationId of ['cataluna','pais-vasco','galicia'])assert.ok((await e.execute('set_destination',{destinationId})).error);});

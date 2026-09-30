@@ -15,7 +15,17 @@ function database(){
  const db=new DatabaseSync(':memory:');
  const dir=new URL('../sites/drizzle/',import.meta.url);
  for(const n of fs.readdirSync(dir).filter(n=>n.endsWith('.sql')).sort())db.exec(fs.readFileSync(new URL(n,dir),'utf8'));
- return {db,env:{DB:{prepare(sql){return {bind(...args){return {async run(){db.prepare(sql).run(...args);return {success:true};},async first(){return db.prepare(sql).get(...args)||null;}};}}}}};
+ const binding={
+  prepare(sql){
+   return {bind(...args){
+    return {
+     async run(){db.prepare(sql).run(...args);return {success:true};},
+     async first(){return db.prepare(sql).get(...args)||null;}
+    };
+   }};
+  }
+ };
+ return {db,env:{DB:binding}};
 }
 test('private durable contact storage records explicit consent evidence and deduplicates retries',async()=>{
  const {db,env}=database();
