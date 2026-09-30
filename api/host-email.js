@@ -1,3 +1,4 @@
+import {validateContact,storeContact} from '../lib/contact-store.js';
 import {SPAIN_LOGO,TOURISM_FOOTER_HTML,TOURISM_FOOTER_TEXT} from '../lib/tourism-email.js';
 import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
@@ -55,6 +56,8 @@ export default async function handler(req, res) {
     }
 
     const { email, filename, mimeType, imageBase64 } = req.body || {};
+    const contact=validateContact(req.body);
+    if(!contact)return res.status(400).json({ok:false,error:'Enter your name, a valid email and destination. Marketing choice must be true or false.'});
     if (!email || !EMAIL_PATTERN.test(String(email)) || !imageBase64) {
       res.status(400).send('Missing required fields.');
       return;
@@ -73,6 +76,7 @@ export default async function handler(req, res) {
       return;
     }
 
+    try{await storeContact(contact,bytes);}catch{return res.status(503).json({ok:false,error:'Your details could not be saved. Your photo has not been emailed. Please try again.'});}
     const resend = resendApiKey ? new Resend(resendApiKey) : null;
     const finalFilename = cleanFilename(filename, 'turespana-portrait.jpg');
     const from = process.env.RESEND_FROM_EMAIL || 'Turespaña Photo Booth <onboarding@resend.dev>';
@@ -84,8 +88,8 @@ export default async function handler(req, res) {
       to: [String(email).trim()],
       ...(replyTo ? { replyTo } : {}),
       subject: 'Your Spain portrait',
-      html: EMAIL_HTML,
-      text: EMAIL_TEXT,
+      html: EMAIL_HTML.replace('Thanks for discovering Spain', 'Hola, '+contact.name.replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]))+'. Thanks for discovering Spain'),
+      text: 'Hola, '+contact.name+'.\n\n'+EMAIL_TEXT,
       attachments: [{
         filename: finalFilename,
         content: bytes.toString('base64'),
@@ -115,7 +119,7 @@ export default async function handler(req, res) {
       return res.status(502).json({ ok: false, error: 'Email delivery failed.' });
     }
 
-    return res.status(200).json({ ok: true, id: data?.id || null });
+    return res.status(200).json({ ok: true, stored:true, marketingOptIn:contact.marketingOptIn, id: data?.id || null });
   } catch (e) {
     console.error('Unexpected email delivery error', {name:e?.name});
     return res.status(500).json({ ok: false, error: 'Unexpected email delivery error.' });

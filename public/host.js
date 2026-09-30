@@ -4,6 +4,7 @@ import {mountTouchControls} from './host-touch.js';
 import {connectVoice} from './host-connection.js';
 import {LiveTools} from './host-engine.js';
 import {TurespanaEngine, destinations} from './turespana-engine.js';
+import {CONSENT_VERSION,consentLabelMarkup,validName} from './contact-policy.js';
 import {PhotoEmail,validEmail} from './host-email.js';
 import {CameraSentry} from './host-sentry.js';
 import {runCountdown} from './host-countdown.js';
@@ -13,6 +14,8 @@ let avatar=null;
 import('./host-avatar.js').then(m=>m.mountAvatar(document.getElementById('face'),document.getElementById('avatar'))).then(a=>avatar=a).catch(()=>{document.getElementById('face').dataset.avatar='fallback';});
 const $=id=>document.getElementById(id);
 const face=$('face'),camera=$('camera'),audio=$('voice'),picture=$('picture');
+$('marketingCopy').innerHTML=consentLabelMarkup();
+let activeContactInput=$('guestNameInput'),keyboardShift=false;
 const captions=new HostCaptions($('hostCaptions'),$('hostCaptionText'),$('stage'),face);
 let cameraPreparation=null,cameraEpoch=0,touchMode=false,touchUI=null;
 const homeLanguage=mountHomeLanguage({onChange:()=>touchUI?.render()});
@@ -87,12 +90,12 @@ function startEventTalk(){
   },30000);
 }
 const photoEmail=new PhotoEmail({
-  deliver:async({email,image,signal})=>{
+  deliver:async({email,name,marketingOptIn,consentVersion,image,signal})=>{
     const base64=await new Promise((resolve,reject)=>{
       const reader=new FileReader();reader.onload=()=>resolve(reader.result.split(',')[1]);reader.onerror=()=>reject(new Error('Image could not be prepared.'));reader.readAsDataURL(image);
     });
     if(signal.aborted)throw new DOMException('Cancelled','AbortError');
-    const response=await fetch('/api/host-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,imageBase64:base64,mimeType:image.type,destinationId:engine.destination,filename:'turespana-portrait.jpg'}),signal:AbortSignal.any([signal,AbortSignal.timeout(30000)])});
+    const response=await fetch('/api/host-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,name,marketingOptIn,consentVersion,imageBase64:base64,mimeType:image.type,destinationId:engine.destination,filename:'turespana-portrait.jpg'}),signal:AbortSignal.any([signal,AbortSignal.timeout(30000)])});
     const result=await response.json().catch(()=>({}));
     if(!response.ok||!result.ok)throw new Error('Delivery was not confirmed.');
   },
@@ -102,20 +105,21 @@ const photoEmail=new PhotoEmail({
     $('emailPanel').hidden=!open;document.body.dataset.emailOpen=String(open);
     captions.placeIn(open?$('emailPanel'):null);
     const sending=state.status==='sending';
-    $('emailInput').disabled=sending;
+    $('emailInput').disabled=sending;$('guestNameInput').disabled=sending;$('marketingOptIn').disabled=sending;
+    $('marketingOptIn').checked=state.marketingOptIn;
     $('emailCancel').disabled=sending;
     document.querySelectorAll('#emailKeyboard button,#emailDomains button').forEach(b=>b.disabled=sending);
-    $('emailConfirm').disabled=sending||!validEmail($('emailInput').value);
+    $('emailConfirm').disabled=sending||!validEmail($('emailInput').value)||!validName($('guestNameInput').value);
     $('emailConfirm').textContent=sending?'Sending your photo…':'Confirm & email photo';
     $('emailStatus').textContent=state.error||(sending?'Sending to the address you confirmed.':'');
     $('emailToast').hidden=state.status!=='sent';
-    if(state.status==='sent')$('emailInput').value='';
+    if(['sent','empty'].includes(state.status)){$('emailInput').value='';$('guestNameInput').value='';$('marketingOptIn').checked=false;}
     $('emailOpen').hidden=!open&&state.status!=='sent'?$('picture').hidden:true;
   }
 });
 function reviewEmail(value){
   const result=photoEmail.review(value);
-  if(result.shown){$('emailInput').value=photoEmail.draft;$('emailConfirm').disabled=!validEmail(photoEmail.draft);$('emailInput').focus({preventScroll:true});}
+  if(result.shown){$('emailInput').value=photoEmail.draft;$('emailConfirm').disabled=!validEmail(photoEmail.draft)||!validName($('guestNameInput').value);activeContactInput=validName($('guestNameInput').value)?$('emailInput'):$('guestNameInput');activeContactInput.focus({preventScroll:true});}
   return result;
 }
 function clearEmail(){photoEmail.reset();$('emailInput').value='';$('emailOpen').hidden=true;$('emailToast').hidden=true;}
@@ -343,29 +347,34 @@ $('emailOpen').addEventListener('click',()=>{
   reviewEmail('');
 });
 $('emailCancel').addEventListener('click',()=>{photoEmail.cancel();$('emailInput').value='';$('emailOpen').hidden=false;note('The visitor skipped email. Do not ask for their email again unless they request it.');$('emailOpen').focus();});
+$('guestNameInput').addEventListener('input',()=>{photoEmail.editName($('guestNameInput').value);touch();});
+$('marketingOptIn').addEventListener('change',()=>{photoEmail.chooseMarketing($('marketingOptIn').checked);touch();});
+for(const id of ['guestNameInput','emailInput'])$(id).addEventListener('focus',()=>{activeContactInput=$(id);$('emailDomains').hidden=id!=='emailInput';});
 $('emailInput').addEventListener('input',()=>{photoEmail.edit($('emailInput').value);touch();});
 $('emailPanel').addEventListener('pointerdown',touch);
 $('emailPanel').addEventListener('keydown',touch);
 $('emailConfirm').addEventListener('click',async()=>{
-  touch();photoEmail.edit($('emailInput').value);
+  touch();photoEmail.edit($('emailInput').value);photoEmail.editName($('guestNameInput').value);
   const sent=await photoEmail.confirm();
   if(sent&&ready){note('Email service accepted the photo for delivery to the address the guest confirmed on screen. Thank them; suggest checking inbox or spam. Do not promise arrival.',true);face.focus();}
 });
-for(const row of ['1234567890','qwertyuiop','asdfghjkl','zxcvbnm','@._-+']){
+for(const row of ['1234567890','qwertyuiop','asdfghjkl','zxcvbnm','áéíóúñ','@._-+']){
   const element=document.createElement('div');element.className='key-row';
-  const keys=[...row];if(row==='@._-+')keys.push('left','right','backspace');
+  const keys=[...row];if(row==='@._-+')keys.push('space','shift','left','right','backspace');
   for(const key of keys){
     const button=document.createElement('button');button.type='button';button.dataset.key=key;
-    button.textContent=({left:'←',right:'→',backspace:'⌫'})[key]||key;
-    button.setAttribute('aria-label',({left:'Move cursor left',right:'Move cursor right',backspace:'Delete previous character'})[key]||('Type '+key));
+    button.textContent=({space:'Space',shift:'⇧',left:'←',right:'→',backspace:'⌫'})[key]||key;
+    button.setAttribute('aria-label',({space:'Space',shift:'Uppercase letters',left:'Move cursor left',right:'Move cursor right',backspace:'Delete previous character'})[key]||('Type '+key));
     button.addEventListener('pointerdown',e=>e.preventDefault());
     button.addEventListener('click',()=>{
-      const input=$('emailInput');if(input.disabled)return;
+      const input=activeContactInput;if(input.disabled)return;
+      if(key==='shift'){keyboardShift=!keyboardShift;button.setAttribute('aria-pressed',String(keyboardShift));return;}
       let start=input.selectionStart??input.value.length,end=input.selectionEnd??start;
       if(key==='left'||key==='right'){const next=Math.max(0,Math.min(input.value.length,start+(key==='left'?-1:1)));input.setSelectionRange(next,next);}
       else {
         if(key==='backspace'&&start===end)start=Math.max(0,start-1);
-        const replacement=key==='backspace'?'':key;
+        const replacement=key==='backspace'?'':key==='space'?' ':keyboardShift?key.toUpperCase():key;
+        if(input.value.length-(end-start)+replacement.length>input.maxLength)return;
         input.setRangeText(replacement,start,end,'end');input.dispatchEvent(new Event('input',{bubbles:true}));
       }
       input.focus({preventScroll:true});touch();
@@ -381,7 +390,7 @@ document.addEventListener('keydown',e=>{
   if(!$('emailPanel').hidden){
     if(e.key==='Escape'){e.preventDefault();if(photoEmail.status!=='sending')$('emailCancel').click();}
     if(e.key==='Tab'){
-      const enabled=[...$('emailPanel').querySelectorAll('button:not(:disabled),input:not(:disabled)')];
+      const enabled=[...$('emailPanel').querySelectorAll('button:not(:disabled),input:not(:disabled),a[href]')];
       const first=enabled[0],last=enabled.at(-1);
       if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus();}
       else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus();}
@@ -389,7 +398,7 @@ document.addEventListener('keydown',e=>{
   }else if(e.key==='Escape')end();
 });
 window.addEventListener('pagehide',()=>{stopSentry();send({type:'session.close'});cleanup();});
-document.addEventListener('visibilitychange',()=>{if(document.hidden){stopSentry();end();}});
+document.addEventListener('visibilitychange',()=>{if(!$('emailPanel').hidden){if(document.hidden)guestIdle.setBusy(true);else syncIdle();return;}if(document.hidden){stopSentry();end();}});
 function startTouchPhoto(){
  stopSentry();send({type:'session.close'});cleanup();touchMode=true;
  phase('listening');text('Choose your group size.','Use the large buttons below.');guestIdle.start(150000);syncIdle();

@@ -665,3 +665,5 @@ body.osk-open .modal.is-open {
   .dest-tile__label { font-size: 16px; }
   .btn--xl { font-size: 15px; padding: 12px 16px; }
 }
+
+.consent{align-items:flex-start;line-height:1.45}.consent a{color:#ffdf39;text-decoration:underline}.consent input{min-width:28px;min-height:28px}

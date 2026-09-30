@@ -122,8 +122,8 @@
 
     <div class="modal" id="emailModal" aria-hidden="true" role="dialog" aria-labelledby="emailModalTitle">
       <div class="modal__panel">
-        <div class="modal__title" id="emailModalTitle" data-i18n="emailTitle">Get your portrait + newsletter</div>
-        <div class="modal__sub" data-i18n="emailSub">We’ll email your costume portrait and add you to the Turespaña newsletter.</div>
+        <div class="modal__title" id="emailModalTitle" data-i18n="emailTitle">Get your Spain portrait</div>
+        <div class="modal__sub" data-i18n="emailSub">Enter your name and email. Marketing messages are optional.</div>
 
         <label class="modal__label" for="nameModalInput" data-i18n="emailNameLabel">Name</label>
         <input class="modal__input" id="nameModalInput" type="text" autocomplete="given-name" data-i18n-attr-placeholder="emailNamePh" placeholder="Your name" maxlength="60" />
@@ -132,8 +132,8 @@
         <input class="modal__input" id="emailModalInput" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" />
 
         <label class="consent" for="newsletterCheck">
-          <input id="newsletterCheck" type="checkbox" checked />
-          <span data-i18n="emailConsent">Yes, send me Turespaña newsletters.</span>
+          <input id="newsletterCheck" type="checkbox" />
+          <span id="classicMarketingCopy"></span>
         </label>
 
         <div class="modal__err" id="emailModalErr"></div>
@@ -177,6 +177,6 @@
   <link rel="stylesheet" href="/assets/osk.css" />
   <script src="/assets/qrcode.min.js" defer></script>
   <script src="/assets/osk.js" defer></script>
-  <script src="/app.js" defer></script>
+  <script type="module" src="/app.js"></script>
 </body>
 </html>

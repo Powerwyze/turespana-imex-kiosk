@@ -1,0 +1,31 @@
+name: Generate contact database migration remotely
+on:
+  push:
+    branches: [codex/turespana-voice-host]
+    paths: [sites/db/schema.ts, .github/workflows/contact-schema.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  schema:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/turespana-voice-host
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm install --no-save --package-lock=false drizzle-kit@0.31.4 drizzle-orm@0.44.5
+        working-directory: sites
+      - run: npx drizzle-kit generate
+        working-directory: sites
+      - name: Commit generated schema artifacts
+        run: |
+          git config user.name "PowerWyze CI"
+          git config user.email "actions@users.noreply.github.com"
+          git add sites/drizzle
+          if ! git diff --cached --quiet; then
+            git commit -m "Generate private kiosk contact database migration"
+            git push origin HEAD:codex/turespana-voice-host
+          fi

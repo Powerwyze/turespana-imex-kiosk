@@ -5,7 +5,7 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 const root=path.resolve(import.meta.dirname,'..');
 assert.equal(await fs.readFile(path.join(root,'public/index.html'),'utf8'),await fs.readFile(path.join(root,'public/host.html'),'utf8'),'Root homepage and kiosk entry point must stay in sync');
-const allowed=["/index.html","/assets/examples/regional-clothing.jpg","/assets/spain-background.png", "/assets/examples/andalucia.webp", "/assets/examples/madrid.webp", "/assets/examples/barcelona.webp", "/assets/examples/bilbao.webp", "/assets/examples/canarias.webp", "/assets/examples/valencia.webp"].concat(['/assets/spain-info-logo.png','/home-language.js','/portrait-branding.js','/host.html','/host.css','/host.js','/host-engine.js','/host-connection.js','/host-touch.js','/turespana-engine.js','/host-countdown.js','/host-idle.js','/host-captions.js','/host-email.js','/host-avatar.js','/host-sentry.js','/host-sentry-gate.js','/host-sentry-worker.js','/assets/person-detector.tflite','/tests/fixtures/sentry-person.jpg','/email-shortcuts.js','/assets/spain-sun.glb','/assets/spain-sun-fallback.svg','/assets/flow-event-background.jpg','/assets/fonts/fraunces.woff2','/assets/fonts/borel.woff2']);
+const allowed=["/index.html","/assets/examples/regional-clothing.jpg","/assets/spain-background.png", "/assets/examples/andalucia.webp", "/assets/examples/madrid.webp", "/assets/examples/barcelona.webp", "/assets/examples/bilbao.webp", "/assets/examples/canarias.webp", "/assets/examples/valencia.webp"].concat(['/contact-policy.js','/assets/spain-info-logo.png','/home-language.js','/portrait-branding.js','/host.html','/host.css','/host.js','/host-engine.js','/host-connection.js','/host-touch.js','/turespana-engine.js','/host-countdown.js','/host-idle.js','/host-captions.js','/host-email.js','/host-avatar.js','/host-sentry.js','/host-sentry-gate.js','/host-sentry-worker.js','/assets/person-detector.tflite','/tests/fixtures/sentry-person.jpg','/email-shortcuts.js','/assets/spain-sun.glb','/assets/spain-sun-fallback.svg','/assets/flow-event-background.jpg','/assets/fonts/fraunces.woff2','/assets/fonts/borel.woff2']);
 const server=http.createServer(async(req,res)=>{
   const pathname=new URL(req.url,'http://localhost').pathname==='/'?'/index.html':new URL(req.url,'http://localhost').pathname;
   if(!allowed.includes(pathname)&&!/^\/vendor\/(three|vision)\/[a-zA-Z0-9/_.-]+\.(js|mjs|wasm)$/.test(pathname)){res.writeHead(404);res.end();return;}
@@ -23,7 +23,9 @@ await page.waitForFunction(()=>document.querySelector('#face').dataset.avatar===
 assert.equal(await page.locator('#avatar').evaluate(e=>e.tagName),'CANVAS');
 assert.equal(await page.locator('#avatarFallback').getAttribute('src'),'/assets/spain-sun-fallback.svg');
 assert.equal(await page.locator('#avatarFallback').evaluate(e=>getComputedStyle(e).visibility),'hidden');
-assert.equal(await page.locator('#face img[src$="spain-info-logo.png"]').count(),0,'No words or white logo card remain');
+assert.equal(await page.locator('#homeOfficialLogo').isVisible(),true,'Homepage uses the official logo with lettering');
+assert.equal(await page.locator('#homeOfficialLogo').evaluate(e=>e.naturalWidth>0),true);
+assert.equal(await page.locator('#avatar').isVisible(),false,'Animated sun is hidden on the homepage');
 
 
 
@@ -72,8 +74,8 @@ await page.addInitScript(()=>{
     close(){}
   };
 });
-let generations=0,release,fail=false,emails=0,lastEmail=null,emailFail=false,holdEmail=false,releaseEmail;
-await page.route('**/api/host-email',async route=>{emails++;lastEmail=route.request().postDataJSON().email;if(holdEmail)await new Promise(r=>releaseEmail=r);else await new Promise(r=>setTimeout(r,350));await route.fulfill({status:emailFail?502:200,contentType:'application/json',body:JSON.stringify({ok:!emailFail})});});
+let generations=0,release,fail=false,emails=0,lastEmail=null,lastContact=null,emailFail=false,holdEmail=false,releaseEmail;
+await page.route('**/api/host-email',async route=>{emails++;lastContact=route.request().postDataJSON();lastEmail=lastContact.email;if(holdEmail)await new Promise(r=>releaseEmail=r);else await new Promise(r=>setTimeout(r,350));await route.fulfill({status:emailFail?502:200,contentType:'application/json',body:JSON.stringify({ok:!emailFail})});});
 const image=await fs.readFile(path.join(root,'tests/fixtures/sentry-person.jpg'));
 await page.route('**/api/host-session',route=>route.fulfill({status:201,contentType:'application/json',body:JSON.stringify({session:{id:'live_synthetic'},transport:{sdp:'synthetic answer'}})}));
 await page.route('**/api/host-photo',async route=>{
@@ -262,12 +264,19 @@ try{
   await say('Check the address on screen. Use the keyboard to fix anything, then tap Confirm & email photo.');
   assert.equal(await page.locator('#emailPanel #hostCaptions').isVisible(),true,'Keep host captions readable inside email review.');
   assert.equal(emails,0);
+  assert.equal(await page.locator('#emailConfirm').isDisabled(),true);
+  assert.equal(await page.locator('#marketingOptIn').isChecked(),false);
+  await page.locator('#guestNameInput').fill('María');await page.locator('[data-key=space]').click();await page.locator('[data-key=g]').click();
+  assert.equal(await page.locator('#guestNameInput').inputValue(),'María g');await page.locator('#guestNameInput').fill('María García');
   await page.locator('#emailInput').fill('alex');await page.locator('#emailDomains button').filter({hasText:'@gmail.com'}).click();
   assert.equal(await page.locator('#emailInput').inputValue(),'alex@gmail.com');
   // Correct a character using the kiosk keyboard, preserving the insertion point.
   await page.locator('#emailInput').evaluate(e=>e.setSelectionRange(4,4));
   await page.locator('[data-key="+"]').click();await page.locator('[data-key="p"]').click();
   assert.equal(await page.locator('#emailInput').inputValue(),'alex+p@gmail.com');
+  await page.locator('#marketingOptIn').check();
+  assert.equal(await page.locator('#marketingCopy a').count(),2);
+  for(const a of await page.locator('#marketingCopy a').all())assert.equal(await a.getAttribute('target'),'_blank');
   await page.screenshot({path:'artifacts/host-email-portrait.png'});
   await page.setViewportSize({width:390,height:844});await page.waitForTimeout(400);
   await page.screenshot({path:'artifacts/host-email-mobile.png'});
@@ -278,7 +287,7 @@ try{
   assert.equal(emails,1);assert.equal(await page.locator('#emailInput').inputValue(),'alex+p@gmail.com');
   emailFail=false;await page.locator('#emailConfirm').dblclick();
   await page.locator('#emailToast').waitFor({state:'visible'});
-  assert.equal(emails,2);assert.equal(lastEmail,'alex+p@gmail.com');
+  assert.equal(emails,2);assert.equal(lastEmail,'alex+p@gmail.com');assert.equal(lastContact.name,'María García');assert.equal(lastContact.marketingOptIn,true);
   assert.equal(await page.locator('#emailInput').inputValue(),'');
   await tool('send_email',{email:'unconfirmed@example.com'});await page.waitForTimeout(100);assert.equal(emails,2);
   // Fail one explicit revision: never reveal rejected bytes or automatically regenerate.
@@ -421,6 +430,7 @@ try{
   assert.equal(await page.locator('body').getAttribute('data-phase'),'generating');assert.equal(greetings,3);
   release();await page.waitForFunction(()=>document.body.dataset.phase==='result');
   await tool('show_email_confirmation',{email:'guest@example.com'});
+  await page.locator('#guestNameInput').fill('Guest Two');assert.equal(await page.locator('#marketingOptIn').isChecked(),false);
   holdEmail=true;await page.locator('#emailConfirm').click();
   await page.waitForFunction(()=>document.querySelector('#emailConfirm').textContent.includes('Sending'));
   await page.waitForTimeout(100);

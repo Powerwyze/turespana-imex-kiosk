@@ -17,6 +17,7 @@ async function generateCase({ count = '1', check = valid(Number(count ?? 1)), ve
   for (const key of Object.keys(saved).slice(1)) delete process.env[key];
   const calls = [];
   globalThis.fetch = async (url, init) => {
+    if(String(url).includes('/api/kiosk-contact'))return Response.json({ok:true,stored:true,id:'synthetic-contact'});
     calls.push({ url: String(url), init });
     if (String(url).endsWith('/images/edits')) return Response.json({ data: [{ b64_json: jpeg }] }, { status: imageStatus });
     if (String(url).endsWith('/responses')) {
@@ -160,7 +161,7 @@ test('HTML and text email preserve PowerWyze/client links and retry idempotency'
   };
   const res = () => ({ status(code) { this.code = code; return this; }, json(data) { this.data = data; return this; }, send(data) { this.data = data; return this; } });
   try {
-    const req = { method: 'POST', body: { email: 'delivered+flow-test@resend.dev', imageBase64: Buffer.from('synthetic-picture').toString('base64'), mimeType: 'image/jpeg' } };
+    const req = { method: 'POST', body: { name:'Test Guest',destinationId:'madrid',marketingOptIn:false,email: 'delivered+flow-test@resend.dev', imageBase64: Buffer.from('synthetic-picture').toString('base64'), mimeType: 'image/jpeg' } };
     const first = res(); await sendPhoto(req, first);
     const second = res(); await sendPhoto(req, second);
     assert.equal(first.code, 200); assert.equal(second.code, 200);

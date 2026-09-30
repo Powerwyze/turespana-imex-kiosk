@@ -255,3 +255,20 @@ body[data-phase=idle] .ambient{display:none}
 #homeLanguageToggle:focus-visible{outline:3px solid #ffe58a;outline-offset:4px}
 #homeLanguageToggle:hover{background:#20354b}
 @media(max-width:360px){#homeLanguageToggle{right:12px;min-width:108px;padding:10px 12px;font-size:13px}#sentryToggle{left:12px;padding:10px 12px}}
+
+/* Official homepage wordmark; the voice avatar remains available during the visit. */
+#homeOfficialLogo{display:none}
+body[data-phase=idle] #face #homeOfficialLogo{display:block;width:100%;height:100%;object-fit:contain;background:#fff;border-radius:8px;padding:4px}
+body[data-phase=idle] #face #avatar,body[data-phase=idle] #face #avatarFallback{display:none}
+body[data-phase=idle] #face{aspect-ratio:1;min-width:64px;min-height:64px}
+/* Contact review: generous targets, readable optional consent, and a persistent send action. */
+#guestNameInput{width:100%;height:clamp(52px,6vw,74px);border:2px solid #ffce39;border-radius:14px;background:#211715;color:#fff7df;padding:10px 14px;font:clamp(20px,2.8vw,32px) Arial,sans-serif}
+#emailInput{height:clamp(52px,6vw,74px);font-size:clamp(20px,2.8vw,32px)}
+#emailPanel .marketing-choice label{display:flex;gap:12px;align-items:flex-start;margin:10px 0 6px;font-size:clamp(14px,1.65vw,19px);line-height:1.45;cursor:pointer}
+#marketingOptIn{flex:0 0 28px;width:28px;height:28px;margin:3px 0;accent-color:#ffdf39;cursor:pointer}
+.marketing-choice a{color:#ffe08a;text-decoration:underline;text-underline-offset:3px}
+.marketing-note{font-size:clamp(12px,1.35vw,16px);line-height:1.4;color:#dfd0bf;margin:6px 0 12px 40px}
+#emailConfirm{position:sticky;bottom:0;z-index:1;box-shadow:0 5px 18px #211715}
+#emailKeyboard [data-key=space]{flex:1.6;font-size:clamp(12px,1.7vw,20px)}
+#emailKeyboard [data-key=shift][aria-pressed=true]{background:#ffdf39;color:#211715}
+@media(max-width:600px){#emailTitle{font-size:25px}#emailPanel label{margin-top:8px}#emailKeyboard .key-row button{min-height:38px;font-size:16px}.marketing-note{margin-left:0}#emailPanel{max-height:96dvh}.email-note{font-size:12px}#emailPanel .eyebrow{display:none}#emailPanel #emailHelp{font-size:12px}}

@@ -20,6 +20,7 @@
   </section>
   <button id="face" type="button" aria-label="Tap the Spain logo to start talking to your AI photo host">
     <canvas id="avatar" aria-label="3D Spain sun symbol"></canvas>
+    <img id="homeOfficialLogo" src="/assets/spain-info-logo.png" alt="Official España tourism logo" draggable="false">
     <img id="avatarFallback" src="/assets/spain-sun-fallback.svg" alt="Spain sun symbol" draggable="false">
   </button>
   <div id="message" role="status" aria-live="polite"><p id="headline">Hola. Let’s discover Spain.</p><p id="hint">Tap the logo or enable camera sentry · English / Español</p></div>
@@ -27,15 +28,18 @@
   <button id="emailOpen" hidden>Email my photo</button>
   <div id="emailToast" role="status" hidden>Photo accepted for delivery. Check your inbox.</div>
   <section id="emailPanel" role="dialog" aria-modal="true" aria-labelledby="emailTitle" hidden>
-    <div class="email-heading"><div><span class="eyebrow">A LITTLE SPAIN, TO GO</span><h1 id="emailTitle">Did I get that right?</h1></div><button id="emailCancel" type="button" aria-label="Skip email">Skip</button></div>
-    <p id="emailHelp">Check your spelled email. Tap the address to move the cursor, then use the keyboard to correct it.</p>
+    <div class="email-heading"><div><span class="eyebrow">A LITTLE SPAIN, TO GO</span><h1 id="emailTitle">Send your Spain photo</h1></div><button id="emailCancel" type="button" aria-label="Skip email">Skip</button></div>
+    <p id="emailHelp">Enter your name and check your email. Tap either field to use the keyboard.</p>
+    <label for="guestNameInput">Your name</label>
+    <input id="guestNameInput" type="text" inputmode="none" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="120" required aria-describedby="emailHelp emailStatus">
     <label for="emailInput">Email address</label>
     <input id="emailInput" type="text" inputmode="none" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" maxlength="254" aria-describedby="emailHelp emailStatus">
     <p id="emailStatus" role="status"></p>
-    <div id="emailKeyboard" aria-label="Email keyboard"></div>
+    <div id="emailKeyboard" aria-label="Name and email keyboard"></div>
     <div id="emailDomains" aria-label="Common email endings"></div>
+    <div class="marketing-choice"><label for="marketingOptIn"><input id="marketingOptIn" type="checkbox"><span id="marketingCopy"></span></label><p class="marketing-note">Optional. You can receive your photo without marketing messages. This kiosk collects email only; no text-message subscription.</p></div>
     <button id="emailConfirm" type="button" disabled>Confirm &amp; email photo</button>
-    <p class="email-note">Send this photo to the address you confirm.</p>
+    <p class="email-note">Your name, email and marketing choice are saved for this photo experience.</p>
   </section>
   <aside id="viewfinder" aria-label="Live camera preview during countdown" hidden>
     <video id="camera" autoplay playsinline muted aria-label="Your camera framing"></video>

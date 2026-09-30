@@ -1,9 +1,11 @@
 const embedded = __ASSET_MAP__;
+__CONTACT_POLICY__
 const BACKEND='https://turespana-imex-kiosk.vercel.app';
 const apiPaths=new Set(['/api/host-session','/api/host-photo','/api/host-email','/api/host-greeting','/api/banana','/api/send-photo','/api/lead']);
 const aliases={'/':'/index.html','/host':'/host.html','/classic':'/classic.html'};
-export default {async fetch(request){
+export default {async fetch(request,env={}){
  const url=new URL(request.url),path=aliases[url.pathname]||url.pathname;
+ if(path==='/api/kiosk-contact')return saveKioskContact(request,env,url);
  const asset=embedded[path];
  if(asset){
   if(!['GET','HEAD'].includes(request.method))return new Response('Method not allowed',{status:405});
@@ -39,3 +41,36 @@ export default {async fetch(request){
   return new Response(upstream.body,{status:upstream.status,headers:result});
  }catch{return Response.json({error:'The photo service is temporarily unavailable. Please try again.'},{status:502,headers:{'Cache-Control':'no-store'}});}
 }};
+
+async function saveKioskContact(request,env,url){
+ const headers={'Cache-Control':'no-store'};
+ const reply=(body,status=200)=>Response.json(body,{status,headers});
+ if(request.method!=='POST')return reply({error:'Method not allowed'},405);
+ if(![url.origin,BACKEND].includes(request.headers.get('origin')))return reply({error:'Please use the kiosk.'},403);
+ if(!(request.headers.get('content-type')||'').startsWith('application/json'))return reply({error:'JSON required'},415);
+ if(Number(request.headers.get('content-length')||0)>4096)return reply({error:'Request too large'},413);
+ // Bound the stream as well as the header. No images or arbitrary metadata belong in this table.
+ let raw='',size=0;
+ const reader=request.body?.getReader(),decoder=new TextDecoder();
+ if(!reader)return reply({error:'Contact details required'},400);
+ try{for(;;){const {value,done}=await reader.read();if(done)break;size+=value.byteLength;if(size>4096){await reader.cancel();return reply({error:'Request too large'},413);}raw+=decoder.decode(value,{stream:true});}raw+=decoder.decode();}catch{return reply({error:'Invalid request'},400);}
+ let b;try{b=JSON.parse(raw);}catch{return reply({error:'Invalid JSON'},400);}
+ if(!b||!validName(b.name)||typeof b.email!=='string'||b.email.length>254||!/^\S+@[^\s@]+\.[a-zA-Z]{2,}$/.test(b.email)||/[<>\r\n]/.test(b.email))return reply({error:'Enter your name and a valid email.'},400);
+ if(b.marketingOptIn!==undefined&&typeof b.marketingOptIn!=='boolean')return reply({error:'Invalid marketing choice'},400);
+ const optIn=b.marketingOptIn===true;
+ if(optIn&&b.consentVersion!==CONSENT_VERSION)return reply({error:'Review the current marketing wording'},400);
+ if(!['canarias','barcelona','bilbao','madrid','andalucia','valencia'].includes(b.destinationId)||!/^[a-f0-9]{64}$/.test(b.portraitHash))return reply({error:'Invalid photo reference'},400);
+ if(!env.DB)return reply({stored:false,error:'Contact storage unavailable'},503);
+ const name=normalizeName(b.name),email=b.email.trim();
+ const canonical=JSON.stringify([name,email,b.destinationId,optIn,CONSENT_VERSION,b.portraitHash]);
+ const id=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(canonical))),v=>v.toString(16).padStart(2,'0')).join('');
+ const now=new Date().toISOString();
+ try{
+  const result=await env.DB.prepare('INSERT OR IGNORE INTO kiosk_contacts (id,name,email,destination_id,marketing_opt_in,consent_at,consent_version,consent_text,terms_url,privacy_url,created_at,client,event,source,portrait_hash) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+   .bind(id,name,email,b.destinationId,optIn?1:0,optIn?now:null,CONSENT_VERSION,CONSENT_TEXT,TERMS_URL,PRIVACY_URL,now,'Turespaña','IMEX Las Vegas 2026','turespana-imex-kiosk',b.portraitHash).run();
+  if(result.success===false)throw new Error('Write rejected');
+  const saved=await env.DB.prepare('SELECT id FROM kiosk_contacts WHERE id = ?').bind(id).first();
+  if(!saved)throw new Error('Write not confirmed');
+  return reply({ok:true,stored:true,id,marketingOptIn:optIn});
+ }catch{return reply({stored:false,error:'Your details could not be saved. Please try again.'},503);}
+}

@@ -5,13 +5,14 @@ import sendEmail from '../api/host-email.js';
 process.env.RESEND_API_KEY='preview-only';
 let message;
 globalThis.fetch=async(url,init)=>{
+ if(String(url).includes('/api/kiosk-contact'))return Response.json({stored:true,id:'preview-contact'});
  if(!String(url).startsWith('https://api.resend.com/'))throw new Error('Unexpected network request');
  message=JSON.parse(init.body);
  return Response.json({id:'preview-only'});
 };
 const photo=await fs.readFile('public/assets/examples/barcelona.webp');
 const result={status(code){this.code=code;return this;},json(data){this.data=data;return this;},send(data){throw new Error(String(data));}};
-await sendEmail({method:'POST',body:{email:'delivered@resend.dev',imageBase64:photo.toString('base64'),mimeType:'image/webp',filename:'portrait.webp'}},result);
+await sendEmail({method:'POST',body:{name:'María García',destinationId:'barcelona',marketingOptIn:false,email:'delivered@resend.dev',imageBase64:photo.toString('base64'),mimeType:'image/webp',filename:'portrait.webp'}},result);
 if(result.code!==200||!message)throw new Error('Preview payload failed');
 let html=message.html;
 for(const a of message.attachments){

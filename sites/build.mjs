@@ -4,6 +4,8 @@ const assets={};
 function walk(dir){for(const entry of fs.readdirSync(dir,{withFileTypes:true})){const p=path.join(dir,entry.name);if(entry.isDirectory())walk(p);else assets['/'+path.relative('assets',p).split(path.sep).join('/')]={type:types[path.extname(p)]||'application/octet-stream',data:fs.readFileSync(p).toString('base64')};}}
 walk('assets');
 fs.mkdirSync('dist/server',{recursive:true});fs.mkdirSync('dist/.openai',{recursive:true});
-fs.writeFileSync('dist/server/index.js',fs.readFileSync('worker.mjs','utf8').replace('__ASSET_MAP__',JSON.stringify(assets)));
+fs.writeFileSync('dist/server/index.js',fs.readFileSync('worker.mjs','utf8').replace('__ASSET_MAP__',JSON.stringify(assets)).replace('__CONTACT_POLICY__',fs.readFileSync('assets/contact-policy.js','utf8').replaceAll('export ','')));
 fs.copyFileSync('.openai/hosting.json','dist/.openai/hosting.json');
 console.log('Built Sites kiosk with',Object.keys(assets).length,'local assets.');
+
+fs.cpSync('drizzle','dist/.openai/drizzle',{recursive:true});
