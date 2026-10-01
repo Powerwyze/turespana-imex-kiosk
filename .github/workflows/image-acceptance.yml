@@ -1,0 +1,37 @@
+name: Regional transformation acceptance
+on:
+  push:
+    branches: [codex/turespana-voice-host]
+    paths: [.github/workflows/image-acceptance.yml]
+  workflow_dispatch:
+    inputs:
+      endpoint:
+        description: Exact staged Vercel deployment origin
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  images:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install Pillow==11.3.0
+      - name: Test supplied selfie and existing camera fixture
+        env:
+          PORTRAIT_TEST_ENDPOINT: ${{ inputs.endpoint }}
+          PORTRAIT_SOURCE_1: ${{ secrets.PORTRAIT_SOURCE_1 }}
+          PORTRAIT_SOURCE_2: ${{ secrets.PORTRAIT_SOURCE_2 }}
+          PORTRAIT_SOURCE_3: ${{ secrets.PORTRAIT_SOURCE_3 }}
+          PORTRAIT_SOURCE_4: ${{ secrets.PORTRAIT_SOURCE_4 }}
+        run: python scripts/portrait-acceptance.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: regional-photo-acceptance
+          path: artifacts/portrait-*
+          retention-days: 3

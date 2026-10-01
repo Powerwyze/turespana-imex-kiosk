@@ -1,15 +1,41 @@
 {
-  "_comment": "IMEX activation destinations specified for this kiosk: Andalucía, Madrid, Cataluña, País Vasco, Galicia, Valencia. Costume/scene lines feed /api/banana. Rename here if the client adjusts wording.",
+  "_comment": "Client-specified destination order. Preserve guest facial identity; transform clothing, hairstyles and accessories as a complete regional ensemble.",
   "destinations": [
     {
-      "id": "andalucia",
-      "label": "Andalucía",
-      "labelEs": "Andalucía",
-      "tileNote": "Feria & flamenco",
-      "tileNoteEs": "Feria y flamenco",
-      "accent": "#E42719",
-      "costumePrompt": "Tasteful Andalusian festival dress: embroidered short jacket or modest flamenca-inspired look (high neckline, full skirt, never sexualized), sash, Córdoba-style wide-brim hat optional. Smart travel alternative: linen and polished leather, still clearly Andalusian feria energy. NO baseball jerseys, NO sports uniforms.",
-      "scenePrompt": "Composite of Seville's Plaza de España arcades and Giralda tower at fiery golden-hour sunset, palm silhouettes, warm stone, cinematic travel-poster depth. Landmark reads as Andalucía, not a generic plaza."
+      "id": "canarias",
+      "label": "Canarias",
+      "labelEs": "Canarias",
+      "tileNote": "Volcanoes & island traditions",
+      "tileNoteEs": "Volcanes y tradiciones",
+      "accent": "#168FAD",
+      "costumePrompt": "Use the supplied CANARIAS clothing panel: white puff-sleeve blouse, black bodice with colourful embroidered edging and red lacing, white lace apron over a long narrow-striped multicolour skirt; OR white collared shirt, black waistcoat with red/green embroidery, red woven sash, black knee breeches and cream gaiters. These are clothing design cues from the client’s reference, rendered as photorealistic garments with real fabric texture. Choose an appropriate dress or trouser option and honor an explicit visitor preference; never copy the reference people, change the guest’s face/body or sexualize the outfit. No baseball or sports uniforms.",
+      "scenePrompt": "Canary Islands photographic travel postcard scene: Tenerife’s distinctive Mount Teide volcanic summit and lava landscape, Atlantic blue water and subtropical island light. Use Tenerife as the specific scenic inspiration for Canarias; do not invent a coastline combining distant islands. No Santiago cathedral or mainland Spanish landmarks.",
+      "referencePanel": "upper-left",
+      "hairPrompt": "DRESS ensemble: arrange the hair in a tidy traditional low bun or gathered braids beneath the reference straw hat and light cream head cloth/veil; keep the face open and clearly recognizable. TROUSER ensemble: include the reference black felt hat with neatly arranged hair. Match the selected Canarian reference outfit, not another region."
+    },
+    {
+      "id": "barcelona",
+      "label": "Barcelona",
+      "labelEs": "Barcelona",
+      "tileNote": "Gaudí & Catalan culture",
+      "tileNoteEs": "Gaudí y cultura catalana",
+      "accent": "#7CB165",
+      "costumePrompt": "Use the supplied BARCELONA clothing panel: black fitted bodice, full dark skirt with rich red and green floral print, ivory embroidered lace shawl and optional black folding fan; OR white shirt, black waistcoat and trousers, broad red faixa sash and red-and-black barretina. Do not substitute the previous plain casteller team shirt. These are clothing design cues from the client’s reference, rendered as photorealistic garments with real fabric texture. Choose an appropriate dress or trouser option and honor an explicit visitor preference; never copy the reference people, change the guest’s face/body or sexualize the outfit. No baseball or sports uniforms.",
+      "scenePrompt": "Barcelona photographic travel postcard scene featuring recognizable Sagrada Família towers and Gothic Quarter stone architecture, clear blue daytime Mediterranean sky. Keep scenery specific to Barcelona, not other Catalan cities.",
+      "referencePanel": "upper-middle",
+      "hairPrompt": "DRESS ensemble: style the hair into a neat gathered bun with the reference red flower at the side, complementing the ivory lace shawl and floral skirt. TROUSER ensemble: include the red-and-black Catalan barretina and tidy hair beneath it. Do not use Valencian side coils or a Chulapa headscarf."
+    },
+    {
+      "id": "bilbao",
+      "label": "Bilbao",
+      "labelEs": "Bilbao",
+      "tileNote": "Guggenheim & Basque culture",
+      "tileNoteEs": "Guggenheim y cultura vasca",
+      "accent": "#1B161C",
+      "costumePrompt": "Use the supplied BILBAO clothing panel: white puff-sleeve blouse, black lace-up bodice, red full skirt with horizontal black bands and white lace apron; OR white shirt, black tailored jacket and trousers with a wide red sash. These are clothing design cues from the client’s reference, rendered as photorealistic garments with real fabric texture. Choose an appropriate dress or trouser option and honor an explicit visitor preference; never copy the reference people, change the guest’s face/body or sexualize the outfit. No baseball or sports uniforms.",
+      "scenePrompt": "Bilbao photographic travel postcard scene: Guggenheim Museum titanium curves beside the Nervión river, Bilbao green surrounding hills and hints of Casco Viejo architecture. Bilbao only: no San Sebastián La Concha bay, no beach or invented coastal waterfront.",
+      "referencePanel": "upper-right",
+      "hairPrompt": "DRESS ensemble: gather the hair neatly under the red Basque headscarf tied as in the reference, with a clear unobscured face. TROUSER ensemble: include the black Basque txapela and groom the visible hair beneath it. Use the selected Basque outfit accessories, not a flamenco flower or Fallera combs."
     },
     {
       "id": "madrid",
@@ -18,38 +44,22 @@
       "tileNote": "Capital chic",
       "tileNoteEs": "Capital chic",
       "accent": "#FFEA00",
-      "costumePrompt": "Madrid chulapo/chulapa-inspired smart look (checked neckerchief, waistcoat, cap) OR contemporary capital travel style: tailored jacket, elegant city-ready outfits. Tasteful, brand-safe. NO baseball jerseys, NO sports uniforms.",
-      "scenePrompt": "Composite of Madrid's Palacio Real and Gran Vía dusk glow, grand boulevards, warm street lamps, cinematic skyline. Landmark reads as Madrid."
+      "costumePrompt": "Use the supplied MADRID clothing panel: white chulapa-inspired dress with small red spots and ruffled trim, red fringed embroidered shawl; OR white shirt, grey waistcoat with dark piping, charcoal trousers and grey checked flat cap. These are clothing design cues from the client’s reference, rendered as photorealistic garments with real fabric texture. Choose an appropriate dress or trouser option and honor an explicit visitor preference; never copy the reference people, change the guest’s face/body or sexualize the outfit. No baseball or sports uniforms.",
+      "scenePrompt": "Composite of Madrid's Palacio Real and Gran Vía daylight, grand boulevards, daytime street details, cinematic skyline. Landmark reads as Madrid.",
+      "referencePanel": "lower-left",
+      "hairPrompt": "DRESS / CHULAPA ensemble: hair MUST be gathered into a neat low bun, with a white triangular pañuelo/headscarf over the head and tied beneath the chin, and a clearly visible RED ROSE pinned at the front/side of the scarf beside the hair. The client specifically requests a rose. BOTH the white pañuelo AND the red rose are REQUIRED, not optional. The face remains completely visible. Do not leave the original everyday hairstyle uncovered, omit the flower, or substitute a flower on the dress. TROUSER / CHULAPO ensemble: include the checked grey parpusa flat cap, white neckerchief and red lapel flower; groom the hair under the cap."
     },
     {
-      "id": "cataluna",
-      "label": "Cataluña",
-      "labelEs": "Cataluña",
-      "tileNote": "Mediterráneo",
-      "tileNoteEs": "Mediterráneo",
-      "accent": "#7CB165",
-      "costumePrompt": "Catalan traditional cues (barretina, faixa sash, modest festive dress) OR smart Barcelona Mediterranean travel looks: clean tailoring, light fabrics. Tasteful, never sexualized. NO baseball jerseys, NO sports uniforms.",
-      "scenePrompt": "Composite of Barcelona's Sagrada Família silhouette and Gothic Quarter stone streets toward a Mediterranean sunset, cinematic tourism-poster depth. Landmark reads as Cataluña."
-    },
-    {
-      "id": "pais-vasco",
-      "label": "País Vasco",
-      "labelEs": "País Vasco",
-      "tileNote": "Costa vasca",
-      "tileNoteEs": "Costa vasca",
-      "accent": "#1B161C",
-      "costumePrompt": "Basque traditional cues (txapela beret, rustic-smart wool or linen, festive but modest) OR polished Basque-coast travel looks. Tasteful, brand-safe. NO baseball jerseys, NO sports uniforms.",
-      "scenePrompt": "Composite of the Guggenheim Bilbao titanium curves and San Sebastián bay at dramatic sunset, green hills, cinematic coastal light. Landmark reads as País Vasco."
-    },
-    {
-      "id": "galicia",
-      "label": "Galicia",
-      "labelEs": "Galicia",
-      "tileNote": "Atlantic green",
-      "tileNoteEs": "Verde atlántico",
-      "accent": "#7CB165",
-      "costumePrompt": "Galician traditional dress cues (monteira-inspired headpiece, embroidered vest, modest skirt or tailored rural-smart look) OR Atlantic travel layers in wool and linen. Tasteful, never sexualized. NO baseball jerseys, NO sports uniforms.",
-      "scenePrompt": "Composite of Santiago de Compostela cathedral towers and green Atlantic coastline under a luminous sunset, misty hills, cinematic pilgrimage-poster depth. Landmark reads as Galicia."
+      "id": "andalucia",
+      "label": "Andalucía",
+      "labelEs": "Andalucía",
+      "tileNote": "Feria & flamenco",
+      "tileNoteEs": "Feria y flamenco",
+      "accent": "#E42719",
+      "costumePrompt": "Use the supplied ANDALUCÍA clothing panel: vivid red flamenca-inspired dress with dramatic layered ruffled sleeves and skirt, black dots or dark ruffle trim; OR black fitted short riding jacket, white shirt, dark trousers, patterned woven waist sash and tall dark boots. These are clothing design cues from the client’s reference, rendered as photorealistic garments with real fabric texture. Choose an appropriate dress or trouser option and honor an explicit visitor preference; never copy the reference people, change the guest’s face/body or sexualize the outfit. No baseball or sports uniforms.",
+      "scenePrompt": "Composite of Seville's Plaza de España arcades and Giralda tower at bright daylight with a blue sky, sunlit palms, warm stone, photographic depth. Landmark reads as Andalucía, not a generic plaza.",
+      "referencePanel": "lower-middle",
+      "hairPrompt": "DRESS / FLAMENCA ensemble: restyle the hair in a polished low bun or gathered flamenco updo with a clearly visible red flower and decorative peineta comb, balanced with the ruffled dress. TROUSER ensemble: include the flat black Córdoba-style riding hat with neatly groomed hair. Keep facial features and expression recognizable; do not copy the reference dancer’s face or extreme pose."
     },
     {
       "id": "valencia",
@@ -58,8 +68,10 @@
       "tileNote": "Fallas & light",
       "tileNoteEs": "Fallas y luz",
       "accent": "#C45C26",
-      "costumePrompt": "Valencian fallera/fallero-inspired festive dress (ornate but modest, high neckline) OR smart Mediterranean travel looks with citrus-festival energy. Tasteful, brand-safe. NO baseball jerseys, NO sports uniforms.",
-      "scenePrompt": "Composite of Valencia's City of Arts and Sciences and Mediterranean orange-grove light at sunset, water reflections, cinematic tourism-poster depth. Landmark reads as Valencia."
+      "costumePrompt": "Use the supplied VALENCIA clothing panel: ornate cream/gold fallera-inspired floral brocade dress with full skirt, embroidered lace trim and a modest fitted bodice; OR white shirt, colourful floral brocade waistcoat, rich red-and-gold sash, beige knee breeches and white stockings. These are clothing design cues from the client’s reference, rendered as photorealistic garments with real fabric texture. Choose an appropriate dress or trouser option and honor an explicit visitor preference; never copy the reference people, change the guest’s face/body or sexualize the outfit. No baseball or sports uniforms.",
+      "scenePrompt": "Composite of Valencia's City of Arts and Sciences and Mediterranean orange-grove light in bright daylight, water reflections, photographic depth. Landmark reads as Valencia.",
+      "referencePanel": "lower-right",
+      "hairPrompt": "DRESS / FALLERA ensemble: authentic Valencian three-bun Fallera coiffure is MANDATORY: two proportionate braided spiral side coils (rodetes) by the ears/temples and a braided low rear bun (moño), with a traditional parting, gold peineta combs and matching hair ornaments. Show the characteristic side coils and combs clearly in the portrait; the rear bun may be partly hidden by the natural camera angle. Restyle the guest’s hair to this structure; a generic loose hairstyle, ponytail, topknot or ordinary single bun is NOT sufficient. Color-matched traditional hairpieces may complete the arrangement, without changing facial geometry, natural hairline or hair color. TROUSER / FALLERO ensemble: include the patterned regional head kerchief from the reference, tied neatly, with groomed visible hair. Do not put Fallera side coils on a guest wearing the trouser ensemble."
     }
   ]
 }

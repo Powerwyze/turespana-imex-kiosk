@@ -18,7 +18,7 @@ Closest pattern: [godr-marlins-kiosk](https://github.com/Powerwyze/godr-marlins-
 
 Six tiles, renamed in [`public/data/destinations.json`](public/data/destinations.json):
 
-**Andalucía · Madrid · Cataluña · País Vasco · Galicia · Valencia**
+**Canarias · Barcelona · Bilbao · Madrid · Andalucía · Valencia**
 
 Costume and landmark prompts live in that file so they stay easy to edit.
 

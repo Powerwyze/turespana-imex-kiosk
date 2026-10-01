@@ -1,0 +1,5 @@
+# Updated wardrobe gallery validation
+
+Barcelona, Bilbao, Madrid and Valencia were rendered through the staged kiosk photo endpoint and passed its independent guest check (Actions run 35404414321). Canarias and Andalucía returned SUBJECT_COUNT_MISMATCH, so those bytes were not exposed and the guard remains unchanged. Their display examples were created separately with the built-in image generator, using the corresponding original fictional subject as identity reference and the reviewed Barcelona poster as painted-style reference. They are gallery illustrations, not evidence of a successful live-service check.
+
+All six were visually reviewed for destination, requested clothing, single-person composition, illustrated style and absence of website text. Canarias shows the white blouse, embroidered black/red-laced bodice, striped skirt and lace apron; Andalucía uses the requested red polka-dot flamenca dress. Only the two input roles (guest and painted-style reference) are sent by the actual kiosk. No claim of exact biometric likeness is made.

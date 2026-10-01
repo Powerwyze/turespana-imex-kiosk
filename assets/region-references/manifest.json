@@ -1,0 +1,68 @@
+{
+  "canarias": {
+    "source": "public/assets/examples/regional-clothing.jpg",
+    "crop": [
+      3,
+      64,
+      402,
+      620
+    ],
+    "width": 399,
+    "height": 556
+  },
+  "barcelona": {
+    "source": "public/assets/examples/regional-clothing.jpg",
+    "crop": [
+      408,
+      64,
+      807,
+      620
+    ],
+    "width": 399,
+    "height": 556
+  },
+  "bilbao": {
+    "source": "public/assets/examples/regional-clothing.jpg",
+    "crop": [
+      813,
+      64,
+      1212,
+      620
+    ],
+    "width": 399,
+    "height": 556
+  },
+  "madrid": {
+    "source": "public/assets/examples/regional-clothing.jpg",
+    "crop": [
+      3,
+      691,
+      402,
+      1277
+    ],
+    "width": 399,
+    "height": 586
+  },
+  "andalucia": {
+    "source": "public/assets/examples/regional-clothing.jpg",
+    "crop": [
+      408,
+      691,
+      807,
+      1277
+    ],
+    "width": 399,
+    "height": 586
+  },
+  "valencia": {
+    "source": "public/assets/examples/regional-clothing.jpg",
+    "crop": [
+      813,
+      691,
+      1212,
+      1277
+    ],
+    "width": 399,
+    "height": 586
+  }
+}

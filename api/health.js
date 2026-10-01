@@ -18,7 +18,7 @@ const NAMES = [
   "SUPABASE_BUCKET",
 ];
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method === "OPTIONS") { res.statusCode = 204; return res.end(); }
   const present = {};
   for (const name of NAMES) present[name] = Boolean(process.env[name]);

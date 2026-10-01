@@ -1,3 +1,4 @@
+import {CONSENT_VERSION,consentLabelMarkup} from './contact-policy.js';
 /* ================================================================
  *  Turespaña · IMEX Las Vegas — portrait kiosk
  *  Flow: pick 1 of 6 destinations → camera → newsletter email →
@@ -12,7 +13,7 @@ const I18N = {
     rotateTitle: "Please rotate to portrait",
     rotateSub: "This experience is designed for a 1080×1920 portrait kiosk.",
     heroTitle: "Pick a destination. Wear Spain.",
-    heroLede: "Choose Andalucía, Madrid, Cataluña, País Vasco, Galicia, or Valencia. We’ll dress you for that destination and email your poster.",
+    heroLede: "Choose Canarias, Barcelona, Bilbao, Madrid, Andalucía, or Valencia. We’ll dress you for that destination and email your poster.",
     back: "← Destinations",
     hudPortrait: "PORTRAIT · 9:16",
     ctaTakePhoto: "Take My Photo",
@@ -23,8 +24,8 @@ const I18N = {
     footerEvent: "Turespaña · IMEX Las Vegas · Oct 13–15 2026",
     footerPowered: "Powered by <strong>PowerWyze</strong>",
     genPill: "Creating your poster · ~60s",
-    emailTitle: "Get your portrait + newsletter",
-    emailSub: "We’ll email your costume portrait and add you to the Turespaña newsletter.",
+    emailTitle: "Get your Spain portrait",
+    emailSub: "Enter your name and email. Marketing messages are optional.",
     emailNameLabel: "Name",
     emailEmailLabel: "Email",
     emailNamePh: "Your name",
@@ -48,7 +49,7 @@ const I18N = {
     rotateTitle: "Gira a vertical",
     rotateSub: "Esta experiencia está diseñada para un kiosco vertical 1080×1920.",
     heroTitle: "Elige un destino. Ponte España.",
-    heroLede: "Elige Andalucía, Madrid, Cataluña, País Vasco, Galicia o Valencia. Te vestimos para ese destino y te enviamos el cartel.",
+    heroLede: "Elige Canarias, Barcelona, Bilbao, Madrid, Andalucía o Valencia. Te vestimos para ese destino y te enviamos el cartel.",
     back: "← Destinos",
     hudPortrait: "VERTICAL · 9:16",
     ctaTakePhoto: "Toma mi foto",
@@ -59,8 +60,8 @@ const I18N = {
     footerEvent: "Turespaña · IMEX Las Vegas · 13–15 oct 2026",
     footerPowered: "Hecho por <strong>PowerWyze</strong>",
     genPill: "Creando tu cartel · ~60s",
-    emailTitle: "Retrato + boletín",
-    emailSub: "Te enviamos el retrato y te apuntamos al boletín de Turespaña.",
+    emailTitle: "Recibe tu retrato",
+    emailSub: "Introduce tu nombre y correo. Los mensajes promocionales son opcionales.",
     emailNameLabel: "Nombre",
     emailEmailLabel: "Correo",
     emailNamePh: "Tu nombre",
@@ -231,6 +232,8 @@ const emailModal = (() => {
   const nameInput = $("#nameModalInput");
   const emailInput = $("#emailModalInput");
   const consent = $("#newsletterCheck");
+  $("#classicMarketingCopy").innerHTML=consentLabelMarkup();
+  emailInput.addEventListener("input",()=>{consent.checked=false;});
   const errEl = $("#emailModalErr");
   const okBtn = $("#emailModalOk");
   let resolver = null;
@@ -241,7 +244,7 @@ const emailModal = (() => {
       resolver = res;
       nameInput.value = "";
       emailInput.value = "";
-      if (consent) consent.checked = true;
+      if (consent) consent.checked = false;
       errEl.textContent = "";
       modal.classList.add("is-open");
       modal.setAttribute("aria-hidden", "false");
@@ -259,8 +262,7 @@ const emailModal = (() => {
     const email = (emailInput.value || "").trim();
     if (!name) { errEl.textContent = i18n.t("emailErrName"); nameInput.focus(); return; }
     if (!isValidEmail(email)) { errEl.textContent = i18n.t("emailErrEmail"); emailInput.focus(); return; }
-    if (consent && !consent.checked) { errEl.textContent = i18n.t("emailErrConsent"); return; }
-    close({ name, email, newsletter: true });
+    close({ name, email, marketingOptIn:consent.checked===true });
   });
   [nameInput, emailInput].forEach((inp) => {
     inp.addEventListener("keydown", (e) => {
@@ -441,38 +443,8 @@ const booth = (() => {
   }
 
   async function watermark(blob, dest) {
-    const img = await createImageBitmap(blob);
-    const c = document.createElement("canvas");
-    c.width = img.width;
-    c.height = img.height;
-    const ctx = c.getContext("2d");
-    ctx.drawImage(img, 0, 0);
-    const W = c.width, H = c.height;
-    const scale = W / 1024;
-    const pad = 28 * scale;
-    const veilH = 220 * scale;
-    const grad = ctx.createLinearGradient(0, H - veilH, 0, H);
-    grad.addColorStop(0, "rgba(0,0,0,0)");
-    grad.addColorStop(1, "rgba(27,22,28,0.72)");
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, H - veilH, W, veilH);
-
-    ctx.save();
-    ctx.textAlign = "left";
-    ctx.textBaseline = "alphabetic";
-    ctx.shadowColor = "rgba(0,0,0,0.55)";
-    ctx.shadowBlur = 8 * scale;
-    ctx.fillStyle = "#FFEA00";
-    ctx.font = `700 ${Math.round(28 * scale)}px Oswald, sans-serif`;
-    ctx.fillText("TURESPAÑA", pad, H - pad - 52 * scale);
-    ctx.fillStyle = "#FFFFFF";
-    ctx.font = `600 ${Math.round(42 * scale)}px Fraunces, Georgia, serif`;
-    ctx.fillText(destLabel(dest) || "Spain", pad, H - pad - 14 * scale);
-    ctx.fillStyle = "#C8C0A8";
-    ctx.font = `500 ${Math.round(20 * scale)}px Inter, sans-serif`;
-        ctx.fillText("spain.info  ·  IMEX Las Vegas  ·  Oct 13–15 2026", pad, H - pad + 10 * scale);
-    ctx.restore();
-    return new Promise((res) => c.toBlob((b) => res(b), "image/jpeg", 0.95));
+    const {brandPortrait}=await import('./portrait-branding.js');
+    return brandPortrait(blob,destLabel(dest));
   }
 
   async function compress(blob) {
@@ -514,9 +486,7 @@ const booth = (() => {
         throw new Error(msg);
       }
       const rawBlob = await r.blob();
-      let generatedBlob;
-      try { generatedBlob = await watermark(rawBlob, job.dest); }
-      catch (_) { generatedBlob = rawBlob; }
+      const generatedBlob = await watermark(rawBlob, job.dest);
       job.generatedBlob = generatedBlob;
       job.status = "ready";
     } catch (e) {
@@ -528,7 +498,7 @@ const booth = (() => {
     if (job.onReady) job.onReady();
   }
 
-  async function sendEmail(job, name, email) {
+  async function sendEmail(job, name, email, marketingOptIn) {
     job.status = "sending";
     renderQueue();
     try {
@@ -539,6 +509,8 @@ const booth = (() => {
         body: JSON.stringify({
           name,
           email,
+          marketingOptIn,
+          consentVersion:CONSENT_VERSION,
           destinationId: job.dest.id,
           destinationLabel: destLabel(job.dest),
           filename: safeName(email) + "-turespana-portrait.jpg",
@@ -556,28 +528,6 @@ const booth = (() => {
     } finally {
       job.status = "done";
       renderQueue();
-    }
-  }
-
-  async function storeLead(job, creds, imageBase64, mimeType) {
-    try {
-      const r = await fetch("/api/lead", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: creds.name,
-          email: creds.email,
-          destinationId: job.dest.id,
-          destinationLabel: destLabel(job.dest),
-          newsletter: true,
-          imageBase64,
-          mimeType,
-        }),
-      });
-      if (!r.ok) return null;
-      return await r.json();
-    } catch (_) {
-      return null;
     }
   }
 
@@ -655,11 +605,8 @@ const booth = (() => {
         return;
       }
 
-      const mail = await sendEmail(job, creds.name, creds.email);
-      const lead = await storeLead(job, creds, mail.b64, mail.mimeType);
-      const claimUrl = lead?.photoId
-        ? `${window.location.origin}/claim?id=${encodeURIComponent(lead.photoId)}`
-        : (lead?.publicUrl || null);
+      const mail = await sendEmail(job, creds.name, creds.email, creds.marketingOptIn);
+      const claimUrl=null; // Guest contacts are private; no public lead or photo URL.
       showResult({ blob: job.generatedBlob, email: creds.email, sent: mail.sent, claimUrl });
       jobs.delete(id);
     } catch (e) {
@@ -695,13 +642,55 @@ async function boot() {
     DESTINATIONS = Array.isArray(json.destinations) ? json.destinations : [];
   } catch (e) {
     DESTINATIONS = [
-      { id: "andalucia", label: "Andalucía", labelEs: "Andalucía", tileNote: "Feria & flamenco", accent: "#E42719" },
-      { id: "madrid", label: "Madrid", labelEs: "Madrid", tileNote: "Capital chic", accent: "#FFEA00" },
-      { id: "cataluna", label: "Cataluña", labelEs: "Cataluña", tileNote: "Mediterráneo", accent: "#7CB165" },
-      { id: "pais-vasco", label: "País Vasco", labelEs: "País Vasco", tileNote: "Costa vasca", accent: "#1B161C" },
-      { id: "galicia", label: "Galicia", labelEs: "Galicia", tileNote: "Atlantic green", accent: "#7CB165" },
-      { id: "valencia", label: "Valencia", labelEs: "Valencia", tileNote: "Fallas & light", accent: "#C45C26" },
-    ];
+  {
+    "id": "canarias",
+    "label": "Canarias",
+    "labelEs": "Canarias",
+    "tileNote": "Volcanoes & island traditions",
+    "tileNoteEs": "Volcanes y tradiciones",
+    "accent": "#168FAD"
+  },
+  {
+    "id": "barcelona",
+    "label": "Barcelona",
+    "labelEs": "Barcelona",
+    "tileNote": "Gaudí & Catalan culture",
+    "tileNoteEs": "Gaudí y cultura catalana",
+    "accent": "#7CB165"
+  },
+  {
+    "id": "bilbao",
+    "label": "Bilbao",
+    "labelEs": "Bilbao",
+    "tileNote": "Guggenheim & Basque culture",
+    "tileNoteEs": "Guggenheim y cultura vasca",
+    "accent": "#1B161C"
+  },
+  {
+    "id": "madrid",
+    "label": "Madrid",
+    "labelEs": "Madrid",
+    "tileNote": "Capital chic",
+    "tileNoteEs": "Capital chic",
+    "accent": "#FFEA00"
+  },
+  {
+    "id": "andalucia",
+    "label": "Andalucía",
+    "labelEs": "Andalucía",
+    "tileNote": "Feria & flamenco",
+    "tileNoteEs": "Feria y flamenco",
+    "accent": "#E42719"
+  },
+  {
+    "id": "valencia",
+    "label": "Valencia",
+    "labelEs": "Valencia",
+    "tileNote": "Fallas & light",
+    "tileNoteEs": "Fallas y luz",
+    "accent": "#C45C26"
+  }
+];
   }
   renderDestGrid();
   showScreen("screenDest");

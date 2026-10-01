@@ -1,0 +1,186 @@
+{
+  "clips": [
+    {
+      "src": "/assets/spain-videos/spain-01.mp4",
+      "originalName": "tyks-familia-10s-v-extra_4996-mp4-720-hd.mp4",
+      "duration": 10.005,
+      "width": 720,
+      "height": 1276,
+      "bytes": 2020546,
+      "sha256": "cb451133d5a261e9c65baa0b132d1b91272a50905cb621aa9ec7fba9f6afc01e"
+    },
+    {
+      "src": "/assets/spain-videos/spain-02.mp4",
+      "originalName": "tyks-familia-10s-v01-balcon-xinzo_4995-mp4-720-hd.mp4",
+      "duration": 10.005,
+      "width": 720,
+      "height": 1276,
+      "bytes": 2656926,
+      "sha256": "f9ed978313c7fcdb48e62237b5bab51e6c8e5b8c43267f76123db8218e4645e0"
+    },
+    {
+      "src": "/assets/spain-videos/spain-03.mp4",
+      "originalName": "tyks-familia-10s-v02-bicis-embalse_4997-mp4-720-hd.mp4",
+      "duration": 10.005,
+      "width": 720,
+      "height": 1276,
+      "bytes": 4240505,
+      "sha256": "81210bf4ed31f166d7f06483a81ca92d9e4484130f308baa8116f0706c8b86d0"
+    },
+    {
+      "src": "/assets/spain-videos/spain-04.mp4",
+      "originalName": "tyks-familia-10s-v03-bicis-pasarela_4998-mp4-720-hd.mp4",
+      "duration": 10.005,
+      "width": 720,
+      "height": 1276,
+      "bytes": 2278750,
+      "sha256": "fb0ec63bc680534e55773d1d95f68ac11a531a51ec9021b1de6e5480036c51fb"
+    },
+    {
+      "src": "/assets/spain-videos/spain-05.mp4",
+      "originalName": "tyks-familia-10s-v04-kayak_4999-mp4-720-hd.mp4",
+      "duration": 10.005,
+      "width": 720,
+      "height": 1276,
+      "bytes": 2256671,
+      "sha256": "9bc40aad8912c19cd1f4b526c906ee0d86b92237ad64df0846876ec3da98aad4"
+    },
+    {
+      "src": "/assets/spain-videos/spain-06.mp4",
+      "originalName": "tyks-familia-10s-v05-surf_4979-mp4-720-hd.mp4",
+      "duration": 10.005,
+      "width": 720,
+      "height": 1276,
+      "bytes": 1825223,
+      "sha256": "0caa00443f54afd950d4951e08bc0746a846e51314eecd44f8c3b51479b096e0"
+    },
+    {
+      "src": "/assets/spain-videos/spain-07.mp4",
+      "originalName": "tyks-familia-10s-v06-cabarceno-oso_4980-mp4-720-hd.mp4",
+      "duration": 10.005,
+      "width": 720,
+      "height": 1276,
+      "bytes": 2069357,
+      "sha256": "074ac9c73fe22f487860c341958293f281a1927d0e879bf40f65a5455fe41ddf"
+    },
+    {
+      "src": "/assets/spain-videos/spain-08.mp4",
+      "originalName": "tyks-familia-10s-v07-columpio_4981-mp4-720-hd.mp4",
+      "duration": 10.005,
+      "width": 720,
+      "height": 1276,
+      "bytes": 1956620,
+      "sha256": "c19ec0b9158af381aac40a3036ad1f1a7de22f2f4f6047556ff287d56af30671"
+    },
+    {
+      "src": "/assets/spain-videos/spain-09.mp4",
+      "originalName": "tyks-familia-10s-v08-parador-de-cangas_4982-mp4-720-hd.mp4",
+      "duration": 10.005,
+      "width": 720,
+      "height": 1276,
+      "bytes": 1505826,
+      "sha256": "4c127ad31ec812c7cc4f62464d0e4908b3dcc9c08966c30c4b919028a79f4a74"
+    },
+    {
+      "src": "/assets/spain-videos/spain-10.mp4",
+      "originalName": "tyks-pareja-10s-v-extra_4984-mp4-720-hd.mp4",
+      "duration": 9.962,
+      "width": 720,
+      "height": 1276,
+      "bytes": 1455458,
+      "sha256": "00c7ca60c7d71f69b3067f0564cf256f41eed7b282428d91af3871ffacc99203"
+    },
+    {
+      "src": "/assets/spain-videos/spain-11.mp4",
+      "originalName": "tyks-pareja-10s-v02-bardenas_4985-mp4-720-hd.mp4",
+      "duration": 10.005,
+      "width": 720,
+      "height": 1276,
+      "bytes": 1666650,
+      "sha256": "10aae7e51f6e7a3a11774c9be234175e28d16582bc68a857ed87c1845fb4fd99"
+    },
+    {
+      "src": "/assets/spain-videos/spain-12.mp4",
+      "originalName": "tyks-pareja-10s-v03-castillo-de-olite_4986-mp4-720-hd.mp4",
+      "duration": 10.005,
+      "width": 720,
+      "height": 1276,
+      "bytes": 681224,
+      "sha256": "bc160a2b6a851e40dd7e5405380ea2aa3dfa2af1557a3106cb5ce66000d47b3d"
+    },
+    {
+      "src": "/assets/spain-videos/spain-13.mp4",
+      "originalName": "tyks-pareja-10s-v04-biblioteca_4987-mp4-720-hd.mp4",
+      "duration": 10.005,
+      "width": 720,
+      "height": 1276,
+      "bytes": 1963010,
+      "sha256": "83f49092f515bc0ce9854b8d27b1c19f3b39f1fd507d2a434dd7d325cac48c7c"
+    },
+    {
+      "src": "/assets/spain-videos/spain-14.mp4",
+      "originalName": "tyks-viajera-10s-v-extra_4988-mp4-720-hd.mp4",
+      "duration": 9.962,
+      "width": 720,
+      "height": 1276,
+      "bytes": 1910090,
+      "sha256": "b321aadac6142f4bda80c134525c351b72b0d24d3563f54e7cdf919ee9f15660"
+    },
+    {
+      "src": "/assets/spain-videos/spain-15.mp4",
+      "originalName": "tyks-viajera-10s-v01-bici-lagunas_4989-mp4-720-hd.mp4",
+      "duration": 10.005,
+      "width": 720,
+      "height": 1276,
+      "bytes": 2426653,
+      "sha256": "27d64de8df2163fc05af6199018d2b9e6c6f938dad488ada06b9bb0a89c476e3"
+    },
+    {
+      "src": "/assets/spain-videos/spain-16.mp4",
+      "originalName": "tyks-viajera-10s-v02-pilones_4990-mp4-720-hd.mp4",
+      "duration": 10.005,
+      "width": 720,
+      "height": 1276,
+      "bytes": 1909607,
+      "sha256": "04e4c6e472c4602b8c96fe1169302e8cd948ba4b2bd616f78a7fd05a3dbbc035"
+    },
+    {
+      "src": "/assets/spain-videos/spain-17.mp4",
+      "originalName": "tyks-viajera-10s-v03-rocio_4991-mp4-720-hd.mp4",
+      "duration": 10.005,
+      "width": 720,
+      "height": 1276,
+      "bytes": 1705100,
+      "sha256": "d982154ecbcc4b9cc17691dd0b6bb85e6c0320e8c67ef577c1518360fc88d852"
+    },
+    {
+      "src": "/assets/spain-videos/spain-18.mp4",
+      "originalName": "tyks-viajera-10s-v04-donaira-piscina_4992-mp4-720-hd.mp4",
+      "duration": 10.005,
+      "width": 720,
+      "height": 1276,
+      "bytes": 3046585,
+      "sha256": "0ef3b75167b67e86c196620efe0693e393b37d813e6e7fb47b02250c4322459d"
+    },
+    {
+      "src": "/assets/spain-videos/spain-19.mp4",
+      "originalName": "tyks-viajera-10s-v05-alcala-del-jucar_4993-mp4-720-hd.mp4",
+      "duration": 10.005,
+      "width": 720,
+      "height": 1276,
+      "bytes": 1139305,
+      "sha256": "74743b8268b51fae29f4c7dc378d0b230720e7b049e23d913e6d72c782e2a4ad"
+    },
+    {
+      "src": "/assets/spain-videos/spain-20.mp4",
+      "originalName": "tyks-viajera-10s-v06-donaira-yoga_4994-mp4-720-hd.mp4",
+      "duration": 10.005,
+      "width": 720,
+      "height": 1276,
+      "bytes": 1678080,
+      "sha256": "f63aecdd7b64f44588d1ad8dfdc96154eb8a9b61973baf46e990228056b667d3"
+    }
+  ],
+  "source": "Supplied by Turespa\u00f1a for the IMEX America kiosk, September 2026",
+  "muted": true
+}

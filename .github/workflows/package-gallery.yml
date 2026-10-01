@@ -1,0 +1,33 @@
+name: Package reviewed destination gallery
+on:
+  push:
+    branches: [codex/turespana-voice-host]
+    paths: [assets/destination-examples-illustrated/**, .github/workflows/package-gallery.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  gallery:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/turespana-voice-host
+      - run: |
+          python -m pip install Pillow
+          python - <<'PYTHON'
+          from PIL import Image
+          from pathlib import Path
+          source=Path('assets/destination-examples-illustrated')
+          for id in ['canarias','barcelona','bilbao','madrid','andalucia','valencia']:
+              p=source/(id+'.png')
+              if not p.exists(): p=source/(id+'.jpg')
+              im=Image.open(p).convert('RGB');im.thumbnail((400,600))
+              im.save(Path('public/assets/examples')/(id+'.webp'),'WEBP',quality=86,method=6)
+          PYTHON
+          git config user.name 'PowerWyze build'
+          git config user.email 'actions@users.noreply.github.com'
+          git add public/assets/examples
+          git commit -m 'Publish reviewed cultural-attire gallery thumbnails'
+          git pull --rebase origin codex/turespana-voice-host
+          git push origin HEAD:codex/turespana-voice-host
