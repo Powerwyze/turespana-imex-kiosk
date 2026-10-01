@@ -10,7 +10,14 @@ const server=http.createServer(async(req,res)=>{
   const pathname=new URL(req.url,'http://localhost').pathname==='/'?'/index.html':new URL(req.url,'http://localhost').pathname;
   if(!allowed.includes(pathname)&&!/^\/assets\/spain-videos\/(manifest\.json|spain-\d{2}\.mp4)$/.test(pathname)&&!/^\/vendor\/(three|vision)\/[a-zA-Z0-9/_.-]+\.(js|mjs|wasm)$/.test(pathname)){res.writeHead(404);res.end();return;}
   const type={'.mp4':'video/mp4','.json':'application/json','.html':'text/html','.css':'text/css','.js':'text/javascript','.jpg':'image/jpeg','.glb':'model/gltf-binary','.svg':'image/svg+xml','.webp':'image/webp','.png':'image/png','.mjs':'text/javascript','.wasm':'application/wasm','.tflite':'application/octet-stream','.woff2':'font/woff2'}[path.extname(pathname)];
-  res.writeHead(200,{'Content-Type':type});res.end(await fs.readFile(path.join(root,pathname.startsWith('/tests/')?pathname:'public'+pathname)));
+  const bytes=await fs.readFile(path.join(root,pathname.startsWith('/tests/')?pathname:'public'+pathname));
+  const range=/^bytes=(\d+)-(\d*)$/.exec(req.headers.range||'');
+  if(type==='video/mp4'&&range){
+    const start=Number(range[1]),end=Math.min(bytes.length-1,range[2]?Number(range[2]):bytes.length-1);
+    if(start> end){res.writeHead(416,{'Content-Range':'bytes */'+bytes.length});res.end();return;}
+    res.writeHead(206,{'Content-Type':type,'Content-Length':end-start+1,'Content-Range':`bytes ${start}-${end}/${bytes.length}`,'Accept-Ranges':'bytes'});res.end(bytes.subarray(start,end+1));return;
+  }
+  res.writeHead(200,{'Content-Type':type,'Content-Length':bytes.length,'Accept-Ranges':'bytes'});res.end(bytes);
 });
 await new Promise(r=>server.listen(4181,'127.0.0.1',r));
 await fs.mkdir('artifacts',{recursive:true});
@@ -31,7 +38,11 @@ assert.equal(await page.locator('#avatar').isVisible(),false,'Animated sun is hi
 
 
 // Exercise genuine video decoding and playlist transitions without paid API calls.
-await page.waitForFunction(()=>{const v=document.querySelector('#homeVideos video.visible');return v&&!v.paused&&v.currentTime>0;});
+try{await page.waitForFunction(()=>{const v=document.querySelector('#homeVideos video.visible');return v&&!v.paused&&v.currentTime>0;});}
+catch(error){
+ console.log('Video diagnostic',await page.evaluate(()=>({codec:document.createElement('video').canPlayType('video/mp4; codecs="avc1.42E01E"'),phase:document.body.dataset.phase,hidden:document.hidden,videos:[...document.querySelectorAll('#homeVideos video')].map(v=>({src:v.src,ready:v.readyState,error:v.error?.message,code:v.error?.code,paused:v.paused,time:v.currentTime}))})));
+ await page.screenshot({path:'artifacts/host-video-failure.png'});throw error;
+}
 assert.equal(await page.locator('#homeVideos video.visible').evaluate(v=>v.muted&&v.playsInline),true);
 const firstClip=await page.locator('#homeVideos video.visible').getAttribute('src');
 await page.locator('#homeVideoToggle').click();
