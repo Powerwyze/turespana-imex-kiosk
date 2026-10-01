@@ -5,11 +5,11 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 const root=path.resolve(import.meta.dirname,'..');
 assert.equal(await fs.readFile(path.join(root,'public/index.html'),'utf8'),await fs.readFile(path.join(root,'public/host.html'),'utf8'),'Root homepage and kiosk entry point must stay in sync');
-const allowed=["/index.html","/assets/examples/regional-clothing.jpg","/assets/spain-background.png", "/assets/examples/andalucia.webp", "/assets/examples/madrid.webp", "/assets/examples/barcelona.webp", "/assets/examples/bilbao.webp", "/assets/examples/canarias.webp", "/assets/examples/valencia.webp"].concat(['/contact-policy.js','/assets/spain-info-logo.png','/home-language.js','/portrait-branding.js','/host.html','/host.css','/host.js','/host-engine.js','/host-connection.js','/host-touch.js','/turespana-engine.js','/host-countdown.js','/host-idle.js','/host-captions.js','/host-email.js','/host-avatar.js','/host-sentry.js','/host-sentry-gate.js','/host-sentry-worker.js','/assets/person-detector.tflite','/tests/fixtures/sentry-person.jpg','/email-shortcuts.js','/assets/spain-sun.glb','/assets/spain-sun-fallback.svg','/assets/flow-event-background.jpg','/assets/fonts/fraunces.woff2','/assets/fonts/borel.woff2']);
+const allowed=["/index.html","/assets/examples/regional-clothing.jpg","/assets/spain-background.png", "/assets/examples/andalucia.webp", "/assets/examples/madrid.webp", "/assets/examples/barcelona.webp", "/assets/examples/bilbao.webp", "/assets/examples/canarias.webp", "/assets/examples/valencia.webp"].concat(['/home-videos.js','/contact-policy.js','/assets/spain-info-logo.png','/home-language.js','/portrait-branding.js','/host.html','/host.css','/host.js','/host-engine.js','/host-connection.js','/host-touch.js','/turespana-engine.js','/host-countdown.js','/host-idle.js','/host-captions.js','/host-email.js','/host-avatar.js','/host-sentry.js','/host-sentry-gate.js','/host-sentry-worker.js','/assets/person-detector.tflite','/tests/fixtures/sentry-person.jpg','/email-shortcuts.js','/assets/spain-sun.glb','/assets/spain-sun-fallback.svg','/assets/flow-event-background.jpg','/assets/fonts/fraunces.woff2','/assets/fonts/borel.woff2']);
 const server=http.createServer(async(req,res)=>{
   const pathname=new URL(req.url,'http://localhost').pathname==='/'?'/index.html':new URL(req.url,'http://localhost').pathname;
-  if(!allowed.includes(pathname)&&!/^\/vendor\/(three|vision)\/[a-zA-Z0-9/_.-]+\.(js|mjs|wasm)$/.test(pathname)){res.writeHead(404);res.end();return;}
-  const type={'.html':'text/html','.css':'text/css','.js':'text/javascript','.jpg':'image/jpeg','.glb':'model/gltf-binary','.svg':'image/svg+xml','.webp':'image/webp','.png':'image/png','.mjs':'text/javascript','.wasm':'application/wasm','.tflite':'application/octet-stream','.woff2':'font/woff2'}[path.extname(pathname)];
+  if(!allowed.includes(pathname)&&!/^\/assets\/spain-videos\/(manifest\.json|spain-\d{2}\.mp4)$/.test(pathname)&&!/^\/vendor\/(three|vision)\/[a-zA-Z0-9/_.-]+\.(js|mjs|wasm)$/.test(pathname)){res.writeHead(404);res.end();return;}
+  const type={'.mp4':'video/mp4','.json':'application/json','.html':'text/html','.css':'text/css','.js':'text/javascript','.jpg':'image/jpeg','.glb':'model/gltf-binary','.svg':'image/svg+xml','.webp':'image/webp','.png':'image/png','.mjs':'text/javascript','.wasm':'application/wasm','.tflite':'application/octet-stream','.woff2':'font/woff2'}[path.extname(pathname)];
   res.writeHead(200,{'Content-Type':type});res.end(await fs.readFile(path.join(root,pathname.startsWith('/tests/')?pathname:'public'+pathname)));
 });
 await new Promise(r=>server.listen(4181,'127.0.0.1',r));
@@ -28,6 +28,35 @@ assert.equal(await page.locator('#homeOfficialLogo').evaluate(e=>e.naturalWidth>
 assert.equal(await page.locator('#avatar').isVisible(),false,'Animated sun is hidden on the homepage');
 
 
+
+
+// Exercise genuine video decoding and playlist transitions without paid API calls.
+await page.waitForFunction(()=>{const v=document.querySelector('#homeVideos video.visible');return v&&!v.paused&&v.currentTime>0;});
+assert.equal(await page.locator('#homeVideos video.visible').evaluate(v=>v.muted&&v.playsInline),true);
+const firstClip=await page.locator('#homeVideos video.visible').getAttribute('src');
+await page.locator('#homeVideoToggle').click();
+assert.equal(await page.locator('#homeVideos video').evaluateAll(vs=>vs.every(v=>v.paused)),true,'Pause stops both video players');
+await page.locator('#homeVideoToggle').click();
+await page.waitForFunction(()=>!document.querySelector('#homeVideos video.visible').paused);
+await page.locator('#homeVideos video.visible').evaluate(v=>v.currentTime=v.duration-.1);
+await page.waitForFunction(first=>document.querySelector('#homeVideos video.visible').getAttribute('src')!==first,firstClip);
+assert.equal(await page.evaluate(async()=>((await (await fetch('/assets/spain-videos/manifest.json')).json()).clips.length),20);
+await page.screenshot({path:'artifacts/host-video-home.png'});
+const reducedPage=await context.newPage();await reducedPage.emulateMedia({reducedMotion:'reduce'});
+await reducedPage.goto('http://127.0.0.1:4181/');
+await reducedPage.locator('#homeVideoToggle').waitFor({state:'visible'});
+assert.equal(await reducedPage.locator('#homeVideos video').evaluateAll(vs=>vs.every(v=>v.paused&&!v.getAttribute('src'))),true,'Reduced-motion starts with the still background and no video downloads');
+await reducedPage.locator('#homeVideoToggle').click();
+await reducedPage.waitForFunction(()=>document.querySelector('#homeVideos video.visible')?.paused===false);
+await reducedPage.close();
+const offlinePage=await context.newPage();
+await offlinePage.route('**/assets/spain-videos/manifest.json',route=>route.abort());
+await offlinePage.goto('http://127.0.0.1:4181/');
+await offlinePage.locator('.destination-pick').first().waitFor();
+assert.equal(await offlinePage.locator('.destination-pick').count(),6);
+assert.equal(await offlinePage.locator('#homeVideoToggle').isVisible(),false);
+assert.notEqual(await offlinePage.locator('#stage').evaluate(el=>getComputedStyle(el,'::before').backgroundImage),'none','Still background remains when video loading fails');
+await offlinePage.close();
 
 const sdp=await page.evaluate(async()=>{
   const pc=new RTCPeerConnection();const mic=await navigator.mediaDevices.getUserMedia({audio:true});mic.getTracks().forEach(t=>pc.addTrack(t,mic));pc.createDataChannel('oai-events');
@@ -118,6 +147,8 @@ try{
     assert.equal(await page.locator('[data-touch=voice]').textContent(),'Habla con Lola');
     assert.equal(await page.locator('.region-card-action').first().textContent(),'Toca para transformar');
     assert.equal(await page.locator('#sentryToggle').textContent(),'Activar cámara');
+    assert.equal(await page.locator('#homeVideoToggle').getAttribute('aria-label'),'Pausar vídeos de fondo');
+    assert.ok(await page.locator('#homeVideoToggle').evaluate(b=>{const r=b.getBoundingClientRect(),c=document.querySelector('#touchControls').getBoundingClientRect();return r.width>=44&&r.height>=44&&r.bottom<=innerHeight&&(r.bottom<=c.top+1||r.right<=c.left||r.left>=c.right);}), 'Video control remains tappable and separate from the visit action');
     assert.equal(await page.locator('.destination-pick').count(),6);
     assert.ok(await page.locator('#touchControls').evaluate(e=>e.getBoundingClientRect().bottom<=innerHeight));
     assert.ok(await page.locator('#stage').evaluate(e=>{
@@ -145,6 +176,8 @@ try{
 
   await page.setViewportSize({width:1080,height:1920});await page.waitForTimeout(900);
   await page.locator('#face').click();await page.waitForFunction(()=>document.body.dataset.phase==='listening');
+  assert.equal(await page.locator('#homeVideos video').evaluateAll(vs=>vs.every(v=>v.paused)),true,'Homepage playback pauses during the visitor experience');
+  assert.equal(await page.locator('#homeVideoToggle').isVisible(),false);
   // Captions are actual outgoing deltas, safely rendered above Lola at kiosk and phone sizes.
   const say=async delta=>page.evaluate(delta=>window.__channel.emit({type:'session.output_transcript.delta',delta}),delta);
   const captionBounds=async()=>page.evaluate(()=>{

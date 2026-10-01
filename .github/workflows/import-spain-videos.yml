@@ -1,9 +1,6 @@
 name: Import supplied Spain videos
 on:
   workflow_dispatch:
-  push:
-    branches: [codex/turespana-voice-host]
-    paths: [.github/workflows/import-spain-videos.yml]
 permissions:
   contents: write
 jobs:

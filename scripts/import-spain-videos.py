@@ -22,9 +22,10 @@ with tempfile.TemporaryDirectory() as temp:
    subprocess.run(['ffmpeg','-hide_banner','-loglevel','error','-y','-i',str(src),'-map','0:v:0','-an','-vf','scale=720:-2,setsar=1','-c:v','libx264','-preset','medium','-crf','24','-pix_fmt','yuv420p','-movflags','+faststart',str(target)],check=True)
    thumb=review/f'spain-{i:02}.jpg'
    subprocess.run(['ffmpeg','-hide_banner','-loglevel','error','-y','-ss','2','-i',str(target),'-frames:v','1','-vf','scale=180:-2',str(thumb)],check=True)
+   encoded=json.loads(subprocess.check_output(['ffprobe','-v','error','-select_streams','v:0','-show_entries','stream=width,height','-of','json',str(target)]))['streams'][0]
    img=Image.open(thumb);x=((i-1)%5)*200;y=((i-1)//5)*390
    sheet.paste(img,(x+10,y));draw.text((x+10,y+img.height+8),f'{i:02} '+pathlib.Path(name).name[5:29],fill='white')
-   clips.append({'src':'/assets/spain-videos/'+target.name,'originalName':pathlib.Path(name).name,'duration':round(duration,3),'width':720,'height':round(720*video['height']/video['width']),'bytes':target.stat().st_size,'sha256':hashlib.sha256(target.read_bytes()).hexdigest()})
+   clips.append({'src':'/assets/spain-videos/'+target.name,'originalName':pathlib.Path(name).name,'duration':round(duration,3),'width':encoded['width'],'height':encoded['height'],'bytes':target.stat().st_size,'sha256':hashlib.sha256(target.read_bytes()).hexdigest()})
   sheet.save(review/'contact-sheet.jpg',quality=90)
   manifest={'clips':clips,'source':'Supplied by Turespaña for the IMEX America kiosk, September 2026','muted':True}
   (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')

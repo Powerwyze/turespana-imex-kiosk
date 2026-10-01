@@ -275,3 +275,15 @@ body[data-phase=idle] #face{aspect-ratio:1;min-width:64px;min-height:64px}
 
 #contactKeyboardToggle{width:100%;margin:4px 0 12px;min-height:44px;border:1px solid #b69870;border-radius:10px;background:#39251b;color:#ffe7bc;font:600 15px Arial,sans-serif}
 @media(max-width:600px){#emailPanel #hostCaptions{padding:8px 12px;margin-bottom:6px}#emailPanel #hostCaptionText{font-size:16px;max-height:2.6em}#emailPanel .caption-speaker{display:none}#emailPanel .marketing-choice label{font-size:14px;margin:8px 0}#emailHelp{margin:4px 0}#emailTitle{font-size:23px}#emailStatus:empty{min-height:0;margin:6px 0}#emailPanel label{font-size:14px}#contactKeyboardToggle{margin-bottom:8px}.marketing-note{font-size:12px}#emailConfirm{position:static}}
+
+/* The supplied Spain films sit beneath the opaque homepage cards and branding. */
+#homeVideos{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;opacity:0;transition:opacity .6s;background:#151f2a}
+#homeVideos video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;filter:saturate(.65);transition:opacity .65s}
+#homeVideos video.visible{opacity:1}
+#homeVideos::after{content:'';position:absolute;inset:0;background:rgba(10,16,24,.45)}
+body[data-phase=idle] #homeVideos[data-ready=true]{opacity:1}
+body:not([data-phase=idle]) #homeVideos{display:none}
+body[data-phase=idle] .examples-note{display:flex;align-items:center;justify-content:center;gap:10px;min-height:44px}
+#homeVideoToggle{flex:none;display:inline-grid;place-items:center;width:44px;height:44px;min-width:44px;padding:0;border:1px solid #ffffff80;border-radius:50%;background:#0e1d2ee8;color:#fff;font:700 20px Arial,sans-serif;cursor:pointer;touch-action:manipulation}
+#homeVideoToggle:focus-visible{outline:3px solid #ffe58a;outline-offset:3px}
+@media(prefers-reduced-motion:reduce){#homeVideos,#homeVideos video{transition:none}}

@@ -1,3 +1,4 @@
+import {mountHomeVideos} from './home-videos.js';
 import {mountHomeLanguage,homeText} from './home-language.js';
 import {brandPortrait} from './portrait-branding.js';
 import {mountTouchControls} from './host-touch.js';
@@ -30,6 +31,7 @@ window.addEventListener('resize',()=>contactKeyboardLayout(true));contactKeyboar
 const captions=new HostCaptions($('hostCaptions'),$('hostCaptionText'),$('stage'),face);
 let cameraPreparation=null,cameraEpoch=0,touchMode=false,touchUI=null;
 const homeLanguage=mountHomeLanguage({onChange:()=>touchUI?.render()});
+mountHomeVideos();
 let peer,events,mic,cameraStream,context,analyser,sourceNode,ready=false,connecting=false,ending=false;
 let sessionEpoch=0,startTimer,closeTimer,maxTimer,pictureUrl=null,requestController=null,level=0,lastPhase='',eventTimer,eventIndex=0,lastVoiceAt=0,guestInterrupted=false,sentryAudioContext=null,sentrySetup=0,sentryEnabling=false,rearmImmediately=false;
 const wait=(ms,signal)=>new Promise((resolve,reject)=>{
