@@ -40,7 +40,7 @@ await page.locator('#homeVideoToggle').click();
 await page.waitForFunction(()=>!document.querySelector('#homeVideos video.visible').paused);
 await page.locator('#homeVideos video.visible').evaluate(v=>v.currentTime=v.duration-.1);
 await page.waitForFunction(first=>document.querySelector('#homeVideos video.visible').getAttribute('src')!==first,firstClip);
-assert.equal(await page.evaluate(async()=>((await (await fetch('/assets/spain-videos/manifest.json')).json()).clips.length),20);
+assert.equal(await page.evaluate(async()=>{const response=await fetch('/assets/spain-videos/manifest.json');return (await response.json()).clips.length;}),20);
 await page.screenshot({path:'artifacts/host-video-home.png'});
 const reducedPage=await context.newPage();await reducedPage.emulateMedia({reducedMotion:'reduce'});
 await reducedPage.goto('http://127.0.0.1:4181/');
