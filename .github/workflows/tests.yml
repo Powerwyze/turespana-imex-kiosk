@@ -35,6 +35,10 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Render the actual photo email without sending
         run: node scripts/email-preview.mjs
+      - name: Ensure the browser supports the supplied H.264 videos
+        run: |
+          if ! command -v google-chrome >/dev/null; then npx playwright install chrome; fi
+          google-chrome --version
       - run: node tests/host.e2e.mjs
       - name: Verify live voice and tool control on the remote preview
         if: github.event_name == 'workflow_dispatch' && inputs.live
@@ -57,3 +61,4 @@ jobs:
           name: turespana-host-verification
           path: artifacts/
           retention-days: 7
+

@@ -21,7 +21,7 @@ const server=http.createServer(async(req,res)=>{
 });
 await new Promise(r=>server.listen(4181,'127.0.0.1',r));
 await fs.mkdir('artifacts',{recursive:true});
-const browser=await chromium.launch({args:['--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream','--autoplay-policy=no-user-gesture-required','--enable-unsafe-swiftshader']});
+const browser=await chromium.launch({channel:'chrome',args:['--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream','--autoplay-policy=no-user-gesture-required','--enable-unsafe-swiftshader']});
 const context=await browser.newContext({viewport:{width:1080,height:1920},permissions:['camera','microphone']});
 const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
 // Generate a genuine browser SDP artifact for an independent server configuration smoke check.
