@@ -1,6 +1,7 @@
 // Text and original brand artwork are composed after the portrait passes its checks.
 // Separate top and bottom bands keep all branding away from faces, hair and clothing.
-export const CAMPAIGN_PHRASE='Think You Know Spain? Think Again.';
+export const CAMPAIGN_PHRASE='Spain at IMEX America - 13-15 October 2026';
+export const AI_DISCLOSURE='AI generated photo';
 export const PORTRAIT_LOGO='/assets/spain-info-logo.png';
 export async function brandPortrait(blob, regionName){
   if(typeof regionName!=='string'||!regionName.trim())throw new Error('Choose a region before creating your portrait.');
@@ -21,9 +22,11 @@ export async function brandPortrait(blob, regionName){
     const logoW=logo.naturalWidth*ratio,logoH=logo.naturalHeight*ratio;
     ctx.drawImage(logo,canvas.width-pad-logoBox+(logoBox-logoW)/2,bottom+(footer-logoH)/2,logoW,logoH);
     const textLeft=38*scale,textWidth=canvas.width-logoBox-3*pad-textLeft;
-    let font=39*scale;ctx.font=`600 ${font}px Georgia, serif`;
+    let font=34*scale;ctx.font=`600 ${font}px Georgia, serif`;
     while(ctx.measureText(CAMPAIGN_PHRASE).width>textWidth&&font>22*scale){font-=scale;ctx.font=`600 ${font}px Georgia, serif`;}
-    ctx.textAlign='left';ctx.fillText(CAMPAIGN_PHRASE,textLeft,bottom+footer/2,textWidth);
+    ctx.textAlign='left';ctx.fillText(CAMPAIGN_PHRASE,textLeft,bottom+74*scale,textWidth);
+    ctx.fillStyle='#465364';ctx.font=`500 ${26*scale}px Arial, sans-serif`;
+    ctx.fillText(AI_DISCLOSURE,textLeft,bottom+121*scale,textWidth);
     return await new Promise((resolve,reject)=>canvas.toBlob(result=>result?resolve(result):reject(new Error('Your branded portrait could not be saved.')),'image/jpeg',.96));
   }finally{photo.close();}
 }

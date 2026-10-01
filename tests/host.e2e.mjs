@@ -231,7 +231,7 @@ try{
   await fs.writeFile('artifacts/branded-portrait.jpg',Buffer.from(brandedBytes));
   // Inspect actual canvas draw calls for all six destinations; text stays out of the photo.
   const brandReport=await page.evaluate(async()=>{
-    const {brandPortrait,CAMPAIGN_PHRASE,PORTRAIT_LOGO}=await import('/portrait-branding.js');
+    const {brandPortrait,CAMPAIGN_PHRASE,AI_DISCLOSURE,PORTRAIT_LOGO}=await import('/portrait-branding.js');
     const raw=await (await fetch('/tests/fixtures/sentry-person.jpg')).blob();
     const nativeText=CanvasRenderingContext2D.prototype.fillText,nativeImage=CanvasRenderingContext2D.prototype.drawImage;
     const records=[];let current;
@@ -240,14 +240,16 @@ try{
     try{for(const label of ['Canarias','Barcelona','Bilbao','Madrid','Andalucía','Valencia']){
       current={label,text:[],images:[]};const branded=await brandPortrait(raw,label);const bitmap=await createImageBitmap(branded);current.width=bitmap.width;current.height=bitmap.height;bitmap.close();records.push(current);
     }}finally{CanvasRenderingContext2D.prototype.fillText=nativeText;CanvasRenderingContext2D.prototype.drawImage=nativeImage;}
-    return {records,phrase:CAMPAIGN_PHRASE,logo:PORTRAIT_LOGO};
+    return {records,phrase:CAMPAIGN_PHRASE,disclosure:AI_DISCLOSURE,logo:PORTRAIT_LOGO};
   });
-  assert.equal(brandReport.phrase,'Think You Know Spain? Think Again.');
+  assert.equal(brandReport.phrase,'Spain at IMEX America - 13-15 October 2026');
+  assert.equal(brandReport.disclosure,'AI generated photo');
   assert.equal(brandReport.logo,'/assets/spain-info-logo.png');
   for(const r of brandReport.records){
-    assert.deepEqual(r.text.map(t=>t.text),[r.label.toLocaleUpperCase('es-ES'),'Think You Know Spain? Think Again.']);
+    assert.deepEqual(r.text.map(t=>t.text),[r.label.toLocaleUpperCase('es-ES'),'Spain at IMEX America - 13-15 October 2026','AI generated photo']);
     const top=Math.round(116*r.width/1024),bottom=top+originalSize.height;
-    assert.ok(r.text[0].y<top&&r.text[1].y>bottom,'Only destination above; campaign below');
+    assert.ok(r.text[0].y<top&&r.text[1].y>bottom,'Only destination above; event details below');
+    assert.ok(r.text[2].y>r.text[1].y&&r.text[2].y<r.height,'AI disclosure is visible below the event details');
     assert.equal(r.images[0].src,'guest');assert.equal(r.images[0].args[1],top,'Entire guest photo is offset below the header');
     assert.ok(r.images[1].src.endsWith('/assets/spain-info-logo.png'));assert.ok(r.images[1].args[1]>=bottom,'Original logo belongs in the footer');
   }
