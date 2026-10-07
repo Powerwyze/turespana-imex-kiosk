@@ -14,8 +14,15 @@ import {HostCaptions} from './host-captions.js';
 const $=id=>document.getElementById(id);
 const face=$('face'),camera=$('camera'),audio=$('voice'),picture=$('picture');
 $('marketingCopy').innerHTML=consentLabelMarkup();
+let generationKeyboardOpen=false;
 let activeContactInput=$('guestNameInput'),keyboardShift=false,contactKeyboardOpen=innerWidth>600;
 function contactKeyboardLayout(reset=false){
+ if(document.body.dataset.phase==='generating'){
+  $('emailKeyboard').hidden=!generationKeyboardOpen;$('emailDomains').hidden=true;
+  $('generationEmailInput').inputMode=generationKeyboardOpen?'none':'email';
+  $('generationKeyboardToggle').textContent=generationKeyboardOpen?'Hide touch keyboard':'Show touch keyboard';
+  $('generationKeyboardToggle').setAttribute('aria-expanded',String(generationKeyboardOpen));return;
+ }
  if(reset)contactKeyboardOpen=innerWidth>600;
  $('emailKeyboard').hidden=!contactKeyboardOpen;
  $('emailDomains').hidden=!contactKeyboardOpen||activeContactInput!==$('emailInput');
@@ -39,7 +46,17 @@ const wait=(ms,signal)=>new Promise((resolve,reject)=>{
   signal?.addEventListener('abort',abort,{once:true});
 });
 function text(title,hint=''){ $('headline').textContent=title;$('hint').textContent=hint; }
-function phase(value){queueMicrotask(()=>touchUI?.render());if(document.body.dataset.phase!==value)captions.clear();document.body.dataset.phase=value;placeHomeLogo();homeLanguage.refresh();$('sentryToggle').disabled=!sentry.enabled&&!['idle','error'].includes(value);}
+function phase(value){
+ $('generationEmailPanel').hidden=value!=='generating';
+ if(value==='generating'){
+  $('generationKeyboardHost').append($('emailKeyboard'));
+ }else{
+  $('emailPanel').insertBefore($('emailKeyboard'),$('emailDomains'));
+  generationKeyboardOpen=false;
+  if(activeContactInput===$('generationEmailInput'))activeContactInput=$('emailInput');
+ }
+ if(value==='idle')$('generationEmailInput').value='';
+ queueMicrotask(()=>touchUI?.render());if(document.body.dataset.phase!==value)captions.clear();document.body.dataset.phase=value;contactKeyboardLayout();placeHomeLogo();homeLanguage.refresh();$('sentryToggle').disabled=!sentry.enabled&&!['idle','error'].includes(value);}
 function placeHomeLogo(){
   const slot=$('homeLogoSlot');
   if(document.body.dataset.phase==='idle'){
@@ -92,7 +109,7 @@ $('sentryToggle').addEventListener('click',async()=>{
 function stopEventTalk(){clearInterval(eventTimer);eventTimer=null;}
 function startEventTalk(){
   stopEventTalk();eventIndex=0;guestInterrupted=false;
-  note('The photo is generating for '+destinations[engine.destination]+'. Share two concise sentences specifically about this destination from your verified facts. Invite a tourism question and listen; answer their follow-up questions while generation continues. Do not ask for email yet.',true);
+  note('The photo is generating for '+destinations[engine.destination]+'. Share two concise sentences specifically about this destination from your verified facts. Invite a tourism question and listen; answer their follow-up questions while generation continues. Mention once that they can type their email in the field on screen while the image generates; nothing sends until they confirm after the reveal. Do not ask them to repeat an email they already entered.',true);
   eventTimer=setInterval(()=>{
     if(!ready||engine.phase!=='generating'){stopEventTalk();return;}
     if(guestInterrupted||Date.now()-lastVoiceAt<18000||eventIndex>=2)return;
@@ -124,16 +141,17 @@ const photoEmail=new PhotoEmail({
     $('emailConfirm').textContent=sending?'Sending your photo…':'Confirm & email photo';
     $('emailStatus').textContent=state.error||(sending?'Sending to the address you confirmed.':'');
     $('emailToast').hidden=state.status!=='sent';
+    if(state.status==='sent')$('generationEmailInput').value='';
     if(['sent','empty'].includes(state.status)){$('emailInput').value='';$('guestNameInput').value='';$('marketingOptIn').checked=false;}
     $('emailOpen').hidden=!open&&state.status!=='sent'?$('picture').hidden:true;
   }
 });
 function reviewEmail(value){
-  const result=photoEmail.review(value);
+  const result=photoEmail.review(value||photoEmail.draft||$('generationEmailInput').value);
   if(result.shown){$('emailInput').value=photoEmail.draft;$('emailConfirm').disabled=!validEmail(photoEmail.draft)||!validName($('guestNameInput').value);activeContactInput=validName($('guestNameInput').value)?$('emailInput'):$('guestNameInput');activeContactInput.focus({preventScroll:true});}
   return result;
 }
-function clearEmail(){photoEmail.reset();$('emailInput').value='';$('emailOpen').hidden=true;$('emailToast').hidden=true;}
+function clearEmail(){$('generationEmailInput').value='';photoEmail.reset();$('emailInput').value='';$('emailOpen').hidden=true;$('emailToast').hidden=true;}
 function hideCountdown(){$('countdown').hidden=true;$('viewfinder').hidden=true;}
 function stopCamera(){cameraEpoch++;cameraPreparation=null;cameraStream?.getTracks().forEach(t=>t.stop());cameraStream=null;camera.srcObject=null;hideCountdown();}
 function hidePicture(){picture.hidden=true;picture.removeAttribute('src');if(pictureUrl)URL.revokeObjectURL(pictureUrl);pictureUrl=null;}
@@ -231,7 +249,7 @@ const engine=new TurespanaEngine({
     if(ready){
       note('Booth state: '+JSON.stringify(state));
       if(state.phase!==lastPhase){
-        if(state.phase==='result')note('The generated photo has passed the guest check, decoded successfully, and is now displayed. Stop the event explanation. Tell the visitor the photo is ready, then ask them to spell their email aloud, including at and dot, if they would like it emailed. Wait for the spelling before showing the confirmation keyboard.',true);
+        if(state.phase==='result')note('The generated photo has passed the guest check, decoded successfully, and is now displayed. Stop the event explanation. Tell the visitor the photo is ready, invite them to tap Email my photo to review their saved email and confirm sending. If they have not entered one, offer spelling it aloud or typing. Do not claim the email has been sent.',true);
         if(state.phase==='error')note('The photo workflow failed: '+state.error+' Do not retry unless the visitor asks.',true);
         if(state.phase==='countdown')send({type:'session.instructions.append',delegation_id:null,content:'The camera is ready and the visible five-second countdown has started now. Stay quiet until the app reports generating. Do not say or count any numbers; the app plays synchronized countdown sounds.'});
         if(state.phase==='generating')startEventTalk();
@@ -353,7 +371,7 @@ $('end').addEventListener('click',end);
 $('audioResume').addEventListener('click',()=>{audio.play().then(()=>{$('audioResume').hidden=true;}).catch(()=>{});});
 $('emailOpen').addEventListener('click',()=>{
   touch();
-  note('The visitor tapped Email my photo. Ask them to spell their email aloud, including at and dot. The keyboard is available if they prefer to type.',true);
+  note('The visitor tapped Email my photo. Their saved draft is on screen if they entered one during generation. Ask them to check their details and tap the confirmation button. Only offer spelling or typing if the address is missing.',true);
   // Touch is a deliberate manual-entry fallback; normal voice flow opens after spelling.
   reviewEmail('');
 });
@@ -362,6 +380,9 @@ $('guestNameInput').addEventListener('input',()=>{photoEmail.editName($('guestNa
 $('marketingOptIn').addEventListener('change',()=>{photoEmail.chooseMarketing($('marketingOptIn').checked);touch();});
 for(const id of ['guestNameInput','emailInput'])$(id).addEventListener('focus',()=>{activeContactInput=$(id);$('emailDomains').hidden=!contactKeyboardOpen||id!=='emailInput';});
 $('emailInput').addEventListener('input',()=>{photoEmail.edit($('emailInput').value);touch();});
+$('generationEmailInput').addEventListener('input',touch);
+$('generationEmailInput').addEventListener('focus',()=>{activeContactInput=$('generationEmailInput');});
+$('generationKeyboardToggle').addEventListener('click',()=>{generationKeyboardOpen=!generationKeyboardOpen;activeContactInput=$('generationEmailInput');contactKeyboardLayout();activeContactInput.focus({preventScroll:true});touch();});
 $('emailPanel').addEventListener('pointerdown',touch);
 $('emailPanel').addEventListener('keydown',touch);
 $('emailConfirm').addEventListener('click',async()=>{

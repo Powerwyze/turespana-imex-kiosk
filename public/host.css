@@ -292,3 +292,18 @@ body[data-phase=idle] .examples-note{display:flex;align-items:center;justify-con
 #face #homeOfficialLogo{display:block;width:100%;height:100%;object-fit:contain;background:#fff;border-radius:8px;padding:4px}
 body:not([data-phase=idle]) #face{aspect-ratio:1;max-width:180px}
 #homeVideoToggle{position:absolute;top:max(80px,env(safe-area-inset-top));right:24px;z-index:9}
+
+/* Guest email draft sits over the film, with no send action until the reveal. */
+#generationEmailPanel{position:absolute;z-index:12;left:50%;top:50%;transform:translate(-50%,-50%);width:min(92vw,640px);max-height:calc(100dvh - 200px);overflow:auto;padding:24px;border-radius:22px;background:rgba(5,18,40,.91);color:#fff;box-shadow:0 12px 48px #0006;border:1px solid #ffffff55}
+#generationEmailTitle{font:600 clamp(22px,3vw,34px) Arial,sans-serif;margin:0 0 18px}
+#generationEmailPanel label{display:block;font:500 18px Arial,sans-serif;margin-bottom:10px}
+#generationEmailInput{display:block;width:100%;box-sizing:border-box;min-height:58px;background:#fff;color:#102039;border:2px solid #ffdf39;border-radius:12px;padding:12px;font:20px Arial,sans-serif}
+#generationEmailHelp{font:15px/1.4 Arial,sans-serif;margin:12px 0}
+#generationKeyboardToggle{min-height:46px;border:1px solid #ffffff88;border-radius:10px;background:transparent;color:white;padding:8px 14px;font:16px Arial,sans-serif}
+#generationEmailInput:focus-visible,#generationKeyboardToggle:focus-visible{outline:3px solid #ffdf39;outline-offset:3px}
+body[data-phase=generating] #face,body[data-phase=generating] #message{visibility:hidden}
+body[data-phase=generating] #touchControls{left:50%;transform:translateX(-50%);width:auto;max-width:92vw;padding:8px;background:transparent;border:0;box-shadow:none}
+body[data-phase=generating] #touchTitle,body[data-phase=generating] .touch-help{display:none}
+body[data-phase=generating] #stage>#hostCaptions{top:74px!important;bottom:auto!important;left:50%!important;transform:translateX(-50%)!important;width:min(92vw,640px)!important;max-height:100px;overflow:auto;z-index:13}
+@media(max-width:600px){#generationEmailPanel{padding:18px;max-height:calc(100dvh - 230px)}#generationEmailTitle{margin-bottom:14px}#generationEmailPanel #emailKeyboard{margin-top:12px}}
+@media(orientation:landscape) and (max-height:500px){#generationEmailPanel{top:65px;transform:translateX(-50%);max-height:calc(100dvh - 140px);padding:12px}body[data-phase=generating] #stage>#hostCaptions{display:none}}

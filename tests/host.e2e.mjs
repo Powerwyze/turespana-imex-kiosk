@@ -392,6 +392,7 @@ try{
   assert.equal(await page.locator('#hostCaptionText').textContent(),'','New guest starts with no old captions.');
   await tool('end_visit',{confirmed:true});await page.waitForFunction(()=>document.body.dataset.phase==='idle');
   assert.equal(await page.locator('#camera').evaluate(e=>e.srcObject===null),true);
+  assert.equal(await page.locator('#generationEmailInput').inputValue(),'');
   assert.equal(await page.locator('#emailInput').inputValue(),'');assert.equal(await page.locator('#emailPanel').isVisible(),false);
   await page.setViewportSize({width:390,height:844});await page.waitForTimeout(1000);await page.screenshot({path:'artifacts/host-idle-mobile.png'});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
@@ -536,8 +537,27 @@ try{
   await new Promise((resolve,reject)=>{const deadline=Date.now()+5000;const poll=()=>generations===beforeTouch+1?resolve():Date.now()>deadline?reject(new Error('Touch capture did not submit an image request')):setTimeout(poll,20);poll();});
   assert.equal(generations,beforeTouch+1);
   assert.equal(await page.locator('[data-touch=capture]').count(),0,'No duplicate capture button during generation');
+  await page.locator('#generationEmailPanel').waitFor({state:'visible'});
+  const emailsBeforeDraft=emails;
+  await page.locator('#generationEmailInput').fill('waiting@example.com');
+  await page.locator('#generationKeyboardToggle').click();
+  await page.locator('#generationEmailInput').evaluate(e=>e.setSelectionRange(7,7));
+  await page.locator('[data-key="+"]').click();
+  assert.equal(await page.locator('#generationEmailInput').inputValue(),'waiting+@example.com');
+  await page.locator('#generationEmailInput').fill('waiting@example.com');
+  await page.locator('#generationKeyboardToggle').click();
+  for(const [label,width,height] of [['phone',390,844],['kiosk',1080,1920]]){
+    await page.setViewportSize({width,height});await page.waitForTimeout(600);
+    assert.ok(await page.locator('#generationEmailInput').evaluate(e=>{const r=e.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight;}));
+    await page.screenshot({path:'artifacts/generation-email-'+label+'.png'});
+  }
+  assert.equal(emails,emailsBeforeDraft,'Typing while generating never sends');
   release();await page.waitForFunction(()=>document.body.dataset.phase==='result');
+  assert.equal(await page.locator('#generationEmailPanel').isVisible(),false);
   await page.locator('#emailOpen').click();
+  assert.equal(await page.locator('#emailInput').inputValue(),'waiting@example.com');
+  assert.equal(await page.locator('#marketingOptIn').isChecked(),false);
+  assert.equal(emails,emailsBeforeDraft,'Revealing and opening review never send');
   assert.equal(await page.locator('#emailPanel').isVisible(),true);
   assert.equal(await page.locator('#touchControls').isVisible(),false,'Only email confirmation controls remain in the dialog');
   await page.locator('#emailCancel').click();
