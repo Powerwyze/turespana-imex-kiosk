@@ -564,6 +564,7 @@ try{
   await page.locator('[data-touch=finish]').click();
   await page.waitForFunction(()=>document.body.dataset.phase==='idle');
   assert.equal(await page.locator('#picture').isVisible(),false);
+  assert.equal(await page.locator('#generationEmailInput').inputValue(),'','Finish clears the generation email draft');
   assert.equal(await page.evaluate(()=>window.__sent.length),voiceBefore,'Touch photos do not need a voice session');
   assert.deepEqual(errors,[]);
   console.log('Face host browser checks passed: portrait/mobile, readiness, camera warmup/cancellation, five-second countdown, top-left viewfinder, duplicate calls, image reveal, guard rejection, explicit retry, reset, cleanup.');

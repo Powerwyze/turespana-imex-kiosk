@@ -375,7 +375,7 @@ $('emailOpen').addEventListener('click',()=>{
   // Touch is a deliberate manual-entry fallback; normal voice flow opens after spelling.
   reviewEmail('');
 });
-$('emailCancel').addEventListener('click',()=>{photoEmail.cancel();$('emailInput').value='';$('emailOpen').hidden=false;note('The visitor skipped email. Do not ask for their email again unless they request it.');$('emailOpen').focus();});
+$('emailCancel').addEventListener('click',()=>{$('generationEmailInput').value='';photoEmail.cancel();$('emailInput').value='';$('emailOpen').hidden=false;note('The visitor skipped email. Do not ask for their email again unless they request it.');$('emailOpen').focus();});
 $('guestNameInput').addEventListener('input',()=>{photoEmail.editName($('guestNameInput').value);touch();});
 $('marketingOptIn').addEventListener('change',()=>{photoEmail.chooseMarketing($('marketingOptIn').checked);touch();});
 for(const id of ['guestNameInput','emailInput'])$(id).addEventListener('focus',()=>{activeContactInput=$(id);$('emailDomains').hidden=!contactKeyboardOpen||id!=='emailInput';});
