@@ -126,10 +126,11 @@ const photoEmail=new PhotoEmail({
     $('emailConfirm').textContent=state.queued?'Confirmed · Waiting for photo':'Confirm & email when ready';
     $('emailStatus').textContent=state.error||(state.queued?'Confirmed. Your photo will be emailed when it is ready.':'');
     $('emailToast').hidden=!['sent','sending','error'].includes(state.status);
-    $('emailToast').textContent=state.status==='sending'?'Sending your photo…':state.status==='error'?'Email was not confirmed. Tap Retry email to try again.':'Photo accepted for delivery. Check your inbox.';
+    $('emailToast').textContent=state.status==='sending'?'Sending your photo…':state.status==='error'?'Email was not confirmed. Tap Retry email to try again.':state.status==='sent'?'Photo accepted for delivery. Check your inbox.':'';
     if(['sent','empty'].includes(state.status)){$('emailInput').value='';$('guestNameInput').value='';$('marketingOptIn').checked=false;}
-    $('emailOpen').hidden=document.body.dataset.phase!=='result'||!['review','error'].includes(state.status)||!validEmail(photoEmail.draft)||!validName(photoEmail.name);
-    $('emailOpen').textContent=state.status==='error'?'Retry email':'Email my photo';
+    $('emailOpen').hidden=document.body.dataset.phase!=='result'||(!['sending','sent'].includes(state.status)&&(!['review','error'].includes(state.status)||!validEmail(photoEmail.draft)||!validName(photoEmail.name)));
+    $('emailOpen').disabled=['sending','sent'].includes(state.status);
+    $('emailOpen').textContent=state.status==='sending'?'Sending…':state.status==='sent'?'Email sent':state.status==='error'?'Retry email':'Email my photo';
   }
 });
 function reviewEmail(value){
@@ -226,7 +227,7 @@ const engine=new TurespanaEngine({
     if(state.phase==='generating'&&lastPhase!=='generating'){photoEmail.beginGeneration();contactKeyboardLayout();}
     else if(state.phase==='result')photoEmail.setImage(image);
     else if(state.phase!=='generating')clearEmail();
-    if(state.phase==='result'&&image){pictureUrl=URL.createObjectURL(image);picture.src=pictureUrl;picture.hidden=false;$('emailOpen').hidden=!['review','error'].includes(photoEmail.status)||!validEmail(photoEmail.draft)||!validName(photoEmail.name);}
+    if(state.phase==='result'&&image){pictureUrl=URL.createObjectURL(image);picture.src=pictureUrl;picture.hidden=false;$('emailOpen').hidden=!['sending','sent'].includes(photoEmail.status)&&(!['review','error'].includes(photoEmail.status)||!validEmail(photoEmail.draft)||!validName(photoEmail.name));}
     if(state.phase==='preparing')text('Getting the camera ready.','Your countdown starts as soon as the camera is ready.');
     else if(state.phase==='countdown')text('Look toward the camera.','Check your framing in the top-left preview.');
     else if(state.phase==='generating')text('A little Spanish magic.','Your host is still here. Feel free to talk.');

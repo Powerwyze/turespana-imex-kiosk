@@ -345,7 +345,7 @@ try{
   await tool('show_email_confirmation',{email:'ignored@example.com'});
   assert.equal(await page.locator('#emailPanel').isVisible(),false,'Late voice tools cannot reopen the form');
   assert.equal(emails,1);emailFail=false;await page.locator('#emailOpen').dblclick();
-  await page.waitForFunction(()=>document.querySelector('#emailToast').textContent.includes('accepted'));
+  await page.waitForFunction(()=>!document.querySelector('#emailToast').hidden&&document.querySelector('#emailToast').textContent.includes('accepted'));
   assert.equal(emails,2);assert.equal(lastEmail,'alex+p@gmail.com');assert.equal(lastContact.name,'María García');assert.equal(lastContact.marketingOptIn,true);
   await tool('send_email',{email:'unconfirmed@example.com'});assert.equal(emails,2);
   // Fail one explicit revision: never reveal rejected bytes or automatically regenerate.
