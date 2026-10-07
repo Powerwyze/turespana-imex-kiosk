@@ -27,17 +27,9 @@
   <section id="touchControls" aria-labelledby="touchTitle"></section>
   <button id="emailOpen" hidden>Email my photo</button>
   <div id="emailToast" role="status" hidden>Photo accepted for delivery. Check your inbox.</div>
-  <section id="generationEmailPanel" aria-labelledby="generationEmailTitle" hidden>
-    <h2 id="generationEmailTitle">Your image is generating…</h2>
-    <label for="generationEmailInput">Where should we email your photo?</label>
-    <input id="generationEmailInput" type="text" inputmode="email" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" maxlength="254" placeholder="you@example.com" aria-describedby="generationEmailHelp">
-    <p id="generationEmailHelp">Optional · Review and confirm after your photo is ready.</p>
-    <button id="generationKeyboardToggle" type="button" aria-controls="emailKeyboard" aria-expanded="false">Show touch keyboard</button>
-    <div id="generationKeyboardHost"></div>
-  </section>
   <section id="emailPanel" role="dialog" aria-modal="true" aria-labelledby="emailTitle" hidden>
-    <div class="email-heading"><div><span class="eyebrow">A LITTLE SPAIN, TO GO</span><h1 id="emailTitle">Send your Spain photo</h1></div><button id="emailCancel" type="button" aria-label="Skip email">Skip</button></div>
-    <p id="emailHelp">Enter your name and check your email. Tap either field to use the keyboard.</p>
+    <div class="email-heading"><div><span class="eyebrow">A LITTLE SPAIN, TO GO</span><h1 id="emailTitle">Your image is generating…</h1></div><button id="emailCancel" type="button" aria-label="Skip email">Skip</button></div>
+    <p id="emailHelp">Enter your details now. We’ll email your photo when it is ready.</p>
     <label for="guestNameInput">Your name</label>
     <input id="guestNameInput" type="text" inputmode="none" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="120" required aria-describedby="emailHelp emailStatus">
     <label for="emailInput">Email address</label>
@@ -47,7 +39,7 @@
     <button id="contactKeyboardToggle" type="button" aria-controls="emailKeyboard emailDomains" aria-expanded="true">Hide touch keyboard</button>
     <div id="emailKeyboard" aria-label="Name and email keyboard"></div>
     <div id="emailDomains" aria-label="Common email endings"></div>
-    <button id="emailConfirm" type="button" disabled>Confirm &amp; email photo</button>
+    <button id="emailConfirm" type="button" disabled>Confirm &amp; email when ready</button>
     <p class="email-note">Your name, email and marketing choice are saved for this photo experience.</p>
   </section>
   <aside id="viewfinder" aria-label="Live camera preview during countdown" hidden>

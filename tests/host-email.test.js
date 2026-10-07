@@ -39,3 +39,11 @@ test('name required, opt-in defaults off and only a choice grants consent; retri
  e.setImage(new Blob(['new']));e.review('other@example.com');e.editName('Other');e.chooseMarketing(true);e.edit('different@example.com');assert.equal(e.marketingOptIn,false);
  e.chooseMarketing(true);e.cancel();assert.equal(e.name,'');assert.equal(e.marketingOptIn,false);
 });
+
+test('generation confirmation queues one send only after a checked image, and edits revoke confirmation',async()=>{
+ let sends=0;const e=new PhotoEmail({deliver:async()=>sends++});e.beginGeneration();e.edit('guest@example.com');e.editName('Guest');
+ await e.confirm();await e.confirm();assert.equal(sends,0);assert.equal(e.queued,true);
+ e.edit('other@example.com');assert.equal(e.queued,false);e.setImage(new Blob(['checked']));await Promise.resolve();assert.equal(sends,0);
+ e.beginGeneration();e.edit('guest@example.com');e.editName('Guest');await e.confirm();e.setImage(new Blob(['checked']));await Promise.resolve();assert.equal(sends,1);
+ e.beginGeneration();e.edit('guest@example.com');e.editName('Guest');await e.confirm();e.reset();e.setImage(new Blob(['late']));await Promise.resolve();assert.equal(sends,1);
+});
