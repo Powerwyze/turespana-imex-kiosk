@@ -494,7 +494,7 @@ try{
   await page.waitForTimeout(100);
   await page.evaluate(()=>window.__advanceTime(40000));
   assert.equal(await page.locator('#emailPanel').isVisible(),false);assert.equal(greetings,3);
-  releaseEmail();await page.locator('#emailToast').waitFor({state:'visible'});
+  releaseEmail();await page.waitForFunction(()=>document.querySelector('#emailToast').textContent.includes('accepted'));
   await page.evaluate(()=>{window.__presence=false;window.__advanceTime(20000);});
   assert.equal(await page.locator('body').getAttribute('data-phase'),'result','Completed work grants a fresh reply window.');
   await page.evaluate(()=>window.__advanceTime(11000));
