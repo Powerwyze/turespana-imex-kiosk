@@ -11,8 +11,6 @@ import {CameraSentry} from './host-sentry.js';
 import {runCountdown} from './host-countdown.js';
 import {GuestIdle} from './host-idle.js';
 import {HostCaptions} from './host-captions.js';
-let avatar=null;
-import('./host-avatar.js').then(m=>m.mountAvatar(document.getElementById('face'),document.getElementById('avatar'))).then(a=>avatar=a).catch(()=>{document.getElementById('face').dataset.avatar='fallback';});
 const $=id=>document.getElementById(id);
 const face=$('face'),camera=$('camera'),audio=$('voice'),picture=$('picture');
 $('marketingCopy').innerHTML=consentLabelMarkup();
@@ -430,19 +428,3 @@ for(const button of document.querySelectorAll('.destination-pick'))button.addEve
 });
 touchUI.render();
 
-const samples=new Uint8Array(256),frequencies=new Uint8Array(128);
-function animate(t){
-  // Keep rendering time available for the live viewfinder and precise capture.
-  if(engine.phase==='countdown'){requestAnimationFrame(animate);return;}
-  let amplitude=0;
-  if(analyser&&!audio.paused){
-    analyser.getByteTimeDomainData(samples);
-    amplitude=Math.sqrt(samples.reduce((sum,v)=>sum+Math.pow((v-128)/128,2),0)/samples.length);
-  }
-  level=level*.55+Math.min(1,amplitude*8)*.45;
-  let brightness=0;
-  if(analyser&&level>.025){analyser.getByteFrequencyData(frequencies);const total=frequencies.reduce((a,b)=>a+b,0)||1;brightness=frequencies.slice(8,45).reduce((a,b)=>a+b,0)/total;}
-  avatar?.update({time:t,level:level<.025?0:level,brightness});
-  requestAnimationFrame(animate);
-}
-requestAnimationFrame(animate);

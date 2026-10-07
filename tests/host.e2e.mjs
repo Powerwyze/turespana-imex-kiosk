@@ -26,17 +26,19 @@ const context=await browser.newContext({viewport:{width:1080,height:1920},permis
 const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
 // Generate a genuine browser SDP artifact for an independent server configuration smoke check.
 await page.goto('http://127.0.0.1:4181/');
-await page.waitForFunction(()=>document.querySelector('#face').dataset.avatar==='ready',null,{timeout:20000});
-assert.equal(await page.locator('#avatar').evaluate(e=>e.tagName),'CANVAS');
-assert.equal(await page.locator('#avatarFallback').getAttribute('src'),'/assets/spain-sun-fallback.svg');
-assert.equal(await page.locator('#avatarFallback').evaluate(e=>getComputedStyle(e).visibility),'hidden');
+await page.waitForFunction(()=>document.querySelector('#homeOfficialLogo').complete,null,{timeout:20000});
+assert.equal(await page.locator('#avatar').count(),0);
+assert.equal(await page.locator('#avatarFallback').count(),0);
+
 assert.equal(await page.locator('#homeOfficialLogo').isVisible(),true,'Homepage uses the official logo with lettering');
 assert.equal(await page.locator('#homeOfficialLogo').evaluate(e=>e.naturalWidth>0),true);
-assert.equal(await page.locator('#avatar').isVisible(),false,'Animated sun is hidden on the homepage');
 
 
 
 
+
+assert.equal(await page.locator('#homeVideos video').evaluateAll(vs=>vs.every(v=>v.paused&&!v.getAttribute('src'))),true,'Idle never starts video');
+await page.evaluate(()=>document.body.dataset.phase='generating');
 // Exercise genuine video decoding and playlist transitions without paid API calls.
 try{await page.waitForFunction(()=>{const v=document.querySelector('#homeVideos video.visible');return v&&!v.paused&&v.currentTime>0;});}
 catch(error){
@@ -52,9 +54,17 @@ await page.waitForFunction(()=>!document.querySelector('#homeVideos video.visibl
 await page.locator('#homeVideos video.visible').evaluate(v=>v.currentTime=v.duration-.1);
 await page.waitForFunction(first=>document.querySelector('#homeVideos video.visible').getAttribute('src')!==first,firstClip);
 assert.equal(await page.evaluate(async()=>{const response=await fetch('/assets/spain-videos/manifest.json');return (await response.json()).clips.length;}),20);
-await page.screenshot({path:'artifacts/host-video-home.png'});
+await page.screenshot({path:'artifacts/host-video-generating.png'});
+for(const phase of ['result','error','idle','preparing','countdown','listening']){
+ await page.evaluate(p=>document.body.dataset.phase=p,phase);
+ await page.waitForFunction(()=>[...document.querySelectorAll('#homeVideos video')].every(v=>v.paused));
+ assert.equal(await page.locator('#homeVideos').isVisible(),false);
+ assert.equal(await page.locator('#avatar').count(),0);
+}
+await page.evaluate(()=>document.body.dataset.phase='idle');
 const reducedPage=await context.newPage();await reducedPage.emulateMedia({reducedMotion:'reduce'});
 await reducedPage.goto('http://127.0.0.1:4181/');
+await reducedPage.evaluate(()=>document.body.dataset.phase='generating');
 await reducedPage.locator('#homeVideoToggle').waitFor({state:'visible'});
 assert.equal(await reducedPage.locator('#homeVideos video').evaluateAll(vs=>vs.every(v=>v.paused&&!v.getAttribute('src'))),true,'Reduced-motion starts with the still background and no video downloads');
 await reducedPage.locator('#homeVideoToggle').click();
@@ -135,7 +145,7 @@ const tool=async(name,args,duplicate=false)=>{
   },{name,args,duplicate});
 };
 try{
-  await page.reload();await page.waitForFunction(()=>document.querySelector('#face').dataset.avatar==='ready',null,{timeout:20000});await page.waitForTimeout(1000);await page.screenshot({path:'artifacts/host-idle-portrait.png'});
+  await page.reload();await page.waitForFunction(()=>document.querySelector('#homeOfficialLogo').complete,null,{timeout:20000});await page.waitForTimeout(1000);await page.screenshot({path:'artifacts/host-idle-portrait.png'});
   for(const [name,width,height] of [['kiosk',1080,1920],['phone',390,844],['compact',390,667],['desktop',1280,720],['landscape',844,390]]){
     await page.setViewportSize({width,height});await page.waitForTimeout(900);
     await page.screenshot({path:'artifacts/host-idle-'+name+'.png'});
@@ -159,7 +169,7 @@ try{
     assert.equal(await page.locator('.region-card-action').first().textContent(),'Toca para transformar');
     assert.equal(await page.locator('#sentryToggle').textContent(),'Activar cámara');
     assert.equal(await page.locator('#homeVideoToggle').getAttribute('aria-label'),'Pausar vídeos de fondo');
-    assert.ok(await page.locator('#homeVideoToggle').evaluate(b=>{const r=b.getBoundingClientRect(),c=document.querySelector('#touchControls').getBoundingClientRect();return r.width>=44&&r.height>=44&&r.bottom<=innerHeight&&(r.bottom<=c.top+1||r.right<=c.left||r.left>=c.right);}), 'Video control remains tappable and separate from the visit action');
+    assert.equal(await page.locator('#homeVideoToggle').isVisible(),false,'No video control outside generation');
     assert.equal(await page.locator('.destination-pick').count(),6);
     assert.ok(await page.locator('#touchControls').evaluate(e=>e.getBoundingClientRect().bottom<=innerHeight));
     assert.ok(await page.locator('#stage').evaluate(e=>{
@@ -173,7 +183,7 @@ try{
     assert.equal(await page.locator('.event-title').textContent(),'Discover Spain');
   }
   await page.locator('#homeLanguageToggle').click();await page.reload();
-  await page.waitForFunction(()=>document.documentElement.lang==='es'&&document.querySelector('#face').dataset.avatar==='ready');
+  await page.waitForFunction(()=>document.documentElement.lang==='es'&&document.querySelector('#homeOfficialLogo').complete);
   assert.equal(await page.locator('[data-touch=voice]').textContent(),'Habla con Lola','Language preference survives reload');
   await page.locator('.destination-pick[data-destination=barcelona]').click();
   await page.locator('[data-touch=people-2]').click();

@@ -1,9 +1,9 @@
-// Decorative, silent homepage playlist. Only the active and next clip are loaded.
+// Decorative, silent image-generation playlist. Only the active and next clip are loaded.
 export function mountHomeVideos(){
  const backdrop=document.getElementById('homeVideos'),videos=[...backdrop.querySelectorAll('video')],button=document.getElementById('homeVideoToggle');
  const reduced=matchMedia('(prefers-reduced-motion: reduce)');
  let enabled=!reduced.matches&&!navigator.connection?.saveData,clips=[],active=0,index=0,started=false,loading=false,failures=0,epoch=0;
- const home=()=>document.body.dataset.phase==='idle';
+ const home=()=>document.body.dataset.phase==='generating';
  const mayPlay=()=>enabled&&home()&&!document.hidden&&clips.length>0;
  function label(){
   const es=document.documentElement.lang==='es',text=enabled?(es?'Pausar vídeos de fondo':'Pause background videos'):(es?'Reproducir vídeos de fondo':'Play background videos');
