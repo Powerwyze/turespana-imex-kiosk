@@ -122,9 +122,9 @@ const photoEmail=new PhotoEmail({
     $('marketingOptIn').checked=state.marketingOptIn;
     $('emailCancel').disabled=sending;
     document.querySelectorAll('#emailKeyboard button,#emailDomains button').forEach(b=>b.disabled=sending);
-    $('emailConfirm').disabled=photoEmail.queued||sending||!validEmail($('emailInput').value)||!validName($('guestNameInput').value);
-    $('emailConfirm').textContent=photoEmail.queued?'Confirmed · Waiting for photo':'Confirm & email when ready';
-    $('emailStatus').textContent=state.error||(photoEmail.queued?'Confirmed. Your photo will be emailed when it is ready.':'');
+    $('emailConfirm').disabled=state.queued||sending||!validEmail($('emailInput').value)||!validName($('guestNameInput').value);
+    $('emailConfirm').textContent=state.queued?'Confirmed · Waiting for photo':'Confirm & email when ready';
+    $('emailStatus').textContent=state.error||(state.queued?'Confirmed. Your photo will be emailed when it is ready.':'');
     $('emailToast').hidden=!['sent','sending','error'].includes(state.status);
     $('emailToast').textContent=state.status==='sending'?'Sending your photo…':state.status==='error'?'Email was not confirmed. Tap Retry email to try again.':'Photo accepted for delivery. Check your inbox.';
     if(['sent','empty'].includes(state.status)){$('emailInput').value='';$('guestNameInput').value='';$('marketingOptIn').checked=false;}

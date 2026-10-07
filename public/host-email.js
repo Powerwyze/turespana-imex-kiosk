@@ -8,7 +8,7 @@ export function validEmail(value){
 }
 export class PhotoEmail{
  constructor({deliver,onChange=()=>{}}){this.deliver=deliver;this.onChange=onChange;this.epoch=0;this.reset();}
- snapshot(){return {status:this.status,hasDraft:!!this.draft,hasName:validName(this.name),marketingOptIn:this.marketingOptIn,error:this.error};}
+ snapshot(){return {status:this.status,queued:this.queued,hasDraft:!!this.draft,hasName:validName(this.name),marketingOptIn:this.marketingOptIn,error:this.error};}
  emit(){this.onChange(this.snapshot());}
  reset(){this.epoch++;this.controller?.abort();this.controller=null;this.collecting=false;this.queued=false;this.image=null;this.draft='';this.name='';this.marketingOptIn=false;this.status='empty';this.error='';this.emit();}
  beginGeneration(){this.reset();this.collecting=true;this.status='review';this.emit();}
