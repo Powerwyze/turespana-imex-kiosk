@@ -32,8 +32,8 @@ export function mountTouchControls({getState,start,voice,action,finish,labels,on
    button('Retake photo','retake',()=>action('take_photo',{confirmed:true,style:''}));
    button('Start over','restart',start,true);
   }else if(!s.hasPhoto){
-   title.textContent='Take a picture';hint.textContent='Look at the camera. Your photo starts after a seven-second countdown.';
-   button('Take a picture','capture',()=>action('take_photo',{confirmed:true,style:''}));
+   title.textContent='See yourself in Spain';hint.textContent='Look at the camera. Your photo starts after a seven-second countdown.';
+   button('See yourself in Spain','capture',()=>action('take_photo',{confirmed:true,style:''}));
   }else if(!s.guestCount||edit==='people'){
    title.textContent='How many people?';hint.textContent=(labels[s.destinationId]?labels[s.destinationId]+' · ':'')+'How many people are in the picture?';
    for(const count of [1,2,3])button(count+' '+(count===1?'person':'people'),'people-'+count,()=>choose('set_guest_count',{count}));

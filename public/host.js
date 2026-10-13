@@ -257,7 +257,7 @@ const engine=new TurespanaEngine({
     else if(state.phase==='choosing_destination')text('Choose your city.','Tap one of the six options to create your photo.');
     else if(state.phase==='generating')text('A little Spanish magic.','Your host is still here. Feel free to talk.');
     else if(state.phase==='error')text('Let’s try that again.',state.error);
-    else if(state.phase==='listening'){text('Take a picture.','Look at the camera, then tap Take a picture or tell Lola to start.');void openHomeCamera();}
+    else if(state.phase==='listening'){text('See yourself in Spain.','Look at the camera, then tap See yourself in Spain or tell Lola to start.');void openHomeCamera();}
     if(ready){
       note('Booth state: '+JSON.stringify(state));
       if(state.phase!==lastPhase){
@@ -341,7 +341,7 @@ async function begin({sentryGreeting=null}={}){
         if(sentryGreeting&&(!sentry.enabled||!sentry.gate.isFresh(performance.now()))){send({type:'session.close'});cleanup();return;}
         guestInterrupted=false;
         $('end').hidden=false;face.setAttribute('aria-label','Your AI photo host is listening');
-        phase(engine.phase);text('Let’s start by taking your picture.','Tap Take a picture or tell Lola to start.');guestIdle.start(sentry.enabled?30000:150000);syncIdle();
+        phase(engine.phase);text('Let’s start by taking your picture.','Tap See yourself in Spain or tell Lola to start.');guestIdle.start(sentry.enabled?30000:150000);syncIdle();
         maxTimer=setTimeout(end,600000);
         const greeting=crypto.randomUUID();
         const listener=({data})=>{
@@ -449,7 +449,7 @@ async function openHomeCamera(){
  const epoch=cameraEpoch;
  $('viewfinder').hidden=false;
  try{await ensureCamera(new AbortController().signal);$('cameraStatus').textContent='YOUR FRAME';}
- catch(error){if(epoch<=cameraEpoch&&['idle','listening'].includes(document.body.dataset.phase)){ $('viewfinder').hidden=false;$('cameraStatus').textContent='Allow camera access, then tap Take a picture';text('Take a picture.','Allow camera access, then tap Take a picture to begin.');}}
+ catch(error){if(epoch<=cameraEpoch&&['idle','listening'].includes(document.body.dataset.phase)){ $('viewfinder').hidden=false;$('cameraStatus').textContent='Allow camera access, then tap See yourself in Spain';text('See yourself in Spain.','Allow camera access, then tap See yourself in Spain to begin.');}}
 }
 
 async function touchAction(name,args){
