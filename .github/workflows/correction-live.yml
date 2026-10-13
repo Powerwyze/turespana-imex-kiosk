@@ -1,10 +1,13 @@
 name: One bounded Spain correction live check
 on:
   workflow_dispatch:
+  push:
+    branches: [codex/imex-generation-only-contact]
 permissions:
   contents: write
 jobs:
   image:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[correction-live-check]')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

@@ -541,6 +541,7 @@ try{
   await new Promise((resolve,reject)=>{const deadline=Date.now()+5000;const poll=()=>generations===beforeTouch+1?resolve():Date.now()>deadline?reject(new Error('Touch capture did not submit an image request')):setTimeout(poll,20);poll();});
   assert.equal(generations,beforeTouch+1);
   assert.equal(await page.locator('[data-touch=capture]').count(),0,'No duplicate capture button during generation');
+  holdEmail=false;emailFail=false;
   const emailsBeforeDraft=emails;
   await page.locator('#emailPanel').waitFor({state:'visible'});
   assert.equal(await page.locator('#emailCancel').count(),0,'No Skip button remains');
