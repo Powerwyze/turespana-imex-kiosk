@@ -2,7 +2,7 @@ name: Spain live readiness check
 on:
   workflow_dispatch:
   push:
-    branches: [codex/imex-generation-only-contact]
+    branches: [codex/turespana-kiosk2]
 permissions:
   contents: write
 jobs:
@@ -28,5 +28,5 @@ jobs:
           git config user.email 'actions@users.noreply.github.com'
           git add docs/review/readiness-live.json
           git commit -m "Save live Spain readiness verification" || exit 0
-          git pull --rebase origin codex/imex-generation-only-contact
-          git push origin HEAD:codex/imex-generation-only-contact
+          git pull --rebase origin codex/turespana-kiosk2
+          git push origin HEAD:codex/turespana-kiosk2

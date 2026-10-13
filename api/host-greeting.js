@@ -1,3 +1,4 @@
+import {openaiFetch} from '../lib/openai-failover.js';
 const reply=(body,status=200)=>Response.json(body,{status,headers:{'Cache-Control':'no-store'}});
 export function readGreeting(data){
   if(data?.status!=='completed')return null;
@@ -17,7 +18,7 @@ export async function POST(req){
     const raw=await req.text();if(raw.length>450000)return reply({error:'Frame is too large.'},413);
     let body;try{body=JSON.parse(raw);}catch{return reply({error:'Invalid request.'},400);}
     if(typeof body.frame!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/]+=*$/.test(body.frame)||body.frame.length<100)return reply({error:'A current camera frame is required.'},400);
-    const response=await fetch('https://api.openai.com/v1/responses',{
+    const response=await openaiFetch('https://api.openai.com/v1/responses',{
       method:'POST',headers:{Authorization:'Bearer '+process.env.OPENAI_API_KEY.trim(),'Content-Type':'application/json'},signal:AbortSignal.any([req.signal,AbortSignal.timeout(10000)]),
       body:JSON.stringify({
         model:'gpt-4.1-mini-2025-04-14',store:false,max_output_tokens:180,

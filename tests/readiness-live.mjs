@@ -13,7 +13,7 @@ await page.addInitScript(()=>{
 let photoCalls=0;await page.route('**/api/host-photo',r=>{photoCalls++;return r.abort();});
 const ask=text=>page.evaluate(text=>{window.__channel.send(JSON.stringify({type:'response.item.create',item:{type:'message',role:'user',content:[{type:'input_text',text}]}}));window.__channel.send(JSON.stringify({type:'response.create'}));},text);
 try{
- await page.goto('https://turespana-imex-kiosk.vercel.app/');await page.locator('#face').click();
+ await page.goto('https://turespana-imex-kiosk2.vercel.app/');await page.locator('#face').click();
  await page.waitForFunction(()=>document.body.dataset.phase==='listening',null,{timeout:45000});
  await page.waitForFunction(()=>window.__events.some(e=>e.type==='session.output_transcript.delta'),null,{timeout:30000});
  await ask('One person. I choose Canarias. Record those choices, but do not take the picture yet. Ask if I am ready.');

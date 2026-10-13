@@ -1,0 +1,26 @@
+name: Kiosk2 photo email verification
+on:
+  push:
+    branches: [codex/turespana-kiosk2]
+    paths: [.github/workflows/kiosk2-email.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  email:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Send one clearly labeled internal fixture email through cloned app
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs/promises';
+          const imageBase64=(await fs.readFile('tests/fixtures/sentry-person.jpg')).toString('base64');
+          const response=await fetch('https://turespana-imex-kiosk2.vercel.app/api/host-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'Kiosk2 internal verification',email:'wyzer@powerwyze.com',destinationId:'barcelona',marketingOptIn:false,imageBase64,mimeType:'image/jpeg',filename:'kiosk2-internal-test-fixture.jpg'}),signal:AbortSignal.timeout(45000)});
+          const data=await response.json();
+          console.log(JSON.stringify({status:response.status,ok:data.ok,stored:data.stored,id:data.id,error:data.error}));
+          if(!response.ok||!data.ok||!data.id)process.exit(1);
+          JS

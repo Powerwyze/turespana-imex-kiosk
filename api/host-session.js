@@ -1,3 +1,4 @@
+import {openaiFetch} from '../lib/openai-failover.js';
 import { liveSessionConfig } from '../lib/host-config.js';
 const reply = (body,status=200) => Response.json(body,{status,headers:{'Cache-Control':'no-store'}});
 export async function POST(req) {
@@ -14,7 +15,7 @@ export async function POST(req) {
     try { body=JSON.parse(text); } catch { return reply({error:'Invalid connection request.'},400); }
     if (typeof body.sdp !== 'string' || !body.sdp.startsWith('v=0') || !body.sdp.includes('m=audio'))
       return reply({error:'A microphone connection offer is required.'},400);
-    const upstream = await fetch('https://api.openai.com/v1/live/sessions',{
+    const upstream = await openaiFetch('https://api.openai.com/v1/live/sessions',{
       method:'POST', headers:{Authorization:`Bearer ${process.env.OPENAI_API_KEY.trim()}`,'Content-Type':'application/json'},
       body:JSON.stringify({session:liveSessionConfig(),transport:{type:'webrtc',sdp:body.sdp}}),
       signal:AbortSignal.any([req.signal,AbortSignal.timeout(25000)])
