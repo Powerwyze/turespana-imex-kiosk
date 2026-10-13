@@ -23,7 +23,7 @@ await new Promise(r=>server.listen(4181,'127.0.0.1',r));
 await fs.mkdir('artifacts',{recursive:true});
 const browser=await chromium.launch({channel:'chrome',args:['--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream','--autoplay-policy=no-user-gesture-required','--enable-unsafe-swiftshader']});
 const context=await browser.newContext({viewport:{width:1080,height:1920},permissions:['camera','microphone']});
-const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+const page=await context.newPage();const errors=[];page.on('pageerror',e=>{errors.push(e.message);console.log('Browser fixture error:',e.message)});
 // Generate a genuine browser SDP artifact for an independent server configuration smoke check.
 await page.goto('http://127.0.0.1:4181/');
 await page.waitForFunction(()=>document.querySelector('#homeOfficialLogo').complete,null,{timeout:20000});
@@ -552,7 +552,7 @@ try{
   await page.locator('#emailInput').fill('waiting@example.com');
   assert.equal(await page.locator('#marketingOptIn').isChecked(),false);
   assert.equal(emails,emailsBeforeDraft);assert.equal(await page.locator('#emailPanel').isVisible(),true,'Valid fields alone must not close the form');assert.equal(await page.locator('#picture').isVisible(),false);await page.locator('#emailConfirm').click();
-  await page.waitForFunction(()=>document.body.dataset.phase==='result');await page.screenshot({path:'artifacts/required-contact-result-phone.png'});
+  await page.waitForFunction(()=>document.body.dataset.phase==='result').catch(async e=>{console.log('Confirmed-result fixture state',await page.evaluate(()=>({phase:document.body.dataset.phase,contactHidden:document.getElementById('emailPanel').hidden,status:document.getElementById('emailStatus').textContent,toast:document.getElementById('emailToast').textContent,pictureHidden:document.getElementById('picture').hidden})),{emails,errors});throw e;});await page.screenshot({path:'artifacts/required-contact-result-phone.png'});
   assert.equal(await page.locator('#emailPanel').isVisible(),false);
   await page.waitForFunction(()=>document.querySelector('#emailToast').textContent.includes('accepted'));assert.equal(emails,emailsBeforeDraft+1,'Explicit Confirm sends exactly once');
   await tool('show_email_confirmation',{email:'late@example.com'});
