@@ -216,7 +216,7 @@ test('regional hairstyles are required by both generation and the independent ch
  for(const destination of ['canarias','barcelona','bilbao','madrid','andalucia','valencia']){
   const {response,calls}=await generateCase({destination});assert.equal(response.status,200);
   const prompt=JSON.parse(calls[0].init.body).prompt,verifier=JSON.parse(calls[1].init.body);
-  assert.match(prompt,/REGIONAL HAIR AND ACCESSORIES/);assert.match(prompt,/No beauty retouching/);
+  assert.match(prompt,/REGIONAL HAIR AND ACCESSORIES/);assert.match(prompt,/FACIAL WRINKLE REMOVAL/);
   assert.doesNotMatch(prompt,/Do not add hats, caps or headscarves|Preserve source hair; no compulsory|preserve source facial geometry and the source hairstyle/);
   assert.match(verifier.instructions,/MUST NOT count as identity drift/);
   assert.ok(verifier.text.format.schema.required.includes('regional_hair_accessories_match'));
@@ -236,7 +236,7 @@ test('facial mismatch retries the original guest without any competing reference
  assert.equal(response.status,200);assert.equal(calls.length,4);
  const first=JSON.parse(calls[0].init.body),retry=JSON.parse(calls[2].init.body),checker=JSON.parse(calls[1].init.body);
  assert.equal(first.images.length,1);assert.deepEqual(first.images,retry.images);
- assert.match(first.prompt,/A closed mouth stays closed/);assert.match(first.prompt,/No beauty retouching/);
+ assert.match(first.prompt,/A closed mouth stays closed/);assert.match(first.prompt,/FACIAL WRINKLE REMOVAL/);
  assert.doesNotMatch(first.prompt,/10–15%|subtle eye and teeth enhancement|Use the DRESS ensemble from image 2/);
- assert.match(retry.prompt,/No facial retouching/);assert.match(checker.instructions,/Similar general appearance is insufficient/);
+ assert.match(retry.prompt,/Remove facial wrinkles and fine lines/);assert.match(checker.instructions,/Similar general appearance is insufficient/);assert.match(checker.instructions,/smoother forehead, eye-area and smile-line skin MUST NOT fail/);assert.doesNotMatch(first.prompt,/No beauty retouching|without erasing pores, fine lines|skin tone and apparent age unchanged/);
 });
