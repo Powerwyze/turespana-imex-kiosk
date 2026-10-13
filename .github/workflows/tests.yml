@@ -57,7 +57,7 @@ jobs:
           APP_TEST_IMAGE_3: ${{ secrets.APP_TEST_IMAGE_3 }}
           APP_TEST_IMAGE_4: ${{ secrets.APP_TEST_IMAGE_4 }}
           APP_TEST_IMAGE_5: ${{ secrets.APP_TEST_IMAGE_5 }}
-          TURESPANA_HOST_PREVIEW_URL: ${{ vars.TURESPANA_HOST_PREVIEW_URL }}
+          TURESPANA_HOST_PREVIEW_URL: https://turespana-imex-kiosk.vercel.app/
         run: node tests/host-sentry-live.mjs
       - name: Verify one real generated image and its guest check
         if: github.event_name == 'workflow_dispatch' && inputs.image
