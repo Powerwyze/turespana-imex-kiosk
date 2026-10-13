@@ -11,3 +11,9 @@ The homepage examples remain the existing previews. Generative constraints and v
 ## Relaxed acceptance
 
 Guests may be off-center, with natural chest-up or waist-up crops. Their faces and a useful portion of their upper bodies should remain visible; full-body or below-knee framing is optional. The host no longer asks guests to center themselves. Costume, accessory and layout observations are advisory. The legacy `photographic` check measures basic usability only, never exact brushwork or resemblance to the reference style. Subject count, recognizable likeness and basic visibility remain required.
+
+## Outfit choice and body proportions
+
+Generation and verification share the same outfit selection rules. Source shirts, jackets, suits, shorts and trousers map to the regional trouser ensemble; clearly visible dresses or skirts map to the dress ensemble. Ambiguous clothing defaults to trousers. Explicit single-guest choices override this; unassigned group requests do not change everyone. No gender inference is used. Negated dress requests never select a dress.
+
+Two required checks now protect outfit choice and source body proportions. Wrong dress/trouser assignment, borrowed reference-model bodies and obvious head/body, shoulder, waist or build distortions trigger correction from the original source and are withheld if correction fails. Small costume differences and relaxed off-center cropping remain accepted. These are generative constraints and visual checks, not an absolute guarantee against errors.

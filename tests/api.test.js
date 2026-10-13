@@ -7,7 +7,7 @@ import { parseSubjectCheck } from '../lib/subject-check.js';
 import sendPhoto from '../api/host-email.js';
 
 const jpeg = Buffer.from('synthetic-jpeg').toString('base64');
-const valid = count => ({ person_count: count, only_nearest_guests: true, source_has_requested_guests: true, uncertain: false, face_and_hair_consistent: true, regional_outfit_matches: true, regional_hair_accessories_match: true, outfit_visible: true, photographic: true, no_poster_layout: true });
+const valid = count => ({ person_count: count, only_nearest_guests: true, source_has_requested_guests: true, uncertain: false, face_and_hair_consistent: true, outfit_choice_consistent: true, body_proportions_consistent: true, regional_outfit_matches: true, regional_hair_accessories_match: true, outfit_visible: true, photographic: true, no_poster_layout: true });
 const envelope = check => ({ status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: JSON.stringify(check) }] }] });
 
 async function generateCase({ count = '1', check = valid(Number(count ?? 1)), checks, verifyBody, verifyStatus = 200, verifyThrows = false, duplicate = false, style = '', imageStatus = 200, destination='madrid' } = {}) {

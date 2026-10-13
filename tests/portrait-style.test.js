@@ -4,9 +4,10 @@ import {readFileSync} from 'node:fs';
 import {generatePortrait,PIPELINE_VERSION} from '../lib/portrait-pipeline.js';
 import {culturalPortraitPrompt} from '../lib/master-transformation.js';
 import {POST} from '../api/host-photo.js';
+import {outfitSelectionPrompt} from '../lib/portrait-outfit.js';
 
 const destinations=JSON.parse(readFileSync(new URL('../public/data/destinations.json',import.meta.url))).destinations;
-const valid={person_count:1,only_nearest_guests:true,source_has_requested_guests:true,uncertain:false,face_and_hair_consistent:true,regional_outfit_matches:true,regional_hair_accessories_match:true,outfit_visible:true,photographic:true,no_poster_layout:true};
+const valid={person_count:1,only_nearest_guests:true,source_has_requested_guests:true,uncertain:false,face_and_hair_consistent:true,outfit_choice_consistent:true,body_proportions_consistent:true,regional_outfit_matches:true,regional_hair_accessories_match:true,outfit_visible:true,photographic:true,no_poster_layout:true};
 const envelope=check=>({status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify(check)}]}]});
 
 async function exercise(checks,run){
@@ -25,7 +26,7 @@ const generate=destinationId=>generatePortrait({file:new File(['camera-source'],
 test('all six destinations use source identity, regional wardrobe and the supplied painting reference',async()=>{
  await exercise([valid],async calls=>{
   for(const dest of destinations){
-   calls.length=0;const result=await generate(dest.id);assert.equal(result.bytes.toString(),'painted-result');assert.equal(result.pipeline,'regional-oil-v7');assert.equal(PIPELINE_VERSION,result.pipeline);
+   calls.length=0;const result=await generate(dest.id);assert.equal(result.bytes.toString(),'painted-result');assert.equal(result.pipeline,'regional-oil-v8');assert.equal(PIPELINE_VERSION,result.pipeline);
    const edit=calls[0].body,check=calls[1].body;
    assert.equal(edit.images.length,3);
    assert.equal(edit.images[0].image_url,'data:image/jpeg;base64,'+Buffer.from('camera-source').toString('base64'));
@@ -71,3 +72,33 @@ test('a guest largely outside the frame or with unrecognizable likeness still ne
   });
  }
 });
+
+test('outfit policy defaults from source clothing, honors explicit choices, and never turns negation into a dress request',()=>{
+ for(const request of ['', 'No dress', "Don't put me in a dress", 'Sin vestido']){
+  const rules=outfitSelectionPrompt(request);
+  assert.doesNotMatch(rules,/EXPLICIT OUTFIT CHOICE/);
+  assert.match(rules,/default to the TROUSER ensemble/);
+ }
+ assert.match(outfitSelectionPrompt('Use a dress'),/EXPLICIT OUTFIT CHOICE: Use the DRESS ensemble/);
+ assert.match(outfitSelectionPrompt('No dress, use trousers'),/default to the TROUSER ensemble/);
+ assert.match(outfitSelectionPrompt('Use trousers'),/EXPLICIT OUTFIT CHOICE: Use the TROUSER ensemble/);
+ assert.doesNotMatch(outfitSelectionPrompt('Use a dress',2),/EXPLICIT OUTFIT CHOICE/);
+});
+
+for(const flag of ['outfit_choice_consistent','body_proportions_consistent']){
+ test(flag+' corrects using the original source and never releases repeated failures',async()=>{
+  await exercise([{...valid,[flag]:false},valid],async calls=>{
+   const result=await generate('canarias');assert.equal(result.attempts,2);
+   assert.deepEqual(calls[0].body.images,calls[2].body.images);
+   assert.ok(calls[1].body.text.format.schema.required.includes(flag));
+   assert.match(calls[1].body.instructions,/OUTFIT SELECTION/);
+   assert.match(calls[1].body.instructions,/Compare only body regions visible in both images/);
+   assert.match(calls[2].body.prompt,flag==='outfit_choice_consistent'?/Correct the dress\/trouser choice/:/Restore the source head-to-body scale/);
+  });
+  await exercise([{...valid,[flag]:false}],async calls=>{
+   const form=new FormData();form.append('image',new File(['camera-source'],'guest.jpg',{type:'image/jpeg'}));form.append('destinationId','canarias');
+   const response=await POST(new Request('https://kiosk.example/api/host-photo',{method:'POST',body:form}));
+   assert.equal(response.status,422);assert.match(await response.text(),/PORTRAIT_QUALITY_MISMATCH/);assert.equal(calls.length,6);
+  });
+ });
+}
