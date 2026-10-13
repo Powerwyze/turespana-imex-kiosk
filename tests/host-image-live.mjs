@@ -14,18 +14,18 @@ try{
   const result=await page.evaluate(async source=>{
     const data=Uint8Array.from(atob(source),c=>c.charCodeAt(0));
     const form=new FormData();form.append('image',new Blob([data],{type:'image/jpeg'}),'approved-reference-test.jpg');form.append('guestCount','1');form.append('destinationId','barcelona');form.append('style','');
-    const response=await fetch(location.origin==='https://turespana-imex-kiosk.powerwyze-2010.chatgpt.site'?'https://turespana-imex-kiosk.vercel.app/api/host-photo':'/api/host-photo',{method:'POST',body:form,signal:AbortSignal.timeout(190000)});
+    const response=await fetch(location.origin==='https://turespana-imex-kiosk.powerwyze-2010.chatgpt.site'?'https://turespana-imex-kiosk.vercel.app/api/host-photo':'/api/host-photo',{method:'POST',body:form,signal:AbortSignal.timeout(295000)});
     if(!response.ok)return {status:response.status,error:await response.text()};
     const bytes=new Uint8Array(await response.arrayBuffer());let binary='';for(const byte of bytes)binary+=String.fromCharCode(byte);
-    return {status:response.status,type:response.headers.get('content-type'),pipeline:response.headers.get('x-portrait-pipeline'),model:response.headers.get('x-image-model'),base64:btoa(binary)};
+    return {status:response.status,type:response.headers.get('content-type'),pipeline:response.headers.get('x-portrait-pipeline'),attempts:Number(response.headers.get('x-portrait-attempts')),model:response.headers.get('x-image-model'),base64:btoa(binary)};
   },input.toString('base64'));
   if(result.status!==200){console.log('Image smoke failed:',JSON.stringify(result));throw new Error('Image generation or guest verification did not succeed.');}
-  assert.match(result.type,/^image\//);
-  assert.equal(result.pipeline,'regional-photo-v3');assert.equal(result.model,'gpt-image-2.5-flare');
+  assert.match(result.type,/^image\//);assert.ok(result.attempts>=1&&result.attempts<=3);
+  assert.equal(result.pipeline,'regional-photo-v4');assert.equal(result.model,'gpt-image-2.5-flare');
   const bytes=Buffer.from(result.base64,'base64');assert.ok(bytes.length>1000);
   await fs.mkdir('artifacts',{recursive:true});await fs.writeFile('artifacts/live-generated-test.jpg',bytes);
   const dimensions=await page.evaluate(async base64=>{
     const image=new Image();image.src='data:image/jpeg;base64,'+base64;await image.decode();return {width:image.naturalWidth,height:image.naturalHeight};
   },bytes.toString('base64'));
-  console.log('Real image generation and independent guest check passed:',JSON.stringify(dimensions));
+  await fs.writeFile('artifacts/live-image-report.json',JSON.stringify({status:result.status,pipeline:result.pipeline,model:result.model,attempts:result.attempts,...dimensions},null,2));console.log('Real image generation and independent guest check passed:',JSON.stringify({attempts:result.attempts,...dimensions}));
 }finally{await browser.close();}
