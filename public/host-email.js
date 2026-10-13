@@ -19,6 +19,7 @@ export class PhotoEmail{
   this.reset();this.image=image;
  }
  review(value=''){
+  if(this.confirmed&&this.queued)return {error:'The guest already confirmed their contact details. Keep the form closed while the checked photo finishes.'};
   if(!this.image&&!this.collecting)return {error:'Wait for the finished photo before asking for contact details.'};
   if(this.status==='sending')return {error:'Email delivery is already in progress.'};
   if(this.status==='sent')return {error:'This photo has already been emailed.'};

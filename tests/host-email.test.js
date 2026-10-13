@@ -58,3 +58,9 @@ test('a failed image attempt resumes generation without losing contact draft or 
  const e=new PhotoEmail({deliver:async()=>{}});e.beginGeneration();e.editName('Guest');e.edit('guest@example.com');e.chooseMarketing(true);e.resumeGeneration();assert.equal(e.name,'Guest');assert.equal(e.draft,'guest@example.com');assert.equal(e.marketingOptIn,true);assert.equal(e.confirmed,false);
  await e.confirm();e.resumeGeneration();assert.equal(e.confirmed,true);assert.equal(e.queued,true);e.cancel();assert.equal(e.confirmed,false);
 });
+
+test('late voice review cannot undo queued touch confirmation or replace the recipient',async()=>{
+ let payload;const e=new PhotoEmail({deliver:async p=>{payload=p;}});e.beginGeneration();e.editName('Guest');e.edit('guest@example.com');await e.confirm();
+ assert.ok(e.review('other@example.com').error);assert.equal(e.confirmed,true);assert.equal(e.queued,true);assert.equal(e.draft,'guest@example.com');
+ e.setImage(new Blob(['checked']));await Promise.resolve();assert.equal(payload.email,'guest@example.com');
+});

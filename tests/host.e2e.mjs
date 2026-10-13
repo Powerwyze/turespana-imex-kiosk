@@ -294,6 +294,10 @@ try{
   await page.setViewportSize({width:1080,height:1920});
   emailFail=true;await page.locator('#emailConfirm').click();
   assert.equal(emails,0,'Confirmation queues delivery without an unfinished image');
+  assert.equal(await page.locator('#emailPanel').isVisible(),false,'Confirm immediately closes contact entry during generation');
+  await tool('show_email_confirmation',{email:'other@example.com'});
+  assert.equal(await page.locator('#emailPanel').isVisible(),false,'Voice host cannot reopen a confirmed contact form during generation');
+  assert.equal(await page.locator('#emailInput').inputValue(),'alex+p@gmail.com','Late voice tool preserves confirmed recipient');
   release();await page.waitForFunction(()=>document.body.dataset.phase==='result');
   // Result area is separate from large actions/captions at kiosk and mobile sizes.
   for(const [label,width,height] of [['kiosk',1080,1920],['phone',390,844],['compact',390,667]]){

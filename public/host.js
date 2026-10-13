@@ -118,6 +118,7 @@ const photoEmail=new PhotoEmail({
     syncIdle();queueMicrotask(()=>touchUI?.render());
     const open=(document.body.dataset.phase==='generating'||(document.body.dataset.phase==='error'&&photoEmail.collecting))&&state.status==='review'&&!state.confirmed;
     $('emailPanel').hidden=!open;document.body.dataset.emailOpen=String(open);
+    if(!open&&$('emailPanel').contains(document.activeElement))document.activeElement.blur();
     captions.placeIn(open?$('emailPanel'):null);
     const sending=state.status==='sending';
     $('emailInput').disabled=sending;$('guestNameInput').disabled=sending;$('marketingOptIn').disabled=sending;
@@ -138,6 +139,7 @@ function revealContactResult(){
  const image=pendingContactImage;if(!image)return;pendingContactImage=null;hidePicture();phase('result');pictureUrl=URL.createObjectURL(image);picture.src=pictureUrl;picture.hidden=false;text('Your Spanish photo is ready.','Confirm to email your photo.');photoEmail.emit();if(ready)note('The guest confirmed their name and email on screen. Reveal the checked photo now. Email still requires their confirmation tap; do not claim it was sent.',true);
 }
 function reviewEmail(value){
+  if(photoEmail.confirmed)return {error:'Contact details are already confirmed. Keep the contact form closed and continue the generation video.'};
   if(engine.phase!=='generating'&&!pendingContactImage)return {error:'Contact entry is available only while the image generates. Do not ask for contact details after the reveal.'};
   const result=photoEmail.review(value||photoEmail.draft);
   if(result.shown){$('emailInput').value=photoEmail.draft;$('emailConfirm').disabled=!validEmail(photoEmail.draft)||!validName($('guestNameInput').value);activeContactInput=validName($('guestNameInput').value)?$('emailInput'):$('guestNameInput');activeContactInput.focus({preventScroll:true});}

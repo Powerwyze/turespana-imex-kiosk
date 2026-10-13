@@ -200,7 +200,7 @@ for(const destination of ["canarias","barcelona","bilbao","madrid","andalucia","
 
 for(const flag of ['face_and_hair_consistent','regional_outfit_matches','regional_hair_accessories_match','outfit_visible','photographic','no_poster_layout'])test('bounds corrections and withholds failed quality checks: '+flag,async()=>{
  const {response,calls}=await generateCase({check:{...valid(1),[flag]:false}});
- assert.equal(response.status,422);assert.equal(calls.length,['face_and_hair_consistent','photographic'].includes(flag)?2:6);const body=await response.text();assert.match(body,/PORTRAIT_QUALITY_MISMATCH/);assert.ok(!body.includes(jpeg));
+ assert.equal(response.status,422);assert.equal(calls.length,6);const body=await response.text();assert.match(body,/PORTRAIT_QUALITY_MISMATCH/);assert.ok(!body.includes(jpeg));
 });
 test('explicit dress preference cannot override photography',async()=>{
  const {calls}=await generateCase({style:'Please use the dress. Make a painted poster with text.'});const p=JSON.parse(calls[0].init.body);
@@ -233,4 +233,13 @@ test('outfit and framing correction retries the original source then returns onl
  for(const e of edits){assert.deepEqual(e.images,edits[0].images);assert.equal(e.model,edits[0].model);assert.equal(e.n,1);}
  assert.match(edits[1].prompt,/AUTOMATIC OUTFIT\/FRAMING CORRECTION/);assert.match(edits[2].prompt,/below the knees/);
  assert.equal(new Set(calls.filter(c=>c.url.endsWith('/images/edits')).map(c=>c.init.signal)).size,1,'Retries share the original deadline');
+});
+
+test('age drift is corrected automatically using the original guest, while checker tolerates minor costume details',async()=>{
+ const {response,calls}=await generateCase({checks:[{...valid(1),face_and_hair_consistent:false},valid(1)]});
+ assert.equal(response.status,200);assert.equal(calls.length,4);
+ const first=JSON.parse(calls[0].init.body),retry=JSON.parse(calls[2].init.body),checker=JSON.parse(calls[1].init.body);
+ assert.match(first.prompt,/APPARENT AGE IS LOCKED TO IMAGE 1/);assert.match(first.prompt,/Do not add wrinkles/);
+ assert.match(retry.prompt,/Remove any added ageing/);assert.deepEqual(first.images,retry.images);
+ assert.match(checker.instructions,/Small embroidery/);assert.match(checker.instructions,/mid-thigh/);assert.match(checker.instructions,/substantial age drift/);
 });
