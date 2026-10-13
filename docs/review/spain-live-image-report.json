@@ -1,6 +1,6 @@
 {
   "status": 200,
-  "pipeline": "regional-photo-v4",
+  "pipeline": "regional-photo-v5",
   "model": "gpt-image-2.5-flare",
   "attempts": 1,
   "width": 1024,
