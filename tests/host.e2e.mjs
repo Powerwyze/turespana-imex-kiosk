@@ -483,7 +483,7 @@ try{
   await page.waitForFunction(()=>document.querySelector('#headline').textContent==='Hello there.');await page.waitForTimeout(100);
   await waitForGreeting(2);assert.equal(greetings,2);releaseGreeting();
   await page.waitForFunction(()=>document.body.dataset.phase==='listening');
-  assert.ok(await page.evaluate(()=>window.__sent.some(e=>e.type==='session.instructions.append'&&e.content.includes('blue jacket'))));
+  assert.ok(await page.evaluate(()=>window.__sent.some(e=>e.type==='session.commentary.append'&&e.content.includes('blue jacket'))));
   const generationCount=generations;
   await page.evaluate(()=>window.__advanceTime(20000));
   await page.evaluate(()=>window.__channel.emit({type:'session.output_transcript.delta',delta:'I am your host.'}));
