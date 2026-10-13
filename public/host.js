@@ -1,3 +1,6 @@
+import {ReadinessReply} from './host-readiness.js';
+import {CAPTURE_FILTER,drawExposureCorrected} from './capture-exposure.js';
+import {PeaceTrigger} from './host-peace.js';
 import {mountHomeVideos} from './home-videos.js';
 import {mountHomeLanguage,homeText} from './home-language.js';
 import {brandPortrait} from './portrait-branding.js';
@@ -13,16 +16,10 @@ import {GuestIdle} from './host-idle.js';
 import {HostCaptions} from './host-captions.js';
 const $=id=>document.getElementById(id);
 const face=$('face'),camera=$('camera'),audio=$('voice'),picture=$('picture');
+camera.style.filter=CAPTURE_FILTER;
 $('marketingCopy').innerHTML=consentLabelMarkup();
-let generationKeyboardOpen=false;
-let activeContactInput=$('guestNameInput'),keyboardShift=false,contactKeyboardOpen=innerWidth>600;
+let activeContactInput=$('emailInput'),keyboardShift=false,contactKeyboardOpen=innerWidth>600;
 function contactKeyboardLayout(reset=false){
- if(document.body.dataset.phase==='generating'){
-  $('emailKeyboard').hidden=!generationKeyboardOpen;$('emailDomains').hidden=true;
-  $('generationEmailInput').inputMode=generationKeyboardOpen?'none':'email';
-  $('generationKeyboardToggle').textContent=generationKeyboardOpen?'Hide touch keyboard':'Show touch keyboard';
-  $('generationKeyboardToggle').setAttribute('aria-expanded',String(generationKeyboardOpen));return;
- }
  if(reset)contactKeyboardOpen=innerWidth>600;
  $('emailKeyboard').hidden=!contactKeyboardOpen;
  $('emailDomains').hidden=!contactKeyboardOpen||activeContactInput!==$('emailInput');
@@ -34,6 +31,8 @@ function contactKeyboardLayout(reset=false){
 $('contactKeyboardToggle').addEventListener('click',()=>{contactKeyboardOpen=!contactKeyboardOpen;contactKeyboardLayout();});
 window.addEventListener('resize',()=>contactKeyboardLayout(true));contactKeyboardLayout();
 const captions=new HostCaptions($('hostCaptions'),$('hostCaptionText'),$('stage'),face);
+let peace=null,peaceArmed=false,peaceEpoch=0;
+const readinessReply=new ReadinessReply({canTrigger:()=>ready&&canPeaceTrigger(),onReady:()=>{touch();engine.execute('take_photo',{confirmed:true,style:''});}});
 let cameraPreparation=null,cameraEpoch=0,touchMode=false,touchUI=null;
 const homeLanguage=mountHomeLanguage({onChange:()=>touchUI?.render()});
 mountHomeVideos();
@@ -47,15 +46,9 @@ const wait=(ms,signal)=>new Promise((resolve,reject)=>{
 });
 function text(title,hint=''){ $('headline').textContent=title;$('hint').textContent=hint; }
 function phase(value){
- $('generationEmailPanel').hidden=value!=='generating';
- if(value==='generating'){
-  $('generationKeyboardHost').append($('emailKeyboard'));
- }else{
-  $('emailPanel').insertBefore($('emailKeyboard'),$('emailDomains'));
-  generationKeyboardOpen=false;
-  if(activeContactInput===$('generationEmailInput'))activeContactInput=$('emailInput');
- }
- if(value==='idle')$('generationEmailInput').value='';
+ if(value!=='generating')$('generationStatus').hidden=true;
+ if(value!=='listening'){readinessReply.reset();peaceArmed=false;peaceEpoch++;peace?.stop();}
+ if(value!=='generating'){ $('emailPanel').hidden=true;document.body.dataset.emailOpen='false';if($('emailPanel').contains(document.activeElement))document.activeElement.blur();captions.placeIn(null);}
  queueMicrotask(()=>touchUI?.render());if(document.body.dataset.phase!==value)captions.clear();document.body.dataset.phase=value;contactKeyboardLayout();placeHomeLogo();homeLanguage.refresh();$('sentryToggle').disabled=!sentry.enabled&&!['idle','error'].includes(value);}
 function placeHomeLogo(){
   const slot=$('homeLogoSlot');
@@ -109,7 +102,7 @@ $('sentryToggle').addEventListener('click',async()=>{
 function stopEventTalk(){clearInterval(eventTimer);eventTimer=null;}
 function startEventTalk(){
   stopEventTalk();eventIndex=0;guestInterrupted=false;
-  note('The photo is generating for '+destinations[engine.destination]+'. Share two concise sentences specifically about this destination from your verified facts. Invite a tourism question and listen; answer their follow-up questions while generation continues. Mention once that they can type their email in the field on screen while the image generates; nothing sends until they confirm after the reveal. Do not ask them to repeat an email they already entered.',true);
+  note('The photo is generating for '+destinations[engine.destination]+'. Start speaking now, without waiting for a guest question. Say one friendly sentence about Spain and one concise fact specifically about the selected destination from your verified facts. Invite a tourism question and pause to listen. Answer interruptions and follow-up questions naturally while generation continues. Do not mention meetings, staff, the front desk or directions within the booth. If contact details are not confirmed, briefly remind guests they can finish their name and email on screen while they wait; never ask them to repeat details already entered. Do not repeat yourself or promise generation timing.',true);
   eventTimer=setInterval(()=>{
     if(!ready||engine.phase!=='generating'){stopEventTalk();return;}
     if(guestInterrupted||Date.now()-lastVoiceAt<18000||eventIndex>=2)return;
@@ -117,6 +110,7 @@ function startEventTalk(){
     note('The image is still generating. Briefly talk about '+topic+' using only your supplied event facts. Do not invent destination facts. Leave room for questions. Do not repeat yourself or promise timing.',true);
   },30000);
 }
+let pendingContactImage=null;
 const photoEmail=new PhotoEmail({
   deliver:async({email,name,marketingOptIn,consentVersion,image,signal})=>{
     const base64=await new Promise((resolve,reject)=>{
@@ -128,44 +122,52 @@ const photoEmail=new PhotoEmail({
     if(!response.ok||!result.ok)throw new Error('Delivery was not confirmed.');
   },
   onChange:state=>{
+    if(pendingContactImage&&state.confirmed)revealContactResult();
     syncIdle();queueMicrotask(()=>touchUI?.render());
-    const open=['review','sending','error'].includes(state.status);
+    const open=(document.body.dataset.phase==='generating'||(document.body.dataset.phase==='error'&&photoEmail.collecting))&&state.status==='review'&&!state.confirmed;
     $('emailPanel').hidden=!open;document.body.dataset.emailOpen=String(open);
+    if(!open&&$('emailPanel').contains(document.activeElement))document.activeElement.blur();
     captions.placeIn(open?$('emailPanel'):null);
     const sending=state.status==='sending';
     $('emailInput').disabled=sending;$('guestNameInput').disabled=sending;$('marketingOptIn').disabled=sending;
     $('marketingOptIn').checked=state.marketingOptIn;
-    $('emailCancel').disabled=sending;
     document.querySelectorAll('#emailKeyboard button,#emailDomains button').forEach(b=>b.disabled=sending);
-    $('emailConfirm').disabled=sending||!validEmail($('emailInput').value)||!validName($('guestNameInput').value);
-    $('emailConfirm').textContent=sending?'Sending your photo…':'Confirm & email photo';
-    $('emailStatus').textContent=state.error||(sending?'Sending to the address you confirmed.':'');
-    $('emailToast').hidden=state.status!=='sent';
-    if(state.status==='sent')$('generationEmailInput').value='';
+    $('emailConfirm').disabled=state.queued||sending||!validEmail($('emailInput').value)||!validName($('guestNameInput').value);
+    $('emailConfirm').textContent=state.queued?'Confirmed · Waiting for photo':'Confirm & email when ready';
+    $('emailStatus').textContent=state.error||(state.queued?'Confirmed. Your photo will be emailed when it is ready.':'');
+    $('emailToast').hidden=!['sent','sending','error'].includes(state.status);
+    $('emailToast').textContent=state.status==='sending'?'Sending your photo…':state.status==='error'?'Email was not confirmed. Tap Retry email to try again.':state.status==='sent'?'Photo accepted for delivery. Check your inbox.':'';
     if(['sent','empty'].includes(state.status)){$('emailInput').value='';$('guestNameInput').value='';$('marketingOptIn').checked=false;}
-    $('emailOpen').hidden=!open&&state.status!=='sent'?$('picture').hidden:true;
+    $('emailOpen').hidden=document.body.dataset.phase!=='result'||(!['sending','sent'].includes(state.status)&&(!['review','error'].includes(state.status)||!validEmail(photoEmail.draft)||!validName(photoEmail.name)));
+    $('emailOpen').disabled=['sending','sent'].includes(state.status);
+    $('emailOpen').textContent=state.status==='sending'?'Sending…':state.status==='sent'?'Email sent':state.status==='error'?'Retry email':'Email my photo';
   }
 });
+function revealContactResult(){
+ const image=pendingContactImage;if(!image)return;pendingContactImage=null;hidePicture();phase('result');pictureUrl=URL.createObjectURL(image);picture.src=pictureUrl;picture.hidden=false;text('Your Spanish photo is ready.','Confirm to email your photo.');photoEmail.emit();if(ready)note('The guest confirmed their name and email on screen. Reveal the checked photo now. Email still requires their confirmation tap; do not claim it was sent.',true);
+}
 function reviewEmail(value){
-  const result=photoEmail.review(value||photoEmail.draft||$('generationEmailInput').value);
-  if(result.shown){$('emailInput').value=photoEmail.draft;$('emailConfirm').disabled=!validEmail(photoEmail.draft)||!validName($('guestNameInput').value);activeContactInput=validName($('guestNameInput').value)?$('emailInput'):$('guestNameInput');activeContactInput.focus({preventScroll:true});}
+  if(photoEmail.confirmed)return {error:'Contact details are already confirmed. Keep the contact form closed and continue the generation video.'};
+  if(engine.phase!=='generating'&&!pendingContactImage)return {error:'Contact entry is available only while the image generates. Do not ask for contact details after the reveal.'};
+  const result=photoEmail.review(value||photoEmail.draft);
+  if(result.shown){$('emailInput').value=photoEmail.draft;$('emailConfirm').disabled=!validEmail(photoEmail.draft)||!validName($('guestNameInput').value);activeContactInput=!validEmail($('emailInput').value)?$('emailInput'):!validName($('guestNameInput').value)?$('guestNameInput'):$('emailInput');activeContactInput.focus({preventScroll:true});}
   return result;
 }
-function clearEmail(){$('generationEmailInput').value='';photoEmail.reset();$('emailInput').value='';$('emailOpen').hidden=true;$('emailToast').hidden=true;}
+function clearEmail(){pendingContactImage=null;photoEmail.reset();$('emailInput').value='';$('emailOpen').hidden=true;$('emailToast').hidden=true;}
 function hideCountdown(){$('countdown').hidden=true;$('viewfinder').hidden=true;}
-function stopCamera(){cameraEpoch++;cameraPreparation=null;cameraStream?.getTracks().forEach(t=>t.stop());cameraStream=null;camera.srcObject=null;hideCountdown();}
+function stopCamera(){peaceArmed=false;peaceEpoch++;peace?.stop();cameraEpoch++;cameraPreparation=null;cameraStream?.getTracks().forEach(t=>t.stop());cameraStream=null;camera.srcObject=null;hideCountdown();}
 function hidePicture(){picture.hidden=true;picture.removeAttribute('src');if(pictureUrl)URL.revokeObjectURL(pictureUrl);pictureUrl=null;}
 function touch(){guestIdle.touch();}
 function syncIdle(){
   if((!ready&&!touchMode)||ending)return;
-  guestIdle.setBusy(['preparing','countdown','generating'].includes(engine.phase)||photoEmail.status==='sending');
+  guestIdle.setBusy(['preparing','countdown','generating'].includes(engine.phase)||photoEmail.status==='sending'||((pendingContactImage||(engine.phase==='error'&&photoEmail.collecting))&&!photoEmail.confirmed));
 }
 async function ensureCamera(signal){
   if(signal.aborted)throw new DOMException('Cancelled','AbortError');
   if(!cameraPreparation){
     const epoch=cameraEpoch;
     cameraPreparation=(async()=>{
-      const next=sentry.enabled&&sentry.stream?.getVideoTracks().some(t=>t.readyState==='live')?sentry.stream.clone():await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1920},height:{ideal:1080}},audio:false});
+      const next=sentry.enabled&&sentry.stream?.getVideoTracks().some(t=>t.readyState==='live')?sentry.stream.clone():await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:2560},height:{ideal:1440}},audio:false});
       if(epoch!==cameraEpoch||signal.aborted){next.getTracks().forEach(t=>t.stop());throw new DOMException('Cancelled','AbortError');}
       cameraStream=next;camera.srcObject=next;await camera.play();
       for(let i=0;i<80&&(!camera.videoWidth||!camera.videoHeight||camera.readyState<2);i++){
@@ -205,7 +207,7 @@ const engine=new TurespanaEngine({
       if(signal.aborted)throw new DOMException('Cancelled','AbortError');
       beep(true);
       const canvas=$('capture');canvas.width=camera.videoWidth;canvas.height=camera.videoHeight;
-      canvas.getContext('2d').drawImage(camera,0,0);
+      drawExposureCorrected(canvas.getContext('2d'),camera,canvas.width,canvas.height);
       hideCountdown();
       const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.96));
       canvas.width=canvas.height=0;
@@ -218,7 +220,7 @@ const engine=new TurespanaEngine({
   },
   generate:async({source,count,style,signal})=>{
     const form=new FormData();form.append('image',source,'guest-photo.jpg');form.append('guestCount',String(count));form.append('style',style);form.append('destinationId',engine.destination);
-    const res=await fetch(location.origin==='https://turespana-imex-kiosk.powerwyze-2010.chatgpt.site'?'https://turespana-imex-kiosk.vercel.app/api/host-photo':'/api/host-photo',{method:'POST',body:form,signal:AbortSignal.any([signal,AbortSignal.timeout(185000)])});
+    const res=await fetch(location.origin==='https://turespana-imex-kiosk.powerwyze-2010.chatgpt.site'?'https://turespana-imex-kiosk.vercel.app/api/host-photo':'/api/host-photo',{method:'POST',body:form,signal:AbortSignal.any([signal,AbortSignal.timeout(295000)])});
     if(!res.ok){
       const problem=await res.json().catch(()=>({}));
       if(problem.code==='PORTRAIT_QUALITY_MISMATCH')throw new Error('That portrait did not meet the outfit, likeness or framing check. Your original photo is saved. Please retry or retake.');
@@ -229,18 +231,24 @@ const engine=new TurespanaEngine({
     const blob=await res.blob();
     if(!blob.size||!blob.type.startsWith('image/'))throw new Error('No picture was returned. Ask me to try again.');
     // Decode before reporting success or revealing the image.
-    return await brandPortrait(blob,destinations[engine.destination]);
+    return await brandPortrait(blob,destinations[engine.destination],{original:res.headers.get('x-portrait-fallback')==='original'});
   },
   onChange:(state,image)=>{
+    $('generationStatus').hidden=state.phase!=='generating';
     syncIdle();
     if(state.phase!=='generating')stopEventTalk();
-    photoEmail.setImage(state.phase==='result'?image:null);
-    if(state.phase!=='result'){$('emailInput').value='';$('emailOpen').hidden=true;}
     hidePicture();
-    phase(state.phase);
-    if(state.phase==='result'&&image){pictureUrl=URL.createObjectURL(image);picture.src=pictureUrl;picture.hidden=false;$('emailOpen').hidden=photoEmail.status==='sent'||!$('emailPanel').hidden;}
-    if(state.phase==='preparing')text('Getting the camera ready.','Your countdown starts as soon as the camera is ready.');
-    else if(state.phase==='countdown')text('Look toward the camera.','Check your framing in the top-left preview.');
+    const waitingContact=state.phase==='result'&&image&&!photoEmail.confirmed;
+    pendingContactImage=waitingContact?image:null;
+    phase(waitingContact?'generating':state.phase);
+    if(state.phase==='generating'&&lastPhase!=='generating'){$('emailTitle').textContent='Your image is generating…';$('emailHelp').textContent='Enter your name and email now. Confirm to email your photo when it is ready.';if(lastPhase==='error')photoEmail.resumeGeneration();else photoEmail.beginGeneration();contactKeyboardLayout();}
+    else if(state.phase==='result')photoEmail.setImage(image);
+    else if(state.phase==='error'){photoEmail.emit();$('emailTitle').textContent='Finish your details';$('emailHelp').textContent='The photo needs another attempt. Your details stay here until you confirm.';}
+    else if(state.phase!=='generating')clearEmail();
+    if(state.phase==='result'&&image&&!waitingContact){pictureUrl=URL.createObjectURL(image);picture.src=pictureUrl;picture.hidden=false;$('emailOpen').hidden=!['sending','sent'].includes(photoEmail.status)&&(!['review','error'].includes(photoEmail.status)||!validEmail(photoEmail.draft)||!validName(photoEmail.name));}
+    if(waitingContact){text('Your photo is ready.','Finish your name and email, then tap Confirm to reveal it.');$('emailTitle').textContent='Your photo is ready';$('emailHelp').textContent='Enter your name and email, then tap Confirm to continue.';}
+    else if(state.phase==='preparing')text('Getting the camera ready.','Your countdown starts as soon as the camera is ready.');
+    else if(state.phase==='countdown')text('Look straight at the camera above the screen.','Keep your head level and chin neutral. Eyes on the lens—not the preview.');
     else if(state.phase==='generating')text('A little Spanish magic.','Your host is still here. Feel free to talk.');
     else if(state.phase==='error')text('Let’s try that again.',state.error);
     else if(state.phase==='listening')text('I’m listening.',state.guestCount?state.guestCount+' '+(state.guestCount===1?'person':'people')+' · '+(state.destinationLabel||'Choose your destination')+' · Say when you’re ready.':'Tell me how many people are in your photo.');
@@ -249,7 +257,8 @@ const engine=new TurespanaEngine({
     if(ready){
       note('Booth state: '+JSON.stringify(state));
       if(state.phase!==lastPhase){
-        if(state.phase==='result')note('The generated photo has passed the guest check, decoded successfully, and is now displayed. Stop the event explanation. Tell the visitor the photo is ready, invite them to tap Email my photo to review their saved email and confirm sending. If they have not entered one, offer spelling it aloud or typing. Do not claim the email has been sent.',true);
+        if(waitingContact)note('The checked photo is ready but is not revealed. The visitor must finish their name/email and tap Confirm to continue; keep the form visible until that tap. Ask them to complete the visible contact form; do not claim it was sent or revealed.',true);
+        else if(state.phase==='result')note('The generated photo has passed the guest check, decoded successfully, and is now displayed. Stop the event explanation. Tell the visitor the photo is ready, do not ask for name or email and do not open the contact form. If the guest confirmed delivery during generation, it is now being attempted. Otherwise, a compact Email my photo button is available only for complete saved details. Do not claim delivery until the app confirms it.',true);
         if(state.phase==='error')note('The photo workflow failed: '+state.error+' Do not retry unless the visitor asks.',true);
         if(state.phase==='countdown')send({type:'session.instructions.append',delegation_id:null,content:'The camera is ready and the visible five-second countdown has started now. Stay quiet until the app reports generating. Do not say or count any numbers; the app plays synchronized countdown sounds.'});
         if(state.phase==='generating')startEventTalk();
@@ -269,7 +278,7 @@ const toolLoop=new LiveTools({send,execute:async(name,args)=>{
   return engine.execute(name,args);
 }});
 function cleanup(message='Tap the logo to begin · AI photo host'){
-  touchMode=false;sessionEpoch++;ready=false;connecting=false;ending=false;captions.clear();
+  readinessReply.reset();touchMode=false;sessionEpoch++;ready=false;connecting=false;ending=false;captions.clear();
   guestIdle.stop();stopEventTalk();clearEmail();sentry.finish({immediate:rearmImmediately});rearmImmediately=false;
   requestController?.abort();requestController=null;
   clearTimeout(startTimer);clearTimeout(closeTimer);clearTimeout(maxTimer);
@@ -327,19 +336,12 @@ async function begin({sentryGreeting=null}={}){
         $('end').hidden=false;face.setAttribute('aria-label','Your AI photo host is listening');
         phase('listening');text('I’m listening.',sentryGreeting?'Say hello, or ask for your photo.':'Tell me how many people are in your photo.');guestIdle.start(sentry.enabled?30000:150000);syncIdle();
         maxTimer=setTimeout(end,600000);
-        const greeting=crypto.randomUUID();
-        const listener=({data})=>{
-          let ack;try{ack=JSON.parse(data);}catch{return;}
-          if(ack.type==='session.instructions.appended'&&ack.client_event_id===greeting){
-            channel.removeEventListener('message',listener);
-            note(sentryGreeting?'A nearby visitor was detected by camera sentry. Deliver the frame-based welcome now, then listen. Do not take a photo yet.':'A new visitor has tapped the Spain logo and is ready to meet the AI photo host. Greet them now and ask how many people are posing.',true);
-          }
-        };
-        channel.addEventListener('message',listener);
-        send({type:'session.instructions.append',event_id:greeting,delegation_id:null,content:sentryGreeting?'Speak first in English. Use this greeting based on the latest camera frame: '+JSON.stringify(sentryGreeting)+' Then listen. If they want a photo, ask how many people are posing and get explicit readiness before capture. Do not claim to see a live video feed.':'Speak first in English: welcome the visitor, identify yourself as an AI photo host, and ask whether one, two, or three people are posing. Then listen.'});
+        // Request speech directly once the session is ready; do not wait for
+        // an optional instructions acknowledgment before welcoming the visitor.
+        note(sentryGreeting?'A nearby visitor was detected by camera sentry. Speak first now in English, without waiting for a tap or guest speech. Welcome them as Lola, their Spain AI photo host. Use this current-frame greeting as context: '+JSON.stringify(sentryGreeting)+' Invite them to take a Spain portrait, then pause and listen. Do not repeat the welcome, mention meetings or booth staff, or take a photo yet. If they want a photo, ask how many people are posing and wait for explicit readiness. Do not claim a live video feed.':'A new visitor has tapped the Spain logo. Speak first now in English: welcome them as Lola, their Spain AI photo host, and ask whether one, two, or three people are posing. Then listen.',true);
         note('Initial booth state: '+JSON.stringify(engine.snapshot()));
       } else if(event.type==='session.closed'){cleanup();}
-      else if(event.type==='session.input_transcript.delta'){if(typeof event.delta==='string'&&event.delta.trim()){touch();guestInterrupted=true;lastVoiceAt=Date.now();captions.nextTurn();}}
+      else if(event.type==='session.input_transcript.delta'){if(typeof event.delta==='string'&&event.delta.trim()){touch();guestInterrupted=true;lastVoiceAt=Date.now();captions.nextTurn();readinessReply.append(event.delta);}}
       else if(event.type==='session.output_transcript.delta'){
         lastVoiceAt=Date.now();
         if(ready&&!ending&&!['idle','connecting','countdown'].includes(document.body.dataset.phase))captions.append(event.delta);
@@ -369,20 +371,11 @@ async function begin({sentryGreeting=null}={}){
 face.addEventListener('click',()=>{if(!ready)begin();else if(audio.paused)audio.play().catch(()=>{$('audioResume').hidden=false;});});
 $('end').addEventListener('click',end);
 $('audioResume').addEventListener('click',()=>{audio.play().then(()=>{$('audioResume').hidden=true;}).catch(()=>{});});
-$('emailOpen').addEventListener('click',()=>{
-  touch();
-  note('The visitor tapped Email my photo. Their saved draft is on screen if they entered one during generation. Ask them to check their details and tap the confirmation button. Only offer spelling or typing if the address is missing.',true);
-  // Touch is a deliberate manual-entry fallback; normal voice flow opens after spelling.
-  reviewEmail('');
-});
-$('emailCancel').addEventListener('click',()=>{$('generationEmailInput').value='';photoEmail.cancel();$('emailInput').value='';$('emailOpen').hidden=false;note('The visitor skipped email. Do not ask for their email again unless they request it.');$('emailOpen').focus();});
+$('emailOpen').addEventListener('click',async()=>{touch();if(engine.phase==='result')await photoEmail.confirm();});
 $('guestNameInput').addEventListener('input',()=>{photoEmail.editName($('guestNameInput').value);touch();});
 $('marketingOptIn').addEventListener('change',()=>{photoEmail.chooseMarketing($('marketingOptIn').checked);touch();});
 for(const id of ['guestNameInput','emailInput'])$(id).addEventListener('focus',()=>{activeContactInput=$(id);$('emailDomains').hidden=!contactKeyboardOpen||id!=='emailInput';});
 $('emailInput').addEventListener('input',()=>{photoEmail.edit($('emailInput').value);touch();});
-$('generationEmailInput').addEventListener('input',touch);
-$('generationEmailInput').addEventListener('focus',()=>{activeContactInput=$('generationEmailInput');});
-$('generationKeyboardToggle').addEventListener('click',()=>{generationKeyboardOpen=!generationKeyboardOpen;activeContactInput=$('generationEmailInput');contactKeyboardLayout();activeContactInput.focus({preventScroll:true});touch();});
 $('emailPanel').addEventListener('pointerdown',touch);
 $('emailPanel').addEventListener('keydown',touch);
 $('emailConfirm').addEventListener('click',async()=>{
@@ -420,7 +413,7 @@ document.addEventListener('pointerdown',touch);
 document.addEventListener('keydown',touch);
 document.addEventListener('keydown',e=>{
   if(!$('emailPanel').hidden){
-    if(e.key==='Escape'){e.preventDefault();if(photoEmail.status!=='sending')$('emailCancel').click();}
+    if(e.key==='Escape'){e.preventDefault();$('emailStatus').textContent='Enter your name and email, then tap Confirm to continue.';}
     if(e.key==='Tab'){
       const enabled=[...$('emailPanel').querySelectorAll('button:not(:disabled),input:not(:disabled),a[href]')];
       const first=enabled[0],last=enabled.at(-1);
@@ -442,7 +435,15 @@ async function touchAction(name,args){
  if(ready)note('The visitor explicitly tapped a booth button: '+name+'. Current state: '+JSON.stringify(engine.snapshot())+'. Do not repeat the same action.');
  touchUI?.render();
 }
-touchUI=mountTouchControls({getState:()=>({...engine.snapshot(),phase:document.body.dataset.phase,active:ready||touchMode,statusMessage:$('hint').textContent,emailOpen:!$('emailPanel').hidden,emailSent:photoEmail.status==='sent'}),start:startTouchPhoto,voice:()=>begin(),action:touchAction,finish:()=>end(),labels:destinations});
+function canPeaceTrigger(){return peaceArmed&&!document.hidden&&(ready||touchMode)&&engine.phase==='listening'&&document.body.dataset.phase==='listening'&&!!engine.count&&!!engine.destination&&!ending;}
+peace=new PeaceTrigger({video:camera,canTrigger:canPeaceTrigger,onTrigger:()=>{if(!canPeaceTrigger())return;touch();engine.execute('take_photo',{confirmed:true,style:''});},onUnavailable:()=>{if(canPeaceTrigger())text('Ready for your photo?','Gesture detection unavailable. Say yes, okay, or take the picture, or tap Take photo.');}});
+async function armPeace(armed){
+ if(peaceArmed===armed)return;
+ peaceArmed=armed;const epoch=++peaceEpoch;
+ if(!armed){readinessReply.reset();peace.stop();return;}
+ try{await ensureCamera(new AbortController().signal);if(epoch===peaceEpoch&&canPeaceTrigger())peace.start();}catch{if(epoch===peaceEpoch)text('Camera permission needed.','Tap Take photo and allow camera access.');}
+}
+touchUI=mountTouchControls({onReadiness:armPeace,getState:()=>({...engine.snapshot(),phase:document.body.dataset.phase,active:ready||touchMode,statusMessage:$('hint').textContent,emailOpen:!$('emailPanel').hidden,emailSent:photoEmail.status==='sent'}),start:startTouchPhoto,voice:()=>begin(),action:touchAction,finish:()=>end(),labels:destinations});
 for(const button of document.querySelectorAll('.destination-pick'))button.addEventListener('click',()=>{
  if(!ready&&!touchMode)startTouchPhoto();
  touchAction('set_destination',{destinationId:button.dataset.destination});

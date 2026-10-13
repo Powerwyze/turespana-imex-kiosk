@@ -5,11 +5,11 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 const root=path.resolve(import.meta.dirname,'..');
 assert.equal(await fs.readFile(path.join(root,'public/index.html'),'utf8'),await fs.readFile(path.join(root,'public/host.html'),'utf8'),'Root homepage and kiosk entry point must stay in sync');
-const allowed=["/index.html","/assets/examples/regional-clothing.jpg","/assets/spain-background.png", "/assets/examples/andalucia.webp", "/assets/examples/madrid.webp", "/assets/examples/barcelona.webp", "/assets/examples/bilbao.webp", "/assets/examples/canarias.webp", "/assets/examples/valencia.webp"].concat(['/home-videos.js','/contact-policy.js','/assets/spain-info-logo.png','/home-language.js','/portrait-branding.js','/host.html','/host.css','/host.js','/host-engine.js','/host-connection.js','/host-touch.js','/turespana-engine.js','/host-countdown.js','/host-idle.js','/host-captions.js','/host-email.js','/host-avatar.js','/host-sentry.js','/host-sentry-gate.js','/host-sentry-worker.js','/assets/person-detector.tflite','/tests/fixtures/sentry-person.jpg','/email-shortcuts.js','/assets/spain-sun.glb','/assets/spain-sun-fallback.svg','/assets/flow-event-background.jpg','/assets/fonts/fraunces.woff2','/assets/fonts/borel.woff2']);
+const allowed=['/host-readiness.js','/capture-exposure.js','/host-peace.js','/host-peace-gate.js','/host-peace-worker.js','/assets/gesture-recognizer.task','/tests/fixtures/victory.jpg',"/index.html","/assets/examples/regional-clothing.jpg","/assets/spain-background.png", "/assets/examples/andalucia.webp", "/assets/examples/madrid.webp", "/assets/examples/barcelona.webp", "/assets/examples/bilbao.webp", "/assets/examples/canarias.webp", "/assets/examples/valencia.webp"].concat(['/home-videos.js','/contact-policy.js','/assets/spain-info-logo.png','/home-language.js','/portrait-branding.js','/host.html','/host.css','/host.js','/host-engine.js','/host-connection.js','/host-touch.js','/turespana-engine.js','/host-countdown.js','/host-idle.js','/host-captions.js','/host-email.js','/host-avatar.js','/host-sentry.js','/host-sentry-gate.js','/host-sentry-worker.js','/assets/person-detector.tflite','/tests/fixtures/sentry-person.jpg','/email-shortcuts.js','/assets/spain-sun.glb','/assets/spain-sun-fallback.svg','/assets/flow-event-background.jpg','/assets/fonts/fraunces.woff2','/assets/fonts/borel.woff2']);
 const server=http.createServer(async(req,res)=>{
   const pathname=new URL(req.url,'http://localhost').pathname==='/'?'/index.html':new URL(req.url,'http://localhost').pathname;
   if(!allowed.includes(pathname)&&!/^\/assets\/spain-videos\/(manifest\.json|spain-\d{2}\.mp4)$/.test(pathname)&&!/^\/vendor\/(three|vision)\/[a-zA-Z0-9/_.-]+\.(js|mjs|wasm)$/.test(pathname)){res.writeHead(404);res.end();return;}
-  const type={'.mp4':'video/mp4','.json':'application/json','.html':'text/html','.css':'text/css','.js':'text/javascript','.jpg':'image/jpeg','.glb':'model/gltf-binary','.svg':'image/svg+xml','.webp':'image/webp','.png':'image/png','.mjs':'text/javascript','.wasm':'application/wasm','.tflite':'application/octet-stream','.woff2':'font/woff2'}[path.extname(pathname)];
+  const type={'.mp4':'video/mp4','.json':'application/json','.html':'text/html','.css':'text/css','.js':'text/javascript','.jpg':'image/jpeg','.glb':'model/gltf-binary','.svg':'image/svg+xml','.webp':'image/webp','.png':'image/png','.mjs':'text/javascript','.wasm':'application/wasm','.task':'application/octet-stream','.tflite':'application/octet-stream','.woff2':'font/woff2'}[path.extname(pathname)];
   const bytes=await fs.readFile(path.join(root,pathname.startsWith('/tests/')?pathname:'public'+pathname));
   const range=/^bytes=(\d+)-(\d*)$/.exec(req.headers.range||'');
   if(type==='video/mp4'&&range){
@@ -23,10 +23,24 @@ await new Promise(r=>server.listen(4181,'127.0.0.1',r));
 await fs.mkdir('artifacts',{recursive:true});
 const browser=await chromium.launch({channel:'chrome',args:['--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream','--autoplay-policy=no-user-gesture-required','--enable-unsafe-swiftshader']});
 const context=await browser.newContext({viewport:{width:1080,height:1920},permissions:['camera','microphone']});
-const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+const page=await context.newPage();const errors=[];page.on('pageerror',e=>{errors.push(e.message);console.log('Browser fixture error:',e.message)});
 // Generate a genuine browser SDP artifact for an independent server configuration smoke check.
 await page.goto('http://127.0.0.1:4181/');
 await page.waitForFunction(()=>document.querySelector('#homeOfficialLogo').complete,null,{timeout:20000});
+// Run the real bundled MediaPipe model in its worker on the official victory fixture.
+const gestureSmoke=await page.evaluate(async()=>{
+ const worker=new Worker('/host-peace-worker.js');
+ try{return await new Promise((resolve,reject)=>{
+  const timeout=setTimeout(()=>reject(new Error('Gesture model timeout')),25000);
+  worker.onerror=()=>{clearTimeout(timeout);reject(new Error('Gesture worker failed'));};
+  worker.onmessage=async({data})=>{
+   if(data.type==='ready'){const bitmap=await createImageBitmap(await(await fetch('/tests/fixtures/victory.jpg')).blob());worker.postMessage({type:'frame',bitmap},[bitmap]);}
+   if(data.type==='gesture'){clearTimeout(timeout);resolve(data.victory);}
+   if(data.type==='error'){clearTimeout(timeout);reject(new Error('Gesture model failed'));}
+  };worker.postMessage({type:'init'});
+ });}finally{worker.terminate();}
+});
+assert.equal(gestureSmoke,true,'Real model recognizes official peace-sign fixture');
 assert.equal(await page.locator('#avatar').count(),0);
 assert.equal(await page.locator('#avatarFallback').count(),0);
 
@@ -101,7 +115,9 @@ await page.addInitScript(()=>{
     return getMedia(constraints);
   };
   window.addEventListener('DOMContentLoaded',()=>{
-    window.__countdownTiming={ticks:[],preparing:null,captured:null,generating:null};
+    window.__countdownTiming={ticks:[],countdownStarted:null,preparing:null,captured:null,generating:null};
+    const countdown=document.getElementById('countdown'),textContent=Object.getOwnPropertyDescriptor(Node.prototype,'textContent');
+    Object.defineProperty(countdown,'textContent',{get(){return textContent.get.call(this);},set(value){if(Number(value)===5&&window.__countdownTiming.countdownStarted===null)window.__countdownTiming.countdownStarted=performance.now();textContent.set.call(this,value);}});
     const capture=document.getElementById('capture').getContext('2d'),draw=capture.drawImage.bind(capture);
     capture.drawImage=(...args)=>{window.__countdownTiming.captured=performance.now();return draw(...args);};
     new MutationObserver(()=>{
@@ -234,9 +250,10 @@ try{
   assert.ok((await captionBounds()).above&&(await captionBounds()).onScreen);
   await page.setViewportSize({width:1080,height:1920});await page.waitForTimeout(1000);
 
+  const warmupRequestBaseline=await page.evaluate(()=>window.__videoRequests);
   await tool('take_photo',{confirmed:true,style:''});await page.waitForTimeout(100);assert.equal(generations,0);
   await tool('set_guest_count',{count:2});await page.waitForTimeout(100);
-  assert.equal(await page.evaluate(()=>window.__videoRequests),1,'Camera warms before readiness.');
+  assert.equal(await page.evaluate(()=>window.__videoRequests),warmupRequestBaseline+1,'Camera warms before readiness.');
   assert.equal(await page.locator('#viewfinder').isVisible(),false);
   await tool('take_photo',{confirmed:true,style:''},true);
   await page.waitForFunction(()=>document.body.dataset.phase==='preparing');
@@ -247,14 +264,15 @@ try{
   assert.equal(await page.locator('#picture').isVisible(),false);
   assert.equal(await page.locator('#hostCaptions').isVisible(),false,'Countdown clears speech captions.');
   assert.equal(await page.locator('#camera').isVisible(),true);
-  assert.equal(await page.evaluate(()=>window.__videoRequests),1,'Warmup and capture share one camera request.');
+  assert.equal(await page.evaluate(()=>window.__videoRequests),warmupRequestBaseline+1,'Warmup and capture share one camera request.');
   assert.ok(await page.locator('#viewfinder').evaluate(e=>{const r=e.getBoundingClientRect();return r.left<=24&&r.top<=24&&r.width<=innerWidth*.3&&r.bottom<innerHeight*.3;}));
   assert.equal(await page.locator('#camera').evaluate(e=>getComputedStyle(e).objectFit),'contain');
+  assert.ok(await page.locator('#camera').evaluate(e=>{const m=new DOMMatrix(getComputedStyle(e).transform),r=e.getBoundingClientRect(),f=e.parentElement.getBoundingClientRect();return Math.abs(m.a+1)<.001&&Math.abs(m.b)<.001&&Math.abs(m.c)<.001&&Math.abs(m.d-1)<.001&&Math.abs(r.width-f.width)<1&&Math.abs(r.height-f.height)<1;}),'Camera preview is upright with the existing mirror and fits its frame.');
   await page.screenshot({path:'artifacts/host-countdown-portrait.png'});
   await page.waitForFunction(()=>document.body.dataset.phase==='generating',{},{timeout:10000});
   const timing=await page.evaluate(()=>window.__countdownTiming);
   assert.deepEqual(timing.ticks.map(t=>t.n),[5,4,3,2,1]);
-  const duration=timing.captured-timing.ticks[0].at;
+  const duration=timing.captured-timing.countdownStarted;
   await fs.writeFile('artifacts/countdown-report.json',JSON.stringify({...timing,duration},null,2));
   assert.ok(duration>=4850&&duration<5800,'Countdown must last five seconds, measured '+duration);
   assert.ok(timing.ticks[0].at-timing.preparing>=500,'Delayed camera must not consume countdown time.');
@@ -262,8 +280,48 @@ try{
   assert.equal(await page.locator('#camera').evaluate(e=>e.srcObject===null),true);
   await fs.writeFile('artifacts/countdown-report.json',JSON.stringify({...timing,duration},null,2));
   await say('While your portrait develops, enjoy the Spain tourism experience with other IMEX visitors!');
-  await page.screenshot({path:'artifacts/host-generating-portrait.png'});assert.equal(generations,1);
+  assert.equal(await page.locator('#generationStatus').isVisible(),true);assert.equal(await page.locator('#generationStatus').textContent(),'Image is generating');await page.screenshot({path:'artifacts/host-generating-portrait.png'});assert.equal(generations,1);
   await tool('take_photo',{confirmed:true,style:''});await page.waitForTimeout(100);assert.equal(generations,1);
+  // Full contact form is available during generation only.
+  await tool('show_email_confirmation',{email:'alex@exampl.com'});
+  await page.locator('#emailPanel').waitFor({state:'visible'});
+  await page.evaluate(()=>window.__channel.emit({type:'session.input_transcript.delta',delta:'alex at example dot com'}));
+  await say('Check the address on screen. Use the keyboard to fix anything, then tap Confirm & email photo.');
+  assert.equal(await page.locator('#emailPanel #hostCaptions').isVisible(),true,'Keep host captions readable inside email review.');
+  assert.equal(emails,0);
+  assert.equal(await page.locator('#emailConfirm').isDisabled(),true);
+  assert.equal(await page.locator('#marketingOptIn').isChecked(),false);
+  await page.locator('#guestNameInput').fill('María');await page.locator('[data-key=space]').click();await page.locator('[data-key=g]').click();
+  assert.equal(await page.locator('#guestNameInput').inputValue(),'María g');await page.locator('#guestNameInput').fill('María García');
+  await page.locator('#emailInput').fill('alex');await page.locator('#emailDomains button').filter({hasText:'@gmail.com'}).click();
+  assert.equal(await page.locator('#emailInput').inputValue(),'alex@gmail.com');
+  // Correct a character using the kiosk keyboard, preserving the insertion point.
+  await page.locator('#emailInput').evaluate(e=>e.setSelectionRange(4,4));
+  await page.locator('[data-key="+"]').click();await page.locator('[data-key="p"]').click();
+  assert.equal(await page.locator('#emailInput').inputValue(),'alex+p@gmail.com');
+  await page.locator('#marketingOptIn').check();
+  assert.equal(await page.locator('#marketingCopy a').count(),2);
+  for(const a of await page.locator('#marketingCopy a').all())assert.equal(await a.getAttribute('target'),'_blank');
+  await page.screenshot({path:'artifacts/host-email-portrait.png'});
+  await page.setViewportSize({width:390,height:844});await page.waitForTimeout(400);
+  await page.screenshot({path:'artifacts/host-email-mobile.png'});
+  assert.ok(await page.locator('#emailConfirm').evaluate(e=>{const r=e.getBoundingClientRect();return r.bottom<=innerHeight&&r.left>=0&&r.right<=innerWidth;}));
+  await page.setViewportSize({width:1080,height:1920});
+  emailFail=true;await page.locator('#emailConfirm').click();
+  assert.equal(emails,0,'Confirmation queues delivery without an unfinished image');
+  assert.equal(await page.locator('#emailPanel').isVisible(),false,'Confirm immediately closes contact entry during generation');
+  await tool('show_email_confirmation',{email:'other@example.com'});
+  assert.equal(await page.locator('#emailPanel').isVisible(),false,'Voice host cannot reopen a confirmed contact form during generation');
+  assert.equal(await page.locator('#emailInput').inputValue(),'alex+p@gmail.com','Late voice tool preserves confirmed recipient');
+  // Generation captions stay centered, fully inside the viewport, including landscape.
+  await say('Spain offers extraordinary art, architecture and regional food. '.repeat(8)+'Ask Lola about your destination.');
+  for(const [label,width,height] of [['kiosk',1080,1920],['phone',390,844],['landscape',844,390]]){
+    await page.setViewportSize({width,height});await page.waitForTimeout(150);
+    const c=await page.locator('#hostCaptions').evaluate(e=>{const r=e.getBoundingClientRect(),t=document.querySelector('#hostCaptionText'),q=t.getBoundingClientRect();return {visible:getComputedStyle(e).display!=='none',center:Math.abs((r.top+r.bottom)/2-innerHeight/2),inside:r.top>=0&&r.bottom<=innerHeight&&r.left>=0&&r.right<=innerWidth,textInside:q.top>=r.top&&q.bottom<=r.bottom,latest:t.scrollHeight-t.clientHeight-t.scrollTop<2};});
+    assert.ok(c.visible&&c.center<2&&c.inside&&c.textInside&&c.latest,'Readable centered generation captions '+label+': '+JSON.stringify(c));
+    await page.screenshot({path:'artifacts/host-generation-captions-'+label+'.png'});
+  }
+  await page.setViewportSize({width:1080,height:1920});
   release();await page.waitForFunction(()=>document.body.dataset.phase==='result');
   // Result area is separate from large actions/captions at kiosk and mobile sizes.
   for(const [label,width,height] of [['kiosk',1080,1920],['phone',390,844],['compact',390,667]]){
@@ -313,47 +371,23 @@ try{
   await page.waitForTimeout(1000);assert.ok(await page.locator('#hostCaptions').evaluate(e=>{const r=e.getBoundingClientRect(),p=document.querySelector('#picture').getBoundingClientRect(),c=document.querySelector('#touchControls').getBoundingClientRect();return r.top>=p.bottom&&r.bottom<=c.top&&r.left>=0&&r.right<=innerWidth;}),'Result captions are outside the photograph');await page.screenshot({path:'artifacts/host-result-portrait.png'});
   assert.ok(await page.locator('#face').evaluate(e=>e.getBoundingClientRect().width<innerWidth*.25));
   assert.ok(await page.evaluate(()=>window.__sent.some(e=>e.type==='session.commentary.append'&&e.content.includes('Madrid'))));
-  // A spoken address opens review; no voice tool can send it.
-  await tool('show_email_confirmation',{email:'alex@exampl.com'});
-  await page.locator('#emailPanel').waitFor({state:'visible'});
-  await page.evaluate(()=>window.__channel.emit({type:'session.input_transcript.delta',delta:'alex at example dot com'}));
-  await say('Check the address on screen. Use the keyboard to fix anything, then tap Confirm & email photo.');
-  assert.equal(await page.locator('#emailPanel #hostCaptions').isVisible(),true,'Keep host captions readable inside email review.');
-  assert.equal(emails,0);
-  assert.equal(await page.locator('#emailConfirm').isDisabled(),true);
-  assert.equal(await page.locator('#marketingOptIn').isChecked(),false);
-  await page.locator('#guestNameInput').fill('María');await page.locator('[data-key=space]').click();await page.locator('[data-key=g]').click();
-  assert.equal(await page.locator('#guestNameInput').inputValue(),'María g');await page.locator('#guestNameInput').fill('María García');
-  await page.locator('#emailInput').fill('alex');await page.locator('#emailDomains button').filter({hasText:'@gmail.com'}).click();
-  assert.equal(await page.locator('#emailInput').inputValue(),'alex@gmail.com');
-  // Correct a character using the kiosk keyboard, preserving the insertion point.
-  await page.locator('#emailInput').evaluate(e=>e.setSelectionRange(4,4));
-  await page.locator('[data-key="+"]').click();await page.locator('[data-key="p"]').click();
-  assert.equal(await page.locator('#emailInput').inputValue(),'alex+p@gmail.com');
-  await page.locator('#marketingOptIn').check();
-  assert.equal(await page.locator('#marketingCopy a').count(),2);
-  for(const a of await page.locator('#marketingCopy a').all())assert.equal(await a.getAttribute('target'),'_blank');
-  await page.screenshot({path:'artifacts/host-email-portrait.png'});
-  await page.setViewportSize({width:390,height:844});await page.waitForTimeout(400);
-  await page.screenshot({path:'artifacts/host-email-mobile.png'});
-  assert.ok(await page.locator('#emailConfirm').evaluate(e=>{const r=e.getBoundingClientRect();return r.bottom<=innerHeight&&r.left>=0&&r.right<=innerWidth;}));
-  await page.setViewportSize({width:1080,height:1920});
-  emailFail=true;await page.locator('#emailConfirm').click();
-  await page.waitForFunction(()=>document.querySelector('#emailStatus').textContent.includes('could not confirm'));
-  assert.equal(emails,1);assert.equal(await page.locator('#emailInput').inputValue(),'alex+p@gmail.com');
-  emailFail=false;await page.locator('#emailConfirm').dblclick();
-  await page.locator('#emailToast').waitFor({state:'visible'});
+  await page.waitForFunction(()=>document.querySelector('#emailToast').textContent.includes('not confirmed'));
+  assert.equal(await page.locator('#emailPanel').isVisible(),false);
+  await tool('show_email_confirmation',{email:'ignored@example.com'});
+  assert.equal(await page.locator('#emailPanel').isVisible(),false,'Late voice tools cannot reopen the form');
+  assert.equal(emails,1);emailFail=false;await page.locator('#emailOpen').dblclick();
+  await page.waitForFunction(()=>!document.querySelector('#emailToast').hidden&&document.querySelector('#emailToast').textContent.includes('accepted'));
   assert.equal(emails,2);assert.equal(lastEmail,'alex+p@gmail.com');assert.equal(lastContact.name,'María García');assert.equal(lastContact.marketingOptIn,true);
-  assert.equal(await page.locator('#emailInput').inputValue(),'');
-  await tool('send_email',{email:'unconfirmed@example.com'});await page.waitForTimeout(100);assert.equal(emails,2);
+  await tool('send_email',{email:'unconfirmed@example.com'});assert.equal(emails,2);
   // Fail one explicit revision: never reveal rejected bytes or automatically regenerate.
   fail=true;release=null;await tool('retry_picture',{confirmed:true,style:'More colorful'});
   await page.waitForTimeout(150);assert.equal(generations,2);release();
   await page.waitForFunction(()=>document.body.dataset.phase==='error');
   assert.equal(await page.locator('#picture').isVisible(),false);
   await page.waitForTimeout(300);assert.equal(generations,2);
-  fail=false;release=null;await tool('retry_picture',{confirmed:true,style:''});await page.waitForTimeout(150);assert.equal(generations,3);release();
+  fail=false;release=null;await tool('retry_picture',{confirmed:true,style:''});await page.waitForTimeout(150);assert.equal(generations,3);await page.locator('#guestNameInput').fill('Retry Guest');await page.locator('#emailInput').fill('retry@example.com');await page.locator('#emailConfirm').click();release();
   await page.waitForFunction(()=>document.body.dataset.phase==='result');
+  await page.waitForFunction(()=>document.querySelector('#emailToast').textContent.includes('accepted'));
   // A reset during work suppresses the old result and stops the camera.
   release=null;await tool('retry_picture',{confirmed:true,style:''});await page.waitForTimeout(150);
   await tool('reset_booth',{confirmed:true});release();await page.waitForTimeout(300);
@@ -390,10 +424,17 @@ try{
   // Still exercise the explicit voice end tool on a new session.
   await page.locator('#face').click();await page.waitForFunction(()=>document.body.dataset.phase==='listening');
   assert.equal(await page.locator('#hostCaptionText').textContent(),'','New guest starts with no old captions.');
+  await tool('set_guest_count',{count:1});await tool('set_destination',{destinationId:'barcelona'});
+  await page.locator('[data-touch="capture"]').waitFor({state:'visible'});
+  await page.evaluate(()=>window.__channel.emit({type:'session.input_transcript.delta',delta:'okay wait'}));
+  await page.waitForTimeout(1200);assert.equal(await page.locator('#countdown').isVisible(),false,'Negated reply cannot start capture');
+  await page.evaluate(()=>window.__channel.emit({type:'session.input_transcript.delta',delta:'Okay'}));
+  await page.waitForFunction(()=>document.body.dataset.phase==='countdown');
+  assert.equal(await page.locator('#viewfinder').isVisible(),true,'Local voice readiness starts the visible countdown without a backend tool');
+
   await tool('end_visit',{confirmed:true});await page.waitForFunction(()=>document.body.dataset.phase==='idle');
   assert.equal(await page.locator('#camera').evaluate(e=>e.srcObject===null),true);
-  assert.equal(await page.locator('#generationEmailInput').inputValue(),'');
-  assert.equal(await page.locator('#emailInput').inputValue(),'');assert.equal(await page.locator('#emailPanel').isVisible(),false);
+    assert.equal(await page.locator('#emailInput').inputValue(),'');assert.equal(await page.locator('#emailPanel').isVisible(),false);
   await page.setViewportSize({width:390,height:844});await page.waitForTimeout(1000);await page.screenshot({path:'artifacts/host-idle-mobile.png'});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   assert.equal(await page.locator('#face').evaluate(e=>{const r=e.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth;}),true);
@@ -459,7 +500,7 @@ try{
   await page.waitForFunction(()=>document.querySelector('#headline').textContent==='Hello there.');await page.waitForTimeout(100);
   await waitForGreeting(2);assert.equal(greetings,2);releaseGreeting();
   await page.waitForFunction(()=>document.body.dataset.phase==='listening');
-  assert.ok(await page.evaluate(()=>window.__sent.some(e=>e.type==='session.instructions.append'&&e.content.includes('blue jacket'))));
+  assert.ok(await page.evaluate(()=>window.__sent.some(e=>e.type==='session.commentary.append'&&e.content.includes('blue jacket'))));
   const generationCount=generations;
   await page.evaluate(()=>window.__advanceTime(20000));
   await page.evaluate(()=>window.__channel.emit({type:'session.output_transcript.delta',delta:'I am your host.'}));
@@ -485,15 +526,15 @@ try{
   await page.waitForFunction(()=>document.body.dataset.phase==='generating',null,{timeout:15000});
   await page.evaluate(()=>window.__advanceTime(40000));await page.waitForTimeout(200);
   assert.equal(await page.locator('body').getAttribute('data-phase'),'generating');assert.equal(greetings,3);
-  release();await page.waitForFunction(()=>document.body.dataset.phase==='result');
   await tool('show_email_confirmation',{email:'guest@example.com'});
   await page.locator('#guestNameInput').fill('Guest Two');assert.equal(await page.locator('#marketingOptIn').isChecked(),false);
   holdEmail=true;await page.locator('#emailConfirm').click();
-  await page.waitForFunction(()=>document.querySelector('#emailConfirm').textContent.includes('Sending'));
+  release();await page.waitForFunction(()=>document.body.dataset.phase==='result');
+  await page.waitForFunction(()=>document.querySelector('#emailToast').textContent.includes('Sending'));
   await page.waitForTimeout(100);
   await page.evaluate(()=>window.__advanceTime(40000));
-  assert.equal(await page.locator('#emailPanel').isVisible(),true);assert.equal(greetings,3);
-  releaseEmail();await page.locator('#emailToast').waitFor({state:'visible'});
+  assert.equal(await page.locator('#emailPanel').isVisible(),false);assert.equal(greetings,3);
+  releaseEmail();await page.waitForFunction(()=>document.querySelector('#emailToast').textContent.includes('accepted'));
   await page.evaluate(()=>{window.__presence=false;window.__advanceTime(20000);});
   assert.equal(await page.locator('body').getAttribute('data-phase'),'result','Completed work grants a fresh reply window.');
   await page.evaluate(()=>window.__advanceTime(11000));
@@ -537,35 +578,48 @@ try{
   await new Promise((resolve,reject)=>{const deadline=Date.now()+5000;const poll=()=>generations===beforeTouch+1?resolve():Date.now()>deadline?reject(new Error('Touch capture did not submit an image request')):setTimeout(poll,20);poll();});
   assert.equal(generations,beforeTouch+1);
   assert.equal(await page.locator('[data-touch=capture]').count(),0,'No duplicate capture button during generation');
-  await page.locator('#generationEmailPanel').waitFor({state:'visible'});
+  holdEmail=false;emailFail=false;
   const emailsBeforeDraft=emails;
-  await page.locator('#generationEmailInput').fill('waiting@example.com');
-  await page.locator('#generationKeyboardToggle').click();
-  await page.locator('#generationEmailInput').evaluate(e=>e.setSelectionRange(7,7));
-  await page.locator('[data-key="+"]').click();
-  assert.equal(await page.locator('#generationEmailInput').inputValue(),'waiting+@example.com');
-  await page.locator('#generationEmailInput').fill('waiting@example.com');
-  await page.locator('#generationKeyboardToggle').click();
-  for(const [label,width,height] of [['phone',390,844],['kiosk',1080,1920]]){
-    await page.setViewportSize({width,height});await page.waitForTimeout(600);
-    assert.ok(await page.locator('#generationEmailInput').evaluate(e=>{const r=e.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight;}));
-    await page.screenshot({path:'artifacts/generation-email-'+label+'.png'});
-  }
-  assert.equal(emails,emailsBeforeDraft,'Typing while generating never sends');
-  release();await page.waitForFunction(()=>document.body.dataset.phase==='result');
-  assert.equal(await page.locator('#generationEmailPanel').isVisible(),false);
-  await page.locator('#emailOpen').click();
-  assert.equal(await page.locator('#emailInput').inputValue(),'waiting@example.com');
+  await page.locator('#emailPanel').waitFor({state:'visible'});
+  assert.equal(await page.locator('#emailCancel').count(),0,'No Skip button remains');
+  release();await page.getByText('Enter your name and email, then tap Confirm to continue.',{exact:true}).waitFor();
+  assert.equal(await page.locator('#picture').isVisible(),false,'A fast result cannot bypass required contact entry');
+  await page.keyboard.press('Escape');assert.equal(await page.locator('#emailPanel').isVisible(),true);await page.screenshot({path:'artifacts/required-contact-phone.png'});
+  await page.locator('#guestNameInput').fill('Waiting Guest');assert.equal(await page.locator('#picture').isVisible(),false);
+  await page.locator('#emailInput').fill('invalid');assert.equal(await page.locator('#picture').isVisible(),false);
+  await page.locator('#emailInput').fill('waiting@example.com');
   assert.equal(await page.locator('#marketingOptIn').isChecked(),false);
-  assert.equal(emails,emailsBeforeDraft,'Revealing and opening review never send');
-  assert.equal(await page.locator('#emailPanel').isVisible(),true);
-  assert.equal(await page.locator('#touchControls').isVisible(),false,'Only email confirmation controls remain in the dialog');
-  await page.locator('#emailCancel').click();
+  assert.equal(emails,emailsBeforeDraft);assert.equal(await page.locator('#emailPanel').isVisible(),true,'Valid fields alone must not close the form');assert.equal(await page.locator('#picture').isVisible(),false);await page.locator('#emailConfirm').click();
+  await page.waitForFunction(()=>document.body.dataset.phase==='result').catch(async e=>{console.log('Confirmed-result fixture state',await page.evaluate(()=>({phase:document.body.dataset.phase,contactHidden:document.getElementById('emailPanel').hidden,status:document.getElementById('emailStatus').textContent,toast:document.getElementById('emailToast').textContent,pictureHidden:document.getElementById('picture').hidden})),{emails,errors});throw e;});await page.screenshot({path:'artifacts/required-contact-result-phone.png'});
+  assert.equal(await page.locator('#emailPanel').isVisible(),false);
+  await page.waitForFunction(()=>document.querySelector('#emailToast').textContent.includes('accepted'));assert.equal(emails,emailsBeforeDraft+1,'Explicit Confirm sends exactly once');
+  await tool('show_email_confirmation',{email:'late@example.com'});
+  assert.equal(await page.locator('#emailPanel').isVisible(),false);
   await page.locator('[data-touch=finish]').click();
   await page.waitForFunction(()=>document.body.dataset.phase==='idle');
   assert.equal(await page.locator('#picture').isVisible(),false);
-  assert.equal(await page.locator('#generationEmailInput').inputValue(),'','Finish clears the generation email draft');
+  assert.equal(await page.locator('#emailInput').inputValue(),'','Finish clears contact details');
   assert.equal(await page.evaluate(()=>window.__sent.length),voiceBefore,'Touch photos do not need a voice session');
+  // Exercise an actual Victory image as a synthetic camera, through readiness to countdown.
+  const gesturePage=await context.newPage();
+  await gesturePage.addInitScript(()=>{
+   navigator.mediaDevices.getUserMedia=async()=>{
+    const image=new Image();image.src='/tests/fixtures/victory.jpg';await image.decode();
+    const canvas=document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;
+    const ctx=canvas.getContext('2d');ctx.drawImage(image,0,0);
+    const timer=setInterval(()=>ctx.drawImage(image,0,0),100);const stream=canvas.captureStream(10);
+    window.addEventListener('pagehide',()=>{clearInterval(timer);stream.getTracks().forEach(t=>t.stop());},{once:true});return stream;
+   };
+  });
+  await gesturePage.goto('http://127.0.0.1:4181/');
+  await gesturePage.waitForTimeout(1000);assert.equal(await gesturePage.locator('#countdown').isVisible(),false,'Gesture cannot capture on the home screen');
+  await gesturePage.locator('.destination-pick').first().click();
+  await gesturePage.locator('[data-touch="people-1"]').click();
+  await gesturePage.waitForFunction(()=>document.body.dataset.phase==='countdown',null,{timeout:30000});
+  await gesturePage.screenshot({path:'artifacts/peace-trigger-countdown.png'});
+  await gesturePage.locator('[data-touch="cancel"]').click();
+  await gesturePage.waitForTimeout(1200);assert.equal(await gesturePage.locator('#countdown').isVisible(),false,'Reset disarms held gesture');
+  await gesturePage.close();
   assert.deepEqual(errors,[]);
   console.log('Face host browser checks passed: portrait/mobile, readiness, camera warmup/cancellation, five-second countdown, top-left viewfinder, duplicate calls, image reveal, guard rejection, explicit retry, reset, cleanup.');
 }finally{await browser.close();server.close();}

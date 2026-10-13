@@ -1,0 +1,32 @@
+name: Spain live readiness check
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/imex-generation-only-contact]
+permissions:
+  contents: write
+jobs:
+  readiness:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm install --no-save --package-lock=false playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - run: node tests/readiness-live.mjs
+      - name: Save safe readiness result
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh auth setup-git
+          cp artifacts/readiness-live.json docs/review/readiness-live.json
+          git config user.name 'PowerWyze build'
+          git config user.email 'actions@users.noreply.github.com'
+          git add docs/review/readiness-live.json
+          git commit -m "Save live Spain readiness verification" || exit 0
+          git pull --rebase origin codex/imex-generation-only-contact
+          git push origin HEAD:codex/imex-generation-only-contact

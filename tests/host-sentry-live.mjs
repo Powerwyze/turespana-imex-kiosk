@@ -19,7 +19,9 @@ await page.addInitScript(()=>{
     terminate(){this.onmessage=null;}
   };
 });
-const frame='data:image/jpeg;base64,'+(await fs.readFile('tests/fixtures/sentry-person.jpg')).toString('base64');
+const privatePhoto=[1,2,3,4,5].map(i=>process.env['APP_TEST_IMAGE_'+i]||'').join('');
+if(!privatePhoto)throw new Error('Private test photo is required.');
+const frame='data:image/jpeg;base64,'+privatePhoto;
 await page.route('**/api/host-greeting',async route=>{
   visionCalls++;
   const response=await route.fetch({postData:JSON.stringify({frame})});greeting=await response.json();
@@ -28,7 +30,7 @@ await page.route('**/api/host-greeting',async route=>{
 });
 page.on('response',r=>{if(new URL(r.url()).pathname==='/api/host-session')sessionCalls++;});
 try{
-  await page.goto(url);await page.waitForFunction(()=>document.querySelector('#face').dataset.avatar==='ready');
+  await page.goto(url);await page.locator('#face').waitFor({state:'visible'});await page.waitForFunction(()=>document.querySelector('#sentryToggle')&&!document.querySelector('#sentryToggle').disabled);
   await page.locator('#sentryToggle').click();
   await page.waitForFunction(()=>document.body.dataset.phase==='listening',null,{timeout:70000});
   await page.waitForFunction(()=>window.__events.filter(e=>e.type==='session.output_transcript.delta').map(e=>e.delta).join('').length>65,null,{timeout:30000});

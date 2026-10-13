@@ -3,7 +3,7 @@
 export const CAMPAIGN_PHRASE='Spain at IMEX America - 13-15 October 2026';
 export const AI_DISCLOSURE='AI generated photo';
 export const PORTRAIT_LOGO='/assets/spain-info-logo.png';
-export async function brandPortrait(blob, regionName){
+export async function brandPortrait(blob, regionName,{original=false}={}){
   if(typeof regionName!=='string'||!regionName.trim())throw new Error('Choose a region before creating your portrait.');
   const photo=await createImageBitmap(blob);
   try{
@@ -26,7 +26,7 @@ export async function brandPortrait(blob, regionName){
     while(ctx.measureText(CAMPAIGN_PHRASE).width>textWidth&&font>22*scale){font-=scale;ctx.font=`600 ${font}px Georgia, serif`;}
     ctx.textAlign='left';ctx.fillText(CAMPAIGN_PHRASE,textLeft,bottom+74*scale,textWidth);
     ctx.fillStyle='#465364';ctx.font=`500 ${26*scale}px Arial, sans-serif`;
-    ctx.fillText(AI_DISCLOSURE,textLeft,bottom+121*scale,textWidth);
-    return await new Promise((resolve,reject)=>canvas.toBlob(result=>result?resolve(result):reject(new Error('Your branded portrait could not be saved.')),'image/jpeg',.96));
+    ctx.fillText(original?'Original photo · AI styling unavailable':AI_DISCLOSURE,textLeft,bottom+121*scale,textWidth);
+    return await new Promise((resolve,reject)=>canvas.toBlob(result=>result?resolve(result):reject(new Error('Your branded portrait could not be saved.')),'image/jpeg',.98));
   }finally{photo.close();}
 }

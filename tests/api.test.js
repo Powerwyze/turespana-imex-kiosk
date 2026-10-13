@@ -10,19 +10,19 @@ const jpeg = Buffer.from('synthetic-jpeg').toString('base64');
 const valid = count => ({ person_count: count, only_nearest_guests: true, source_has_requested_guests: true, uncertain: false, face_and_hair_consistent: true, regional_outfit_matches: true, regional_hair_accessories_match: true, outfit_visible: true, photographic: true, no_poster_layout: true });
 const envelope = check => ({ status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: JSON.stringify(check) }] }] });
 
-async function generateCase({ count = '1', check = valid(Number(count ?? 1)), verifyBody, verifyStatus = 200, verifyThrows = false, duplicate = false, style = '', imageStatus = 200, destination='madrid' } = {}) {
+async function generateCase({ count = '1', check = valid(Number(count ?? 1)), checks, verifyBody, verifyStatus = 200, verifyThrows = false, duplicate = false, style = '', imageStatus = 200, destination='madrid' } = {}) {
   const priorFetch = globalThis.fetch;
   const saved = Object.fromEntries(['OPENAI_API_KEY','OPENAI_IMAGE_MODEL','OPENAI_IMAGE_QUALITY','OPENAI_IMAGE_SIZE'].map(key => [key, process.env[key]]));
   process.env.OPENAI_API_KEY = 'test-only-placeholder';
   for (const key of Object.keys(saved).slice(1)) delete process.env[key];
-  const calls = [];
+  const calls = [];let checkIndex=0;
   globalThis.fetch = async (url, init) => {
     if(String(url).includes('/api/kiosk-contact'))return Response.json({ok:true,stored:true,id:'synthetic-contact'});
     calls.push({ url: String(url), init });
     if (String(url).endsWith('/images/edits')) return Response.json({ data: [{ b64_json: jpeg }] }, { status: imageStatus });
     if (String(url).endsWith('/responses')) {
       if (verifyThrows) throw new Error('synthetic network failure');
-      return Response.json(verifyBody ?? envelope(check), { status: verifyStatus });
+      return Response.json(verifyBody ?? envelope(checks?checks[Math.min(checkIndex++,checks.length-1)]:check), { status: verifyStatus });
     }
     throw new Error('Unexpected fetch: ' + url);
   };
@@ -52,20 +52,19 @@ for (const count of [1, 2, 3]) {
     assert.equal(calls.length, 2, 'one generation + one check; no paid auto-regeneration');
     const payload = JSON.parse(calls[0].init.body);
     assert.equal(payload.model, 'gpt-image-2.5-flare'); assert.equal(payload.quality, 'xhigh');
-    assert.equal(payload.size, '1024x1536'); assert.equal(payload.n, 1);
-    assert.equal(payload.images.length, 2);
-    assert.equal(payload.images[1].image_url,'data:image/jpeg;base64,'+readFileSync('assets/region-references/madrid.jpg').toString('base64'));
-    assert.match(payload.prompt,/ONE cropped regional example for Madrid/);
+    assert.equal(payload.size, '1536x2304');assert.equal(payload.output_compression,100);assert.match(payload.prompt,/FRONT-FACING PORTRAIT/); assert.equal(payload.n, 1);
+    assert.equal(payload.images.length, 1);
+    assert.match(payload.prompt,/REGION FOR THIS TRANSFORMATION: Madrid/);
     assert.match(payload.prompt,/full-body or three-quarter/);
-    assert.match(payload.prompt,/Never deliver a headshot, chest-up or waist-up crop/);
+    assert.match(payload.prompt,/Do not force hands or unseen anatomy into view/);
     assert.equal(payload.images[0].image_url, "data:image/jpeg;base64,"+Buffer.from("synthetic-source").toString("base64"));
     assert.ok(payload.prompt.includes(masterTransformationPrompt));
     assert.match(payload.prompt,/IDENTITY IS THE HIGHEST PRIORITY/);
-    assert.match(payload.prompt,/preserve source facial geometry/);
+    assert.match(payload.prompt,/Preserve source facial geometry/);
     assert.doesNotMatch(payload.prompt,/POLISHED ILLUSTRATED POSTER|Simplify skin microtexture|Dramatic golden-hour lighting and painted clothing/);
     assert.match(payload.prompt,/Image 1 is the actual guest camera photo/);
-    assert.match(payload.prompt,/Remove ALL reference people completely/);
-    assert.notEqual(payload.images[0].image_url,payload.images[1].image_url);
+    assert.match(payload.prompt,/No reference person is supplied/);
+
     assert.match(payload.prompt,new RegExp('GUEST GROUP: Exactly '+count));
     assert.match(payload.prompt,new RegExp('FINAL CHECK: Exactly '+count));
     assert.match(payload.prompt,/background bystanders/);
@@ -80,7 +79,7 @@ for (const count of [1, 2, 3]) {
     assert.match(verifier.instructions, /Independently count ALL people/);
     assert.match(verifier.instructions, /distant crowds, walkers, posters, screens, or reflections/);
     assert.equal(verifier.input[0].content[1].image_url, payload.images[0].image_url);
-    assert.equal(verifier.input[0].content[2].image_url, 'data:image/jpeg;base64,' + jpeg);assert.equal(verifier.input[0].content[3].image_url,payload.images[1].image_url);
+    assert.equal(verifier.input[0].content[2].image_url, 'data:image/jpeg;base64,' + jpeg);assert.equal(verifier.input[0].content[3].image_url,'data:image/jpeg;base64,'+readFileSync('assets/region-references/madrid.jpg').toString('base64'));
     assert.ok(calls[0].init.signal); assert.ok(calls[1].init.signal);
   });
 }
@@ -198,18 +197,18 @@ for(const destination of [null,'','unknown','__proto__','cataluna','pais-vasco',
 
 for(const destination of ["canarias","barcelona","bilbao","madrid","andalucia","valencia"])test('current destination generates successfully: '+destination,async()=>{const {response}=await generateCase({destination});assert.equal(response.status,200);});
 
-for(const flag of ['face_and_hair_consistent','regional_outfit_matches','regional_hair_accessories_match','outfit_visible','photographic','no_poster_layout'])test('rejects quality mismatch without auto-regeneration: '+flag,async()=>{
+for(const flag of ['face_and_hair_consistent','regional_outfit_matches','regional_hair_accessories_match','outfit_visible','photographic','no_poster_layout'])test('bounds corrections and returns honest fallback: '+flag,async()=>{
  const {response,calls}=await generateCase({check:{...valid(1),[flag]:false}});
- assert.equal(response.status,422);assert.equal(calls.length,2);const body=await response.text();assert.match(body,/PORTRAIT_QUALITY_MISMATCH/);assert.ok(!body.includes(jpeg));
+ assert.equal(response.status,200);const original=['face_and_hair_consistent','photographic'].includes(flag);assert.equal(calls.length,original?6:2);assert.equal(response.headers.get('x-portrait-fallback'),original?'original':'style-tolerance');assert.equal(await response.text(),original?'synthetic-source':'synthetic-jpeg');
 });
 test('explicit dress preference cannot override photography',async()=>{
  const {calls}=await generateCase({style:'Please use the dress. Make a painted poster with text.'});const p=JSON.parse(calls[0].init.body);
  assert.match(p.prompt,/Use the DRESS ensemble/);assert.doesNotMatch(p.prompt,/Make a painted poster/);
 });
-test('each destination uses only its own reference panel',async()=>{
+test('generation receives only guest pixels; checker receives the selected regional reference',async()=>{
  for(const destination of ['canarias','barcelona','bilbao','madrid','andalucia','valencia']){
   const {calls}=await generateCase({destination});const p=JSON.parse(calls[0].init.body);
-  assert.equal(p.images[1].image_url,'data:image/jpeg;base64,'+readFileSync('assets/region-references/'+destination+'.jpg').toString('base64'));
+  assert.equal(p.images.length,1);assert.match(p.prompt,/ONLY image input/);const v=JSON.parse(calls[1].init.body);assert.equal(v.input[0].content[3].image_url,'data:image/jpeg;base64,'+readFileSync('assets/region-references/'+destination+'.jpg').toString('base64'));
  }
 });
 
@@ -217,11 +216,27 @@ test('regional hairstyles are required by both generation and the independent ch
  for(const destination of ['canarias','barcelona','bilbao','madrid','andalucia','valencia']){
   const {response,calls}=await generateCase({destination});assert.equal(response.status,200);
   const prompt=JSON.parse(calls[0].init.body).prompt,verifier=JSON.parse(calls[1].init.body);
-  assert.match(prompt,/REGIONAL HAIR AND ACCESSORIES/);assert.match(prompt,/10–15% beauty retouching/);
+  assert.match(prompt,/REGIONAL HAIR AND ACCESSORIES/);assert.match(prompt,/FACIAL WRINKLE REMOVAL/);
   assert.doesNotMatch(prompt,/Do not add hats, caps or headscarves|Preserve source hair; no compulsory|preserve source facial geometry and the source hairstyle/);
   assert.match(verifier.instructions,/MUST NOT count as identity drift/);
   assert.ok(verifier.text.format.schema.required.includes('regional_hair_accessories_match'));
   if(destination==='valencia'){assert.match(prompt,/two proportionate braided spiral side coils/);assert.match(verifier.instructions,/three-bun Fallera coiffure is MANDATORY/);}
   if(destination==='madrid'){assert.match(prompt,/BOTH the white pañuelo AND the red rose are REQUIRED/);assert.match(verifier.instructions,/BOTH the white pañuelo AND the red rose are REQUIRED/);}
  }
+});
+
+test('a face-checked usable image returns immediately without cosmetic regeneration',async()=>{
+ const {response,calls}=await generateCase({checks:[{...valid(1),regional_outfit_matches:false,outfit_visible:false},valid(1)]});
+ assert.equal(response.status,200);assert.equal(response.headers.get('x-portrait-attempts'),'1');assert.equal(response.headers.get('x-portrait-fallback'),'style-tolerance');assert.equal(calls.length,2);
+ assert.equal(calls.filter(c=>c.url.endsWith('/images/edits')).length,1);
+});
+
+test('facial mismatch retries the original guest without any competing reference face',async()=>{
+ const {response,calls}=await generateCase({checks:[{...valid(1),face_and_hair_consistent:false},valid(1)]});
+ assert.equal(response.status,200);assert.equal(calls.length,4);
+ const first=JSON.parse(calls[0].init.body),retry=JSON.parse(calls[2].init.body),checker=JSON.parse(calls[1].init.body);
+ assert.equal(first.images.length,1);assert.deepEqual(first.images,retry.images);
+ assert.match(first.prompt,/A closed mouth stays closed/);assert.match(first.prompt,/FACIAL WRINKLE REMOVAL/);
+ assert.doesNotMatch(first.prompt,/10–15%|subtle eye and teeth enhancement|Use the DRESS ensemble from image 2/);
+ assert.match(retry.prompt,/Remove facial wrinkles and fine lines/);assert.match(checker.instructions,/Similar general appearance is insufficient/);assert.match(checker.instructions,/smoother forehead, eye-area and smile-line skin MUST NOT fail/);assert.doesNotMatch(first.prompt,/No beauty retouching|without erasing pores, fine lines|skin tone and apparent age unchanged/);
 });

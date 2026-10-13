@@ -8,7 +8,7 @@ export class CameraSentry{
     if(this.enabled)return;this.enabled=true;const epoch=++this.epoch;
     this.gate.reset();this.onStatus('starting');
     try{
-      const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1920},height:{ideal:1080}},audio:false});
+      const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:2560},height:{ideal:1440}},audio:false});
       if(epoch!==this.epoch){stream.getTracks().forEach(t=>t.stop());return;}
       this.stream=stream;this.video.srcObject=stream;await this.video.play();
       this.worker=new Worker('/host-sentry-worker.js');

@@ -11,6 +11,7 @@
 <main id="stage" aria-label="Turespaña voice photo experience">
   <button id="homeVideoToggle" type="button" aria-controls="homeVideos" aria-label="Pause background videos" title="Pause background videos" hidden><span aria-hidden="true">Ⅱ</span></button>
   <div id="homeVideos" aria-hidden="true"><video muted playsinline preload="none" tabindex="-1"></video><video muted playsinline preload="none" tabindex="-1"></video></div>
+  <div id="generationStatus" role="status" aria-live="polite" hidden>Image is generating</div>
   <button id="homeLanguageToggle" type="button" lang="es" aria-label="Cambiar la pantalla de inicio a español"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M5 6h14M5 18h14"/></svg><span>Español</span></button>
   <div class="ambient" aria-hidden="true"></div>
   <header id="intro"><div class="brand-row"><span class="brand" aria-label="Turespaña">TURESPAÑA</span><span id="homeLogoSlot"></span></div><span class="eyebrow" data-home-text="tourism">SPAIN TOURISM BOARD · IMEX LAS VEGAS</span><h1 class="event-title" data-home-text="title">Discover Spain</h1></header>
@@ -27,31 +28,23 @@
   <section id="touchControls" aria-labelledby="touchTitle"></section>
   <button id="emailOpen" hidden>Email my photo</button>
   <div id="emailToast" role="status" hidden>Photo accepted for delivery. Check your inbox.</div>
-  <section id="generationEmailPanel" aria-labelledby="generationEmailTitle" hidden>
-    <h2 id="generationEmailTitle">Your image is generating…</h2>
-    <label for="generationEmailInput">Where should we email your photo?</label>
-    <input id="generationEmailInput" type="text" inputmode="email" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" maxlength="254" placeholder="you@example.com" aria-describedby="generationEmailHelp">
-    <p id="generationEmailHelp">Optional · Review and confirm after your photo is ready.</p>
-    <button id="generationKeyboardToggle" type="button" aria-controls="emailKeyboard" aria-expanded="false">Show touch keyboard</button>
-    <div id="generationKeyboardHost"></div>
-  </section>
   <section id="emailPanel" role="dialog" aria-modal="true" aria-labelledby="emailTitle" hidden>
-    <div class="email-heading"><div><span class="eyebrow">A LITTLE SPAIN, TO GO</span><h1 id="emailTitle">Send your Spain photo</h1></div><button id="emailCancel" type="button" aria-label="Skip email">Skip</button></div>
-    <p id="emailHelp">Enter your name and check your email. Tap either field to use the keyboard.</p>
-    <label for="guestNameInput">Your name</label>
-    <input id="guestNameInput" type="text" inputmode="none" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="120" required aria-describedby="emailHelp emailStatus">
+    <div class="email-heading"><div><span class="eyebrow">A LITTLE SPAIN, TO GO</span><h1 id="emailTitle">Your image is generating…</h1></div></div>
+    <p id="emailHelp">Enter your details now. We’ll email your photo when it is ready.</p>
     <label for="emailInput">Email address</label>
-    <input id="emailInput" type="text" inputmode="none" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" maxlength="254" aria-describedby="emailHelp emailStatus">
+    <input id="emailInput" required type="text" inputmode="none" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" maxlength="254" aria-describedby="emailHelp emailStatus">
+    <label for="guestNameInput">Your name</label>
+    <input id="guestNameInput" required type="text" inputmode="none" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="120" aria-describedby="emailHelp emailStatus">
     <p id="emailStatus" role="status"></p>
     <div class="marketing-choice"><label for="marketingOptIn"><input id="marketingOptIn" type="checkbox"><span id="marketingCopy"></span></label><p class="marketing-note">Optional. You can receive your photo without marketing messages. This kiosk collects email only; no text-message subscription.</p></div>
     <button id="contactKeyboardToggle" type="button" aria-controls="emailKeyboard emailDomains" aria-expanded="true">Hide touch keyboard</button>
     <div id="emailKeyboard" aria-label="Name and email keyboard"></div>
     <div id="emailDomains" aria-label="Common email endings"></div>
-    <button id="emailConfirm" type="button" disabled>Confirm &amp; email photo</button>
+    <button id="emailConfirm" type="button" disabled>Confirm &amp; email when ready</button>
     <p class="email-note">Your name, email and marketing choice are saved for this photo experience.</p>
   </section>
   <aside id="viewfinder" aria-label="Live camera preview during countdown" hidden>
-    <video id="camera" autoplay playsinline muted aria-label="Your camera framing"></video>
+    <div class="camera-frame"><video id="camera" autoplay playsinline muted aria-label="Your camera framing, rotated 90 degrees left"></video></div>
     <span>YOUR FRAME</span>
   </aside>
   <div id="countdown" aria-live="assertive" hidden></div>

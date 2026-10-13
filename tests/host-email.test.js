@@ -39,3 +39,28 @@ test('name required, opt-in defaults off and only a choice grants consent; retri
  e.setImage(new Blob(['new']));e.review('other@example.com');e.editName('Other');e.chooseMarketing(true);e.edit('different@example.com');assert.equal(e.marketingOptIn,false);
  e.chooseMarketing(true);e.cancel();assert.equal(e.name,'');assert.equal(e.marketingOptIn,false);
 });
+
+test('generation confirmation queues one send only after a checked image, and edits revoke confirmation',async()=>{
+ let sends=0;const e=new PhotoEmail({deliver:async()=>sends++});e.beginGeneration();e.edit('guest@example.com');e.editName('Guest');
+ await e.confirm();await e.confirm();assert.equal(sends,0);assert.equal(e.queued,true);
+ e.edit('other@example.com');assert.equal(e.queued,false);e.setImage(new Blob(['checked']));await Promise.resolve();assert.equal(sends,0);
+ e.beginGeneration();e.edit('guest@example.com');e.editName('Guest');await e.confirm();e.setImage(new Blob(['checked']));await Promise.resolve();assert.equal(sends,1);
+ e.beginGeneration();e.edit('guest@example.com');e.editName('Guest');await e.confirm();e.reset();e.setImage(new Blob(['late']));await Promise.resolve();assert.equal(sends,1);
+});
+
+test('completed image and valid drafts do not imply touch confirmation',async()=>{
+ let sends=0;const e=new PhotoEmail({deliver:async()=>sends++});e.beginGeneration();e.editName('Guest');e.edit('guest@example.com');e.setImage(new Blob(['checked']));
+ assert.equal(e.snapshot().confirmed,false);assert.equal(sends,0);e.editName('Guest Updated');assert.equal(e.snapshot().confirmed,false);
+ await e.confirm();assert.equal(e.snapshot().confirmed,true);assert.equal(sends,1);e.reset();assert.equal(e.snapshot().confirmed,false);
+});
+
+test('a failed image attempt resumes generation without losing contact draft or queued confirmation',async()=>{
+ const e=new PhotoEmail({deliver:async()=>{}});e.beginGeneration();e.editName('Guest');e.edit('guest@example.com');e.chooseMarketing(true);e.resumeGeneration();assert.equal(e.name,'Guest');assert.equal(e.draft,'guest@example.com');assert.equal(e.marketingOptIn,true);assert.equal(e.confirmed,false);
+ await e.confirm();e.resumeGeneration();assert.equal(e.confirmed,true);assert.equal(e.queued,true);e.cancel();assert.equal(e.confirmed,false);
+});
+
+test('late voice review cannot undo queued touch confirmation or replace the recipient',async()=>{
+ let payload;const e=new PhotoEmail({deliver:async p=>{payload=p;}});e.beginGeneration();e.editName('Guest');e.edit('guest@example.com');await e.confirm();
+ assert.ok(e.review('other@example.com').error);assert.equal(e.confirmed,true);assert.equal(e.queued,true);assert.equal(e.draft,'guest@example.com');
+ e.setImage(new Blob(['checked']));await Promise.resolve();assert.equal(payload.email,'guest@example.com');
+});

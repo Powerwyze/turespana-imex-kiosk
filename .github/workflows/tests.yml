@@ -17,7 +17,7 @@ on:
         type: boolean
         default: false
 permissions:
-  contents: read
+  contents: write
 jobs:
   test:
     if: github.event_name != 'push' || !contains(github.event.head_commit.message, 'Bootstrap Turespana')
@@ -29,6 +29,10 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci --ignore-scripts
+      - name: Fetch official gesture model and test fixture on cloud runner
+        run: |
+          test -s public/assets/gesture-recognizer.task || curl --fail --location --retry 2 https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task -o public/assets/gesture-recognizer.task
+          test -s tests/fixtures/victory.jpg || curl --fail --location --retry 2 https://storage.googleapis.com/mediapipe-assets/victory.jpg -o tests/fixtures/victory.jpg
       - run: npm test
       - name: Install browser tools on the cloud runner
         run: npm install --no-save --package-lock=false playwright@1.56.1
@@ -48,15 +52,39 @@ jobs:
       - name: Verify live camera greeting and automatic voice start
         if: github.event_name == 'workflow_dispatch' && (inputs.live || inputs.sentry)
         env:
-          TURESPANA_HOST_PREVIEW_URL: ${{ vars.TURESPANA_HOST_PREVIEW_URL }}
+          APP_TEST_IMAGE_1: ${{ secrets.APP_TEST_IMAGE_1 }}
+          APP_TEST_IMAGE_2: ${{ secrets.APP_TEST_IMAGE_2 }}
+          APP_TEST_IMAGE_3: ${{ secrets.APP_TEST_IMAGE_3 }}
+          APP_TEST_IMAGE_4: ${{ secrets.APP_TEST_IMAGE_4 }}
+          APP_TEST_IMAGE_5: ${{ secrets.APP_TEST_IMAGE_5 }}
+          TURESPANA_HOST_PREVIEW_URL: https://turespana-imex-kiosk.vercel.app/
         run: node tests/host-sentry-live.mjs
       - name: Verify one real generated image and its guest check
         if: github.event_name == 'workflow_dispatch' && inputs.image
         env:
           TURESPANA_HOST_PREVIEW_URL: ${{ vars.TURESPANA_HOST_PREVIEW_URL }}
         run: node tests/host-image-live.mjs
+      - name: Save required-contact screenshot in remote review branch
+        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/codex/imex-generation-only-contact'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh auth setup-git
+          mkdir -p docs/review
+          cp artifacts/required-contact-phone.png docs/review/required-contact-phone.png
+          cp artifacts/host-countdown-portrait.png docs/review/host-countdown-portrait.png
+          cp artifacts/host-countdown-mobile.png docs/review/host-countdown-mobile.png
+          git config user.name 'PowerWyze build'
+          git config user.email 'actions@users.noreply.github.com'
+          git add docs/review public/assets/gesture-recognizer.task tests/fixtures/victory.jpg
+          if ! git diff --cached --quiet; then
+            git commit -m "Save required Spain contact-entry browser evidence"
+            git pull --rebase origin codex/imex-generation-only-contact
+            git push origin HEAD:codex/imex-generation-only-contact
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
+        continue-on-error: true
         with:
           name: turespana-host-verification
           path: artifacts/
