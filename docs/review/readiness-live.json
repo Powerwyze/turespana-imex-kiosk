@@ -1,0 +1,8 @@
+{
+  "liveSession": true,
+  "inputMode": "text through live data channel",
+  "phrase": "Okay, take the picture.",
+  "countdownStarted": true,
+  "negationDidNotCapture": true,
+  "photoCalls": 0
+}
