@@ -1,23 +1,13 @@
-# Velázquez-inspired regional oil portraits
+# Regional oil portraits and generation-time speech
 
-New guest portraits use the supplied Portrait of Pope Innocent X reference for Spanish Baroque oil-paint technique, visible brushwork, warm light, deep shadows and crimson/ochre/ivory tones. The screenshot UI and the sitter's identity, age, clothing and pose are explicitly excluded.
+The generator uses the supplied Velázquez reference, the regional clothing reference and the guest camera photo. The guest source controls identity and natural body proportions. Shared outfit rules select trousers for shirt/jacket/trouser or ambiguous source clothing, and a dress ensemble for a clear source dress/skirt or explicit single-guest choice. Unassigned voice preferences never apply to an entire group.
 
-Image 1 supplies guest identity, image 2 supplies the selected regional clothing and destination, and image 3 supplies painting style. Both voice and classic generators use the shared prompt. Regional coiffures, costume details and three-quarter or full-body framing remain required.
+Guests can be off-center with natural chest-up or waist-up crops. Fine costume, accessory and art-style differences do not cause rejection. One independent check compares only the source and result, retaining guest count, recognizable likeness, correct outfit category, body proportions, visibility and basic usability. Its legacy `photographic` flag measures usability, not exact painting style. Visual checks cannot guarantee perfect results.
 
-The independent checker accepts painterly interpretation while retaining subject-count, likeness, age, wardrobe, hairstyle and framing checks. Its legacy `photographic` field now measures the oil-paint style, and correction retries reinforce that same style. The reference is included in both Vercel image functions.
+## Fast interactive path
 
-The homepage examples remain the existing previews. Generative constraints and visual consistency checks cannot guarantee exact likeness.
+Rendering uses medium quality at 1024×1536 with the existing image model. Each request makes one image render and one compact verification request within a shared 90-second deadline. It never automatically regenerates a failed portrait; a guest can choose Retry. Responses and logs expose non-sensitive generation and verification timings.
 
-## Relaxed acceptance
+## Lola during generation
 
-Guests may be off-center, with natural chest-up or waist-up crops. Their faces and a useful portion of their upper bodies should remain visible; full-body or below-knee framing is optional. The host no longer asks guests to center themselves. Costume, accessory and layout observations are advisory. The legacy `photographic` check measures basic usability only, never exact brushwork or resemblance to the reference style. Subject count, recognizable likeness and basic visibility remain required.
-
-## Outfit choice and body proportions
-
-Generation and verification share the same outfit selection rules. Source shirts, jackets, suits, shorts and trousers map to the regional trouser ensemble; clearly visible dresses or skirts map to the dress ensemble. Ambiguous clothing defaults to trousers. Explicit single-guest choices override this; unassigned group requests do not change everyone. No gender inference is used. Negated dress requests never select a dress.
-
-Two required checks now protect outfit choice and source body proportions. Wrong dress/trouser assignment, borrowed reference-model bodies and obvious head/body, shoulder, waist or build distortions trigger correction from the original source and are withheld if correction fails. Small costume differences and relaxed off-center cropping remain accepted. These are generative constraints and visual checks, not an absolute guarantee against errors.
-
-## Interactive generation latency
-
-The kiosk uses high image quality at 1024×1536 instead of extra-high, preserving the image model and all likeness, outfit-choice and body-proportion checks. It makes at most two image attempts (one correction) within a shared 180-second deadline; a correction starts only within the first 90 seconds. Failed portraits are still withheld. Successful responses include aggregate generation, verification and total Server-Timing durations, and each attempt logs non-sensitive timings for latency diagnosis.
+Voice sessions receive an explicit instruction that countdown silence is over and Lola should speak. The touch flow preloads a fixed destination clip before capture and plays it as generation begins without opening a microphone session. The six English clips use the same Marin voice as Lola, cached in the function and CDN. If a clip is slow or unavailable, browser speech is used where supported. Playback never blocks image generation, and pending or playing speech stops on completion, failure, reset or navigation. Browsers that block audio expose the existing Tap to hear your host button.

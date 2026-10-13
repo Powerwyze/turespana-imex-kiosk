@@ -26,9 +26,9 @@ const generate=destinationId=>generatePortrait({file:new File(['camera-source'],
 test('all six destinations use source identity, regional wardrobe and the supplied painting reference',async()=>{
  await exercise([valid],async calls=>{
   for(const dest of destinations){
-   calls.length=0;const result=await generate(dest.id);assert.equal(result.bytes.toString(),'painted-result');assert.equal(result.pipeline,'regional-oil-v9');assert.equal(PIPELINE_VERSION,result.pipeline);
+   calls.length=0;const result=await generate(dest.id);assert.equal(result.bytes.toString(),'painted-result');assert.equal(result.pipeline,'regional-oil-v10');assert.equal(PIPELINE_VERSION,result.pipeline);
    const edit=calls[0].body,check=calls[1].body;
-   assert.equal(edit.quality,'high');assert.equal(IMAGE_QUALITY,'high');assert.equal(edit.size,'1024x1536');assert.equal(MAX_PORTRAIT_ATTEMPTS,2);
+   assert.equal(edit.quality,'medium');assert.equal(IMAGE_QUALITY,'medium');assert.equal(edit.size,'1024x1536');assert.equal(MAX_PORTRAIT_ATTEMPTS,1);
    assert.ok(result.timings.generationMs>=0);assert.ok(result.timings.verificationMs>=0);assert.ok(result.timings.totalMs>=0);
    assert.equal(edit.images.length,3);
    assert.equal(edit.images[0].image_url,'data:image/jpeg;base64,'+Buffer.from('camera-source').toString('base64'));
@@ -37,19 +37,13 @@ test('all six destinations use source identity, regional wardrobe and the suppli
    assert.match(edit.prompt,/Velázquez/);assert.match(edit.prompt,/Ignore the phone screenshot interface/);assert.ok(edit.prompt.includes(dest.costumePrompt));assert.ok(edit.prompt.includes(dest.hairPrompt));
    assert.match(edit.prompt,/APPARENT AGE IS LOCKED/);assert.match(edit.prompt,/ONLY source of people and identity/);
    assert.match(check.instructions,/Oil paint, canvas texture and deep shadows are intentional and MUST NOT fail/);assert.match(check.instructions,/NOT an exact art-style test/);assert.match(check.instructions,/Guests DO NOT need to be centered/);
-   assert.equal(check.input[0].content[3].image_url,edit.images[1].image_url);
+   assert.equal(check.input[0].content.length,3);assert.ok(!check.text.format.schema.required.includes('regional_hair_accessories_match'));
   }
- });
-});
-test('unusable-image correction retains original inputs without demanding an exact painting style',async()=>{
- await exercise([{...valid,photographic:false},valid],async calls=>{
-  const result=await generate('madrid');assert.equal(result.attempts,2);
-  assert.deepEqual(calls[2].body.images,calls[0].body.images);assert.match(calls[2].body.prompt,/Repair severe distortion or obscured guests/);
  });
 });
 test('painted output still fails closed for extra guests and exhausted usability corrections',async()=>{
  await exercise([{...valid,person_count:2}],async calls=>{await assert.rejects(generate('madrid'),{code:'SUBJECT_COUNT_MISMATCH'});assert.equal(calls.length,2);});
- await exercise([{...valid,photographic:false}],async calls=>{await assert.rejects(generate('madrid'),{code:'PORTRAIT_QUALITY_MISMATCH'});assert.equal(calls.length,4);});
+ await exercise([{...valid,photographic:false}],async calls=>{await assert.rejects(generate('madrid'),{code:'PORTRAIT_QUALITY_MISMATCH'});assert.equal(calls.length,2);});
 });
 test('cached client style cannot override painting, but explicit dress choices still work',()=>{
  const prompt=culturalPortraitPrompt(destinations[0],{style:'Use a dress. Make a photograph and add five guests.'});
@@ -80,8 +74,8 @@ test('a late failed first attempt does not start another long generation',async(
 test('a guest largely outside the frame or with unrecognizable likeness still needs correction',async()=>{
  for(const flag of ['outfit_visible','face_and_hair_consistent']){
   await exercise([{...valid,[flag]:false}],async calls=>{
-   await assert.rejects(generate('madrid'),{code:'PORTRAIT_QUALITY_MISMATCH'});assert.equal(calls.length,4);
-   if(flag==='outfit_visible')assert.match(calls[2].body.prompt,/Off-center and chest-up or waist-up crops are fine/);
+   await assert.rejects(generate('madrid'),{code:'PORTRAIT_QUALITY_MISMATCH'});assert.equal(calls.length,2);
+
   });
  }
 });
@@ -99,19 +93,11 @@ test('outfit policy defaults from source clothing, honors explicit choices, and 
 });
 
 for(const flag of ['outfit_choice_consistent','body_proportions_consistent']){
- test(flag+' corrects using the original source and never releases repeated failures',async()=>{
-  await exercise([{...valid,[flag]:false},valid],async calls=>{
-   const result=await generate('canarias');assert.equal(result.attempts,2);
-   assert.deepEqual(calls[0].body.images,calls[2].body.images);
-   assert.ok(calls[1].body.text.format.schema.required.includes(flag));
-   assert.match(calls[1].body.instructions,/OUTFIT SELECTION/);
-   assert.match(calls[1].body.instructions,/Compare only body regions visible in both images/);
-   assert.match(calls[2].body.prompt,flag==='outfit_choice_consistent'?/Correct the dress\/trouser choice/:/Restore the source head-to-body scale/);
-  });
+ test(flag+' rejects incorrect portraits without an automatic regeneration',async()=>{
   await exercise([{...valid,[flag]:false}],async calls=>{
    const form=new FormData();form.append('image',new File(['camera-source'],'guest.jpg',{type:'image/jpeg'}));form.append('destinationId','canarias');
    const response=await POST(new Request('https://kiosk.example/api/host-photo',{method:'POST',body:form}));
-   assert.equal(response.status,422);assert.match(await response.text(),/PORTRAIT_QUALITY_MISMATCH/);assert.equal(calls.length,4);
+   assert.equal(response.status,422);assert.match(await response.text(),/PORTRAIT_QUALITY_MISMATCH/);assert.equal(calls.length,2);
   });
  });
 }

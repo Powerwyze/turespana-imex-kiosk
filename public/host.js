@@ -1,3 +1,4 @@
+import {GenerationSpeech} from './generation-speech.js';
 import {PeaceTrigger} from './host-peace.js';
 import {mountHomeVideos} from './home-videos.js';
 import {mountHomeLanguage,homeText} from './home-language.js';
@@ -94,9 +95,16 @@ $('sentryToggle').addEventListener('click',async()=>{
     if(setup===sentrySetup){stopSentry();$('sentryToggle').textContent=homeText('enableSentry');text('Camera sentry needs permission.',error.name==='NotAllowedError'?'Allow microphone and camera access, then enable sentry again.':'Tap Enable camera sentry to try again.');}
   }finally{if(setup===sentrySetup)sentryEnabling=false;}
 });
-function stopEventTalk(){clearInterval(eventTimer);eventTimer=null;}
+const generationSpeech=new GenerationSpeech({
+ getContext:()=>{if(!context||context.state==='closed')context=new AudioContext();return context;},
+ onText:line=>{captions.clear();captions.append(line);},
+ onBlocked:()=>{$('audioResume').hidden=false;}
+});
+function stopEventTalk(){clearInterval(eventTimer);eventTimer=null;generationSpeech.stop();}
 function startEventTalk(){
   stopEventTalk();eventIndex=0;guestInterrupted=false;
+  if(!ready){void generationSpeech.start(engine.destination);return;}
+  send({type:'session.instructions.append',delegation_id:null,content:'The countdown is over and image generation has started. Speak now as Lola: share a short fact about the selected destination. The instruction to stay quiet during countdown no longer applies.'});
   note('The photo is generating for '+destinations[engine.destination]+'. Share two concise sentences specifically about this destination from your verified facts. Invite a tourism question and listen; answer their follow-up questions while generation continues. Mention once that they can type their email in the field on screen while the image generates; they should enter their name and email, then tap Confirm & email when ready now; the photo will send once generation succeeds. Do not ask them to repeat an email they already entered.',true);
   eventTimer=setInterval(()=>{
     if(!ready||engine.phase!=='generating'){stopEventTalk();return;}
@@ -230,6 +238,7 @@ const engine=new TurespanaEngine({
   },
   onChange:(state,image)=>{
     syncIdle();
+    if(state.destinationId&&!ready&&['listening','preparing','countdown'].includes(state.phase))void generationSpeech.prefetch(state.destinationId);
     if(state.phase!=='generating')stopEventTalk();
     hidePicture();
     const waitingContact=state.phase==='result'&&image&&!photoEmail.confirmed;
@@ -255,9 +264,10 @@ const engine=new TurespanaEngine({
         else if(state.phase==='result')note('The generated photo has passed the guest check, decoded successfully, and is now displayed. Stop the event explanation. Tell the visitor the photo is ready, do not ask for name or email and do not open the contact form. If the guest confirmed delivery during generation, it is now being attempted. Otherwise, a compact Email my photo button is available only for complete saved details. Do not claim delivery until the app confirms it.',true);
         if(state.phase==='error')note('The photo workflow failed: '+state.error+' Do not retry unless the visitor asks.',true);
         if(state.phase==='countdown')send({type:'session.instructions.append',delegation_id:null,content:'The camera is ready and the visible five-second countdown has started now. Stay quiet until the app reports generating. Do not say or count any numbers; the app plays synchronized countdown sounds.'});
-        if(state.phase==='generating')startEventTalk();
+
       }
     }
+    if(state.phase==='generating'&&lastPhase!=='generating')startEventTalk();
     lastPhase=state.phase;
   }
 });
@@ -371,7 +381,7 @@ async function begin({sentryGreeting=null}={}){
 }
 face.addEventListener('click',()=>{if(!ready)begin();else if(audio.paused)audio.play().catch(()=>{$('audioResume').hidden=false;});});
 $('end').addEventListener('click',end);
-$('audioResume').addEventListener('click',()=>{audio.play().then(()=>{$('audioResume').hidden=true;}).catch(()=>{});});
+$('audioResume').addEventListener('click',async()=>{if(!ready&&engine.phase==='generating'){await generationSpeech.unlock();void generationSpeech.start(engine.destination);$('audioResume').hidden=true;}else audio.play().then(()=>{$('audioResume').hidden=true;}).catch(()=>{});});
 $('emailOpen').addEventListener('click',async()=>{touch();if(engine.phase==='result')await photoEmail.confirm();});
 $('guestNameInput').addEventListener('input',()=>{photoEmail.editName($('guestNameInput').value);touch();});
 $('marketingOptIn').addEventListener('change',()=>{photoEmail.chooseMarketing($('marketingOptIn').checked);touch();});
@@ -427,10 +437,12 @@ window.addEventListener('pagehide',()=>{stopSentry();send({type:'session.close'}
 document.addEventListener('visibilitychange',()=>{if(!$('emailPanel').hidden){if(document.hidden)guestIdle.setBusy(true);else syncIdle();return;}if(document.hidden){stopSentry();end();}});
 function startTouchPhoto(){
  stopSentry();send({type:'session.close'});cleanup();touchMode=true;
+ void generationSpeech.unlock();
  phase('listening');text('Choose your group size.','Use the large buttons below.');guestIdle.start(150000);syncIdle();
 }
 async function touchAction(name,args){
  if(photoEmail.status==='sending'||['preparing','countdown','generating'].includes(engine.phase))return;
+ if(!ready)void generationSpeech.unlock();
  touch();const result=await engine.execute(name,args);
  if(result.error&&!result.accepted)text('Check your selection.',result.error);
  if(ready)note('The visitor explicitly tapped a booth button: '+name+'. Current state: '+JSON.stringify(engine.snapshot())+'. Do not repeat the same action.');

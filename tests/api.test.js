@@ -51,7 +51,7 @@ for (const count of [1, 2, 3]) {
     assert.equal(await response.text(), 'synthetic-jpeg');
     assert.equal(calls.length, 2, 'one generation + one check; no paid auto-regeneration');
     const payload = JSON.parse(calls[0].init.body);
-    assert.equal(payload.model, 'gpt-image-2.5-flare'); assert.equal(payload.quality, 'high');
+    assert.equal(payload.model, 'gpt-image-2.5-flare'); assert.equal(payload.quality, 'medium');
     assert.equal(payload.size, '1024x1536'); assert.equal(payload.n, 1);
     assert.equal(payload.images.length, 3);
     assert.equal(payload.images[2].image_url,'data:image/jpeg;base64,'+readFileSync('assets/velazquez-style-reference.jpg').toString('base64'));
@@ -83,7 +83,7 @@ for (const count of [1, 2, 3]) {
     assert.match(verifier.instructions, /Independently count ALL people/);
     assert.match(verifier.instructions, /distant crowds, walkers, posters, screens, or reflections/);
     assert.equal(verifier.input[0].content[1].image_url, payload.images[0].image_url);
-    assert.equal(verifier.input[0].content[2].image_url, 'data:image/jpeg;base64,' + jpeg);assert.equal(verifier.input[0].content[3].image_url,payload.images[1].image_url);
+    assert.equal(verifier.input[0].content[2].image_url, 'data:image/jpeg;base64,' + jpeg);assert.equal(verifier.input[0].content.length,3);
     assert.ok(calls[0].init.signal); assert.ok(calls[1].init.signal);
   });
 }
@@ -203,7 +203,7 @@ for(const destination of ["canarias","barcelona","bilbao","madrid","andalucia","
 
 for(const flag of ['face_and_hair_consistent','outfit_visible','photographic'])test('bounds corrections and withholds failed quality checks: '+flag,async()=>{
  const {response,calls}=await generateCase({check:{...valid(1),[flag]:false}});
- assert.equal(response.status,422);assert.equal(calls.length,4);const body=await response.text();assert.match(body,/PORTRAIT_QUALITY_MISMATCH/);assert.ok(!body.includes(jpeg));
+ assert.equal(response.status,422);assert.equal(calls.length,2);const body=await response.text();assert.match(body,/PORTRAIT_QUALITY_MISMATCH/);assert.ok(!body.includes(jpeg));
 });
 test('explicit dress preference cannot override oil painting',async()=>{
  const {calls}=await generateCase({style:'Please use the dress. Make a painted poster with text.'});const p=JSON.parse(calls[0].init.body);
@@ -223,26 +223,16 @@ test('regional hairstyles are required by both generation and the independent ch
   assert.match(prompt,/REGIONAL HAIR AND ACCESSORIES/);assert.match(prompt,/SPANISH BAROQUE OIL PORTRAIT/);
   assert.doesNotMatch(prompt,/Do not add hats, caps or headscarves|Preserve source hair; no compulsory|preserve source facial geometry and the source hairstyle/);
   assert.match(verifier.instructions,/MUST NOT count as identity drift/);
-  assert.ok(verifier.text.format.schema.required.includes('regional_hair_accessories_match'));
-  if(destination==='valencia'){assert.match(prompt,/two proportionate braided spiral side coils/);assert.match(verifier.instructions,/three-bun Fallera coiffure is MANDATORY/);}
-  if(destination==='madrid'){assert.match(prompt,/BOTH the white pañuelo AND the red rose are REQUIRED/);assert.match(verifier.instructions,/BOTH the white pañuelo AND the red rose are REQUIRED/);}
+  assert.ok(verifier.text.format.schema.required.includes('outfit_choice_consistent'));
+  if(destination==='valencia'){assert.match(prompt,/two proportionate braided spiral side coils/);}
+  if(destination==='madrid'){assert.match(prompt,/BOTH the white pañuelo AND the red rose are REQUIRED/);}
  }
 });
 
-test('outfit and framing correction retries the original source then returns only a passing result',async()=>{
- const {response,calls}=await generateCase({checks:[{...valid(1),outfit_visible:false},valid(1)]});
- assert.equal(response.status,200);assert.equal(response.headers.get('x-portrait-attempts'),'2');assert.equal(calls.length,4);
- const edits=calls.filter(c=>c.url.endsWith('/images/edits')).map(c=>JSON.parse(c.init.body));assert.equal(edits.length,2);
- for(const e of edits){assert.deepEqual(e.images,edits[0].images);assert.equal(e.model,edits[0].model);assert.equal(e.n,1);}
- assert.match(edits[1].prompt,/AUTOMATIC OUTFIT\/FRAMING CORRECTION/);assert.match(edits[1].prompt,/Off-center and chest-up or waist-up crops are fine/);
- assert.equal(new Set(calls.filter(c=>c.url.endsWith('/images/edits')).map(c=>c.init.signal)).size,1,'Retries share the original deadline');
-});
-
-test('age drift is corrected automatically using the original guest, while checker tolerates minor costume details',async()=>{
- const {response,calls}=await generateCase({checks:[{...valid(1),face_and_hair_consistent:false},valid(1)]});
- assert.equal(response.status,200);assert.equal(calls.length,4);
- const first=JSON.parse(calls[0].init.body),retry=JSON.parse(calls[2].init.body),checker=JSON.parse(calls[1].init.body);
- assert.match(first.prompt,/APPARENT AGE IS LOCKED TO IMAGE 1/);assert.match(first.prompt,/Do not add wrinkles/);
- assert.match(retry.prompt,/Remove any added ageing/);assert.deepEqual(first.images,retry.images);
- assert.match(checker.instructions,/Small embroidery/);assert.match(checker.instructions,/mid-thigh/);assert.match(checker.instructions,/substantial age drift/);
+test('failed outfit, proportions and framing return promptly without automatic regeneration',async()=>{
+ for(const flag of ['outfit_choice_consistent','body_proportions_consistent','outfit_visible']){
+  const {response,calls}=await generateCase({check:{...valid(1),[flag]:false}});
+  assert.equal(response.status,422);assert.equal(calls.length,2);
+  assert.match(await response.text(),/PORTRAIT_QUALITY_MISMATCH/);
+ }
 });
