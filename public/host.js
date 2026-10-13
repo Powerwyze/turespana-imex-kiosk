@@ -1,3 +1,4 @@
+import {CAPTURE_FILTER,drawExposureCorrected} from './capture-exposure.js';
 import {PeaceTrigger} from './host-peace.js';
 import {mountHomeVideos} from './home-videos.js';
 import {mountHomeLanguage,homeText} from './home-language.js';
@@ -14,6 +15,7 @@ import {GuestIdle} from './host-idle.js';
 import {HostCaptions} from './host-captions.js';
 const $=id=>document.getElementById(id);
 const face=$('face'),camera=$('camera'),audio=$('voice'),picture=$('picture');
+camera.style.filter=CAPTURE_FILTER;
 $('marketingCopy').innerHTML=consentLabelMarkup();
 let activeContactInput=$('guestNameInput'),keyboardShift=false,contactKeyboardOpen=innerWidth>600;
 function contactKeyboardLayout(reset=false){
@@ -203,7 +205,7 @@ const engine=new TurespanaEngine({
       if(signal.aborted)throw new DOMException('Cancelled','AbortError');
       beep(true);
       const canvas=$('capture');canvas.width=camera.videoWidth;canvas.height=camera.videoHeight;
-      canvas.getContext('2d').drawImage(camera,0,0);
+      drawExposureCorrected(canvas.getContext('2d'),camera,canvas.width,canvas.height);
       hideCountdown();
       const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.96));
       canvas.width=canvas.height=0;
