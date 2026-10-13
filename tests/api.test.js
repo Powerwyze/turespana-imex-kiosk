@@ -53,7 +53,10 @@ for (const count of [1, 2, 3]) {
     const payload = JSON.parse(calls[0].init.body);
     assert.equal(payload.model, 'gpt-image-2.5-flare'); assert.equal(payload.quality, 'xhigh');
     assert.equal(payload.size, '1024x1536'); assert.equal(payload.n, 1);
-    assert.equal(payload.images.length, 2);
+    assert.equal(payload.images.length, 3);
+    assert.equal(payload.images[2].image_url,'data:image/jpeg;base64,'+readFileSync('assets/velazquez-style-reference.jpg').toString('base64'));
+    assert.match(payload.prompt,/Velázquez/);
+    assert.match(payload.prompt,/Spanish Baroque/);
     assert.equal(payload.images[1].image_url,'data:image/jpeg;base64,'+readFileSync('assets/region-references/madrid.jpg').toString('base64'));
     assert.match(payload.prompt,/ONE cropped regional example for Madrid/);
     assert.match(payload.prompt,/full-body or three-quarter/);
@@ -202,7 +205,7 @@ for(const flag of ['face_and_hair_consistent','regional_outfit_matches','regiona
  const {response,calls}=await generateCase({check:{...valid(1),[flag]:false}});
  assert.equal(response.status,422);assert.equal(calls.length,6);const body=await response.text();assert.match(body,/PORTRAIT_QUALITY_MISMATCH/);assert.ok(!body.includes(jpeg));
 });
-test('explicit dress preference cannot override photography',async()=>{
+test('explicit dress preference cannot override oil painting',async()=>{
  const {calls}=await generateCase({style:'Please use the dress. Make a painted poster with text.'});const p=JSON.parse(calls[0].init.body);
  assert.match(p.prompt,/Use the DRESS ensemble/);assert.doesNotMatch(p.prompt,/Make a painted poster/);
 });
@@ -217,7 +220,7 @@ test('regional hairstyles are required by both generation and the independent ch
  for(const destination of ['canarias','barcelona','bilbao','madrid','andalucia','valencia']){
   const {response,calls}=await generateCase({destination});assert.equal(response.status,200);
   const prompt=JSON.parse(calls[0].init.body).prompt,verifier=JSON.parse(calls[1].init.body);
-  assert.match(prompt,/REGIONAL HAIR AND ACCESSORIES/);assert.match(prompt,/10–15% beauty retouching/);
+  assert.match(prompt,/REGIONAL HAIR AND ACCESSORIES/);assert.match(prompt,/SPANISH BAROQUE OIL PORTRAIT/);
   assert.doesNotMatch(prompt,/Do not add hats, caps or headscarves|Preserve source hair; no compulsory|preserve source facial geometry and the source hairstyle/);
   assert.match(verifier.instructions,/MUST NOT count as identity drift/);
   assert.ok(verifier.text.format.schema.required.includes('regional_hair_accessories_match'));

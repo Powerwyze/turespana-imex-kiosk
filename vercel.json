@@ -33,7 +33,7 @@
   "functions": {
     "api/banana.js": {
       "maxDuration": 300,
-      "includeFiles": "{public/data/destinations.json,assets/region-references/*.jpg}"
+      "includeFiles": "{public/data/destinations.json,assets/region-references/*.jpg,assets/velazquez-style-reference.jpg}"
     },
     "api/send-photo.js": {
       "maxDuration": 30,
@@ -50,7 +50,7 @@
     },
     "api/host-photo.js": {
       "maxDuration": 300,
-      "includeFiles": "{public/data/destinations.json,assets/region-references/*.jpg}"
+      "includeFiles": "{public/data/destinations.json,assets/region-references/*.jpg,assets/velazquez-style-reference.jpg}"
     },
     "api/host-email.js": {
       "maxDuration": 30,
