@@ -252,6 +252,7 @@ try{
   assert.equal(await page.evaluate(()=>window.__videoRequests),1,'Warmup and capture share one camera request.');
   assert.ok(await page.locator('#viewfinder').evaluate(e=>{const r=e.getBoundingClientRect();return r.left<=24&&r.top<=24&&r.width<=innerWidth*.3&&r.bottom<innerHeight*.3;}));
   assert.equal(await page.locator('#camera').evaluate(e=>getComputedStyle(e).objectFit),'contain');
+  assert.ok(await page.locator('#camera').evaluate(e=>{const m=new DOMMatrix(getComputedStyle(e).transform),r=e.getBoundingClientRect(),f=e.parentElement.getBoundingClientRect();return Math.abs(m.a)<.001&&Math.abs(m.b-1)<.001&&Math.abs(m.c-1)<.001&&Math.abs(m.d)<.001&&Math.abs(r.width-f.width)<1&&Math.abs(r.height-f.height)<1;}),'Camera preview rotates left with the existing mirror and fits its portrait frame.');
   await page.screenshot({path:'artifacts/host-countdown-portrait.png'});
   await page.waitForFunction(()=>document.body.dataset.phase==='generating',{},{timeout:10000});
   const timing=await page.evaluate(()=>window.__countdownTiming);

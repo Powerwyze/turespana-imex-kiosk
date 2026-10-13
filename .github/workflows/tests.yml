@@ -63,6 +63,8 @@ jobs:
           gh auth setup-git
           mkdir -p docs/review
           cp artifacts/required-contact-phone.png docs/review/required-contact-phone.png
+          cp artifacts/host-countdown-portrait.png docs/review/host-countdown-portrait.png
+          cp artifacts/host-countdown-mobile.png docs/review/host-countdown-mobile.png
           git config user.name 'PowerWyze build'
           git config user.email 'actions@users.noreply.github.com'
           git add docs/review
