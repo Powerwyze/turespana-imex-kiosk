@@ -5,7 +5,7 @@ export class PeaceGate {
  observe(victory,now){
   if(this.fired)return false;
   if(!victory){this.since=null;this.last=null;return false;}
-  if(this.last===null||now-this.last>900)this.since=now;
+  if(this.last===null||now-this.last>2500)this.since=now;
   this.last=now;
   if(now-this.since<800)return false;
   this.fired=true;return true;

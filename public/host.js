@@ -1,3 +1,4 @@
+import {ReadinessReply} from './host-readiness.js';
 import {CAPTURE_FILTER,drawExposureCorrected} from './capture-exposure.js';
 import {PeaceTrigger} from './host-peace.js';
 import {mountHomeVideos} from './home-videos.js';
@@ -31,6 +32,7 @@ $('contactKeyboardToggle').addEventListener('click',()=>{contactKeyboardOpen=!co
 window.addEventListener('resize',()=>contactKeyboardLayout(true));contactKeyboardLayout();
 const captions=new HostCaptions($('hostCaptions'),$('hostCaptionText'),$('stage'),face);
 let peace=null,peaceArmed=false,peaceEpoch=0;
+const readinessReply=new ReadinessReply({canTrigger:()=>ready&&canPeaceTrigger(),onReady:()=>{touch();engine.execute('take_photo',{confirmed:true,style:''});}});
 let cameraPreparation=null,cameraEpoch=0,touchMode=false,touchUI=null;
 const homeLanguage=mountHomeLanguage({onChange:()=>touchUI?.render()});
 mountHomeVideos();
@@ -45,7 +47,7 @@ const wait=(ms,signal)=>new Promise((resolve,reject)=>{
 function text(title,hint=''){ $('headline').textContent=title;$('hint').textContent=hint; }
 function phase(value){
  if(value!=='generating')$('generationStatus').hidden=true;
- if(value!=='listening'){peaceArmed=false;peaceEpoch++;peace?.stop();}
+ if(value!=='listening'){readinessReply.reset();peaceArmed=false;peaceEpoch++;peace?.stop();}
  if(value!=='generating'){ $('emailPanel').hidden=true;document.body.dataset.emailOpen='false';if($('emailPanel').contains(document.activeElement))document.activeElement.blur();captions.placeIn(null);}
  queueMicrotask(()=>touchUI?.render());if(document.body.dataset.phase!==value)captions.clear();document.body.dataset.phase=value;contactKeyboardLayout();placeHomeLogo();homeLanguage.refresh();$('sentryToggle').disabled=!sentry.enabled&&!['idle','error'].includes(value);}
 function placeHomeLogo(){
@@ -276,7 +278,7 @@ const toolLoop=new LiveTools({send,execute:async(name,args)=>{
   return engine.execute(name,args);
 }});
 function cleanup(message='Tap the logo to begin · AI photo host'){
-  touchMode=false;sessionEpoch++;ready=false;connecting=false;ending=false;captions.clear();
+  readinessReply.reset();touchMode=false;sessionEpoch++;ready=false;connecting=false;ending=false;captions.clear();
   guestIdle.stop();stopEventTalk();clearEmail();sentry.finish({immediate:rearmImmediately});rearmImmediately=false;
   requestController?.abort();requestController=null;
   clearTimeout(startTimer);clearTimeout(closeTimer);clearTimeout(maxTimer);
@@ -339,7 +341,7 @@ async function begin({sentryGreeting=null}={}){
         note(sentryGreeting?'A nearby visitor was detected by camera sentry. Speak first now in English, without waiting for a tap or guest speech. Welcome them as Lola, their Spain AI photo host. Use this current-frame greeting as context: '+JSON.stringify(sentryGreeting)+' Invite them to take a Spain portrait, then pause and listen. Do not repeat the welcome, mention meetings or booth staff, or take a photo yet. If they want a photo, ask how many people are posing and wait for explicit readiness. Do not claim a live video feed.':'A new visitor has tapped the Spain logo. Speak first now in English: welcome them as Lola, their Spain AI photo host, and ask whether one, two, or three people are posing. Then listen.',true);
         note('Initial booth state: '+JSON.stringify(engine.snapshot()));
       } else if(event.type==='session.closed'){cleanup();}
-      else if(event.type==='session.input_transcript.delta'){if(typeof event.delta==='string'&&event.delta.trim()){touch();guestInterrupted=true;lastVoiceAt=Date.now();captions.nextTurn();}}
+      else if(event.type==='session.input_transcript.delta'){if(typeof event.delta==='string'&&event.delta.trim()){touch();guestInterrupted=true;lastVoiceAt=Date.now();captions.nextTurn();readinessReply.append(event.delta);}}
       else if(event.type==='session.output_transcript.delta'){
         lastVoiceAt=Date.now();
         if(ready&&!ending&&!['idle','connecting','countdown'].includes(document.body.dataset.phase))captions.append(event.delta);
@@ -438,7 +440,7 @@ peace=new PeaceTrigger({video:camera,canTrigger:canPeaceTrigger,onTrigger:()=>{i
 async function armPeace(armed){
  if(peaceArmed===armed)return;
  peaceArmed=armed;const epoch=++peaceEpoch;
- if(!armed){peace.stop();return;}
+ if(!armed){readinessReply.reset();peace.stop();return;}
  try{await ensureCamera(new AbortController().signal);if(epoch===peaceEpoch&&canPeaceTrigger())peace.start();}catch{if(epoch===peaceEpoch)text('Camera permission needed.','Tap Take photo and allow camera access.');}
 }
 touchUI=mountTouchControls({onReadiness:armPeace,getState:()=>({...engine.snapshot(),phase:document.body.dataset.phase,active:ready||touchMode,statusMessage:$('hint').textContent,emailOpen:!$('emailPanel').hidden,emailSent:photoEmail.status==='sent'}),start:startTouchPhoto,voice:()=>begin(),action:touchAction,finish:()=>end(),labels:destinations});
