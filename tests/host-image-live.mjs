@@ -1,3 +1,4 @@
+if(process.env.APP_TEST_IMAGE_1)process.env.APP_TEST_IMAGE_B64=[1,2,3,4,5].map(i=>process.env['APP_TEST_IMAGE_'+i]||'').join('');
 // One opt-in real image request using the repository's approved reference as a synthetic one-person source.
 import { chromium } from 'playwright';
 import fs from 'node:fs/promises';
