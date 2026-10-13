@@ -165,7 +165,7 @@ async function ensureCamera(signal){
   if(!cameraPreparation){
     const epoch=cameraEpoch;
     cameraPreparation=(async()=>{
-      const next=sentry.enabled&&sentry.stream?.getVideoTracks().some(t=>t.readyState==='live')?sentry.stream.clone():await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1920},height:{ideal:1080}},audio:false});
+      const next=sentry.enabled&&sentry.stream?.getVideoTracks().some(t=>t.readyState==='live')?sentry.stream.clone():await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:2560},height:{ideal:1440}},audio:false});
       if(epoch!==cameraEpoch||signal.aborted){next.getTracks().forEach(t=>t.stop());throw new DOMException('Cancelled','AbortError');}
       cameraStream=next;camera.srcObject=next;await camera.play();
       for(let i=0;i<80&&(!camera.videoWidth||!camera.videoHeight||camera.readyState<2);i++){
@@ -246,7 +246,7 @@ const engine=new TurespanaEngine({
     if(state.phase==='result'&&image&&!waitingContact){pictureUrl=URL.createObjectURL(image);picture.src=pictureUrl;picture.hidden=false;$('emailOpen').hidden=!['sending','sent'].includes(photoEmail.status)&&(!['review','error'].includes(photoEmail.status)||!validEmail(photoEmail.draft)||!validName(photoEmail.name));}
     if(waitingContact){text('Your photo is ready.','Finish your name and email, then tap Confirm to reveal it.');$('emailTitle').textContent='Your photo is ready';$('emailHelp').textContent='Enter your name and email, then tap Confirm to continue.';}
     else if(state.phase==='preparing')text('Getting the camera ready.','Your countdown starts as soon as the camera is ready.');
-    else if(state.phase==='countdown')text('Look toward the camera.','Check your framing in the top-left preview.');
+    else if(state.phase==='countdown')text('Look straight at the camera above the screen.','Keep your head level and chin neutral. Eyes on the lens—not the preview.');
     else if(state.phase==='generating')text('A little Spanish magic.','Your host is still here. Feel free to talk.');
     else if(state.phase==='error')text('Let’s try that again.',state.error);
     else if(state.phase==='listening')text('I’m listening.',state.guestCount?state.guestCount+' '+(state.guestCount===1?'person':'people')+' · '+(state.destinationLabel||'Choose your destination')+' · Say when you’re ready.':'Tell me how many people are in your photo.');

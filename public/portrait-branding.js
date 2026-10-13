@@ -27,6 +27,6 @@ export async function brandPortrait(blob, regionName,{original=false}={}){
     ctx.textAlign='left';ctx.fillText(CAMPAIGN_PHRASE,textLeft,bottom+74*scale,textWidth);
     ctx.fillStyle='#465364';ctx.font=`500 ${26*scale}px Arial, sans-serif`;
     ctx.fillText(original?'Original photo · AI styling unavailable':AI_DISCLOSURE,textLeft,bottom+121*scale,textWidth);
-    return await new Promise((resolve,reject)=>canvas.toBlob(result=>result?resolve(result):reject(new Error('Your branded portrait could not be saved.')),'image/jpeg',.96));
+    return await new Promise((resolve,reject)=>canvas.toBlob(result=>result?resolve(result):reject(new Error('Your branded portrait could not be saved.')),'image/jpeg',.98));
   }finally{photo.close();}
 }

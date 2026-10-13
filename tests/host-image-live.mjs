@@ -32,5 +32,6 @@ try{
   const dimensions=await page.evaluate(async base64=>{
     const image=new Image();image.src='data:image/jpeg;base64,'+base64;await image.decode();return {width:image.naturalWidth,height:image.naturalHeight};
   },bytes.toString('base64'));
+  if(result.fallback!=='original'){assert.equal(dimensions.width,1536);assert.equal(dimensions.height,2304);}
   await fs.writeFile('artifacts/live-image-report.json',JSON.stringify({status:result.status,pipeline:result.pipeline,model:result.model,attempts:result.attempts,fallback:result.fallback,...dimensions},null,2));console.log('Real image generation and independent guest check passed:',JSON.stringify({attempts:result.attempts,fallback:result.fallback,...dimensions}));
 }finally{await browser.close();}

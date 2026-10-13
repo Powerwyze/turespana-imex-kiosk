@@ -52,7 +52,7 @@ for (const count of [1, 2, 3]) {
     assert.equal(calls.length, 2, 'one generation + one check; no paid auto-regeneration');
     const payload = JSON.parse(calls[0].init.body);
     assert.equal(payload.model, 'gpt-image-2.5-flare'); assert.equal(payload.quality, 'xhigh');
-    assert.equal(payload.size, '1024x1536'); assert.equal(payload.n, 1);
+    assert.equal(payload.size, '1536x2304');assert.equal(payload.output_compression,100);assert.match(payload.prompt,/FRONT-FACING PORTRAIT/); assert.equal(payload.n, 1);
     assert.equal(payload.images.length, 1);
     assert.match(payload.prompt,/REGION FOR THIS TRANSFORMATION: Madrid/);
     assert.match(payload.prompt,/full-body or three-quarter/);
