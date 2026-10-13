@@ -1,6 +1,6 @@
-# Regional oil portraits and generation-time speech
+# Regional photographic portraits and generation-time speech
 
-The generator uses the supplied Velázquez reference, the regional clothing reference and the guest camera photo. The guest source controls identity and natural body proportions. Shared outfit rules select trousers for shirt/jacket/trouser or ambiguous source clothing, and a dress ensemble for a clear source dress/skirt or explicit single-guest choice. Unassigned voice preferences never apply to an entire group.
+The generator uses the regional clothing reference and the guest camera photo. Output is a realistic iPhone-style travel photograph with natural skin detail, daylight and color. The former painting reference is no longer sent to the image model. Regional references guide clothing and location only, even when those examples are painted. The guest source controls identity and natural body proportions. Shared outfit rules select trousers for shirt/jacket/trouser or ambiguous source clothing, and a dress ensemble for a clear source dress/skirt or explicit single-guest choice. Unassigned voice preferences never apply to an entire group.
 
 Guests can be off-center with natural chest-up or waist-up crops. Face likeness is the highest prompt priority; clothing, accessories, framing and background are best-effort guidance. Every completed render is returned directly, without a separate quality or subject-count classifier, rejection gate, or automatic regeneration. Provider failures and missing image data still return a retryable error rather than pretending a portrait was created.
 

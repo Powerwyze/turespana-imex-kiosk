@@ -53,10 +53,9 @@ for (const count of [1, 2, 3]) {
     const payload = JSON.parse(calls[0].init.body);
     assert.equal(payload.model, 'gpt-image-2.5-flare'); assert.equal(payload.quality, 'medium');
     assert.equal(payload.size, '1024x1536'); assert.equal(payload.n, 1);
-    assert.equal(payload.images.length, 3);
-    assert.equal(payload.images[2].image_url,'data:image/jpeg;base64,'+readFileSync('assets/velazquez-style-reference.jpg').toString('base64'));
-    assert.match(payload.prompt,/Velázquez/);
-    assert.match(payload.prompt,/Spanish Baroque/);
+    assert.equal(payload.images.length, 2);
+    assert.match(payload.prompt,/iPhone/);
+    assert.match(payload.prompt,/natural photographic detail/);
     assert.equal(payload.images[1].image_url,'data:image/jpeg;base64,'+readFileSync('assets/region-references/madrid.jpg').toString('base64'));
     assert.match(payload.prompt,/ONE cropped regional example for Madrid/);
     assert.match(payload.prompt,/upper-body, waist-up and three-quarter/);
@@ -194,7 +193,7 @@ for(const flag of ['face_and_hair_consistent','outfit_visible','photographic'])t
  const {response,calls}=await generateCase({check:{...valid(1),[flag]:false}});
  assert.equal(response.status,200);assert.equal(calls.length,1);assert.equal(await response.text(),'synthetic-jpeg');
 });
-test('explicit dress preference cannot override oil painting',async()=>{
+test('explicit dress preference cannot override photographic style',async()=>{
  const {calls}=await generateCase({style:'Please use the dress. Make a painted poster with text.'});const p=JSON.parse(calls[0].init.body);
  assert.match(p.prompt,/Use the DRESS ensemble/);assert.doesNotMatch(p.prompt,/Make a painted poster/);
 });
@@ -209,7 +208,7 @@ test('regional hairstyles remain prompt guidance without a separate check',async
  for(const destination of ['canarias','barcelona','bilbao','madrid','andalucia','valencia']){
   const {response,calls}=await generateCase({destination});assert.equal(response.status,200);
   const prompt=JSON.parse(calls[0].init.body).prompt;assert.equal(calls.length,1);
-  assert.match(prompt,/REGIONAL HAIR AND ACCESSORIES/);assert.match(prompt,/SPANISH BAROQUE OIL PORTRAIT/);
+  assert.match(prompt,/REGIONAL HAIR AND ACCESSORIES/);assert.match(prompt,/REALISTIC IPHONE PHOTO/);
   assert.doesNotMatch(prompt,/Do not add hats, caps or headscarves|Preserve source hair; no compulsory|preserve source facial geometry and the source hairstyle/);
   if(destination==='valencia'){assert.match(prompt,/two proportionate braided spiral side coils/);}
   if(destination==='madrid'){assert.match(prompt,/BOTH the white pañuelo AND the red rose are REQUIRED/);}

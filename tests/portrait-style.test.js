@@ -11,7 +11,7 @@ async function exercise(run,{empty=false,status=200}={}){
  globalThis.fetch=async(url,init)=>{
   calls.push({url:String(url),body:JSON.parse(init.body)});
   assert.ok(String(url).endsWith('/images/edits'),'No classifier may run after generation');
-  return Response.json({data:empty?[]:[{b64_json:Buffer.from('painted-result').toString('base64')}]},{status});
+  return Response.json({data:empty?[]:[{b64_json:Buffer.from('photo-result').toString('base64')}]},{status});
  };
  try{await run(calls);}finally{globalThis.fetch=priorFetch;if(priorKey===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=priorKey;}
 }
@@ -20,15 +20,14 @@ test('all six regions return the render directly with face identity prioritized'
  await exercise(async calls=>{
   for(const dest of destinations){
    calls.length=0;const result=await generate(dest.id);
-   assert.equal(result.bytes.toString(),'painted-result');assert.equal(result.pipeline,PIPELINE_VERSION);
+   assert.equal(result.bytes.toString(),'photo-result');assert.equal(result.pipeline,PIPELINE_VERSION);
    assert.equal(calls.length,1);assert.equal(result.attempts,1);assert.equal(result.timings.verificationMs,0);
    const edit=calls[0].body;
-   assert.equal(edit.quality,'medium');assert.equal(edit.size,'1024x1536');assert.equal(edit.images.length,3);
+   assert.equal(edit.quality,'medium');assert.equal(edit.size,'1024x1536');assert.equal(edit.images.length,2);
    assert.equal(edit.images[0].image_url,'data:image/jpeg;base64,'+Buffer.from('camera-source').toString('base64'));
    assert.equal(edit.images[1].image_url,'data:image/jpeg;base64,'+readFileSync('assets/region-references/'+dest.id+'.jpg').toString('base64'));
-   assert.equal(edit.images[2].image_url,'data:image/jpeg;base64,'+readFileSync('assets/velazquez-style-reference.jpg').toString('base64'));
-   assert.match(edit.prompt,/Velázquez/);assert.match(edit.prompt,/Facial likeness takes precedence/);
-   assert.match(edit.prompt,/best-effort artistic guidance, not acceptance requirements/);
+   assert.match(edit.prompt,/iPhone/);assert.doesNotMatch(edit.prompt,/Image 3|Velázquez|SPANISH BAROQUE/);assert.match(edit.prompt,/Facial likeness takes precedence/);
+   assert.match(edit.prompt,/best-effort guidance, not acceptance requirements/);
    assert.match(edit.prompt,/Guests do not need to be centered/);assert.match(edit.prompt,/head-to-body scale/);
   }
  });
@@ -38,7 +37,7 @@ test('API delivers image bytes immediately without a quality rejection gate',asy
   const form=new FormData();form.append('image',new File(['source'],'guest.jpg',{type:'image/jpeg'}));form.append('destinationId','madrid');
   const response=await POST(new Request('https://kiosk.example/api/host-photo',{method:'POST',body:form}));
   assert.equal(response.status,200);assert.equal(response.headers.get('content-type'),'image/jpeg');
-  assert.equal(await response.text(),'painted-result');assert.equal(calls.length,1);
+  assert.equal(await response.text(),'photo-result');assert.equal(calls.length,1);
   assert.match(response.headers.get('server-timing'),/verification;dur=0/);
  });
 });
