@@ -9,7 +9,7 @@ const allowed=['/host-peace.js','/host-peace-gate.js','/host-peace-worker.js','/
 const server=http.createServer(async(req,res)=>{
   const pathname=new URL(req.url,'http://localhost').pathname==='/'?'/index.html':new URL(req.url,'http://localhost').pathname;
   if(!allowed.includes(pathname)&&!/^\/assets\/spain-videos\/(manifest\.json|spain-\d{2}\.mp4)$/.test(pathname)&&!/^\/vendor\/(three|vision)\/[a-zA-Z0-9/_.-]+\.(js|mjs|wasm)$/.test(pathname)){res.writeHead(404);res.end();return;}
-  const type={'.mp4':'video/mp4','.json':'application/json','.html':'text/html','.css':'text/css','.js':'text/javascript','.jpg':'image/jpeg','.glb':'model/gltf-binary','.svg':'image/svg+xml','.webp':'image/webp','.png':'image/png','.mjs':'text/javascript','.wasm':'application/wasm','.tflite':'application/octet-stream','.woff2':'font/woff2'}[path.extname(pathname)];
+  const type={'.mp4':'video/mp4','.json':'application/json','.html':'text/html','.css':'text/css','.js':'text/javascript','.jpg':'image/jpeg','.glb':'model/gltf-binary','.svg':'image/svg+xml','.webp':'image/webp','.png':'image/png','.mjs':'text/javascript','.wasm':'application/wasm','.task':'application/octet-stream','.tflite':'application/octet-stream','.woff2':'font/woff2'}[path.extname(pathname)];
   const bytes=await fs.readFile(path.join(root,pathname.startsWith('/tests/')?pathname:'public'+pathname));
   const range=/^bytes=(\d+)-(\d*)$/.exec(req.headers.range||'');
   if(type==='video/mp4'&&range){
@@ -533,6 +533,26 @@ try{
   assert.equal(await page.locator('#sentryCamera').evaluate(e=>e.srcObject===null),true);
   assert.equal(await page.locator('#sentryToggle').getAttribute('aria-pressed'),'false');
   await fs.writeFile('artifacts/sentry-idle-report.json',JSON.stringify({idleWindowMs:30000,occupiedSceneRearmed:true,speechAndTouchExtend:true,assistantAndStatusDoNotExtend:true,generationProtected:true,emailSendProtected:true,emptySceneNoRequest:true,manualStopStaysOff:true,greetings},null,2));
+  // Exercise an actual Victory image as a synthetic camera, through readiness to countdown.
+  const gesturePage=await context.newPage();
+  await gesturePage.addInitScript(()=>{
+   navigator.mediaDevices.getUserMedia=async()=>{
+    const image=new Image();image.src='/tests/fixtures/victory.jpg';await image.decode();
+    const canvas=document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;
+    const ctx=canvas.getContext('2d');ctx.drawImage(image,0,0);
+    const timer=setInterval(()=>ctx.drawImage(image,0,0),100);const stream=canvas.captureStream(10);
+    window.addEventListener('pagehide',()=>{clearInterval(timer);stream.getTracks().forEach(t=>t.stop());},{once:true});return stream;
+   };
+  });
+  await gesturePage.goto('http://127.0.0.1:4181/');
+  await gesturePage.waitForTimeout(1000);assert.equal(await gesturePage.locator('#countdown').isVisible(),false,'Gesture cannot capture on the home screen');
+  await gesturePage.locator('.destination-pick').first().click();
+  await gesturePage.locator('[data-touch="people-1"]').click();
+  await gesturePage.waitForFunction(()=>document.body.dataset.phase==='countdown',null,{timeout:30000});
+  await gesturePage.screenshot({path:'artifacts/peace-trigger-countdown.png'});
+  await gesturePage.locator('[data-touch="cancel"]').click();
+  await gesturePage.waitForTimeout(1200);assert.equal(await gesturePage.locator('#countdown').isVisible(),false,'Reset disarms held gesture');
+  await gesturePage.close();
   assert.deepEqual(errors,[]);
   // The touch path must work without opening a paid voice session.
   await page.setViewportSize({width:390,height:844});
@@ -582,6 +602,26 @@ try{
   assert.equal(await page.locator('#picture').isVisible(),false);
   assert.equal(await page.locator('#emailInput').inputValue(),'','Finish clears contact details');
   assert.equal(await page.evaluate(()=>window.__sent.length),voiceBefore,'Touch photos do not need a voice session');
+  // Exercise an actual Victory image as a synthetic camera, through readiness to countdown.
+  const gesturePage=await context.newPage();
+  await gesturePage.addInitScript(()=>{
+   navigator.mediaDevices.getUserMedia=async()=>{
+    const image=new Image();image.src='/tests/fixtures/victory.jpg';await image.decode();
+    const canvas=document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;
+    const ctx=canvas.getContext('2d');ctx.drawImage(image,0,0);
+    const timer=setInterval(()=>ctx.drawImage(image,0,0),100);const stream=canvas.captureStream(10);
+    window.addEventListener('pagehide',()=>{clearInterval(timer);stream.getTracks().forEach(t=>t.stop());},{once:true});return stream;
+   };
+  });
+  await gesturePage.goto('http://127.0.0.1:4181/');
+  await gesturePage.waitForTimeout(1000);assert.equal(await gesturePage.locator('#countdown').isVisible(),false,'Gesture cannot capture on the home screen');
+  await gesturePage.locator('.destination-pick').first().click();
+  await gesturePage.locator('[data-touch="people-1"]').click();
+  await gesturePage.waitForFunction(()=>document.body.dataset.phase==='countdown',null,{timeout:30000});
+  await gesturePage.screenshot({path:'artifacts/peace-trigger-countdown.png'});
+  await gesturePage.locator('[data-touch="cancel"]').click();
+  await gesturePage.waitForTimeout(1200);assert.equal(await gesturePage.locator('#countdown').isVisible(),false,'Reset disarms held gesture');
+  await gesturePage.close();
   assert.deepEqual(errors,[]);
   console.log('Face host browser checks passed: portrait/mobile, readiness, camera warmup/cancellation, five-second countdown, top-left viewfinder, duplicate calls, image reveal, guard rejection, explicit retry, reset, cleanup.');
 }finally{await browser.close();server.close();}
