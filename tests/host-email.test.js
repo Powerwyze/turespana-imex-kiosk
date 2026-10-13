@@ -47,3 +47,9 @@ test('generation confirmation queues one send only after a checked image, and ed
  e.beginGeneration();e.edit('guest@example.com');e.editName('Guest');await e.confirm();e.setImage(new Blob(['checked']));await Promise.resolve();assert.equal(sends,1);
  e.beginGeneration();e.edit('guest@example.com');e.editName('Guest');await e.confirm();e.reset();e.setImage(new Blob(['late']));await Promise.resolve();assert.equal(sends,1);
 });
+
+test('completed image and valid drafts do not imply touch confirmation',async()=>{
+ let sends=0;const e=new PhotoEmail({deliver:async()=>sends++});e.beginGeneration();e.editName('Guest');e.edit('guest@example.com');e.setImage(new Blob(['checked']));
+ assert.equal(e.snapshot().confirmed,false);assert.equal(sends,0);e.editName('Guest Updated');assert.equal(e.snapshot().confirmed,false);
+ await e.confirm();assert.equal(e.snapshot().confirmed,true);assert.equal(sends,1);e.reset();assert.equal(e.snapshot().confirmed,false);
+});

@@ -114,9 +114,9 @@ const photoEmail=new PhotoEmail({
     if(!response.ok||!result.ok)throw new Error('Delivery was not confirmed.');
   },
   onChange:state=>{
-    if(pendingContactImage&&state.hasName&&validEmail(photoEmail.draft))revealContactResult();
+    if(pendingContactImage&&state.confirmed)revealContactResult();
     syncIdle();queueMicrotask(()=>touchUI?.render());
-    const open=document.body.dataset.phase==='generating'&&state.status==='review';
+    const open=document.body.dataset.phase==='generating'&&state.status==='review'&&!state.confirmed;
     $('emailPanel').hidden=!open;document.body.dataset.emailOpen=String(open);
     captions.placeIn(open?$('emailPanel'):null);
     const sending=state.status==='sending';
@@ -135,7 +135,7 @@ const photoEmail=new PhotoEmail({
   }
 });
 function revealContactResult(){
- const image=pendingContactImage;if(!image)return;pendingContactImage=null;hidePicture();phase('result');pictureUrl=URL.createObjectURL(image);picture.src=pictureUrl;picture.hidden=false;text('Your Spanish photo is ready.','Confirm to email your photo.');photoEmail.emit();if(ready)note('The guest completed their name and email. Reveal the checked photo now. Email still requires their confirmation tap; do not claim it was sent.',true);
+ const image=pendingContactImage;if(!image)return;pendingContactImage=null;hidePicture();phase('result');pictureUrl=URL.createObjectURL(image);picture.src=pictureUrl;picture.hidden=false;text('Your Spanish photo is ready.','Confirm to email your photo.');photoEmail.emit();if(ready)note('The guest confirmed their name and email on screen. Reveal the checked photo now. Email still requires their confirmation tap; do not claim it was sent.',true);
 }
 function reviewEmail(value){
   if(engine.phase!=='generating'&&!pendingContactImage)return {error:'Contact entry is available only while the image generates. Do not ask for contact details after the reveal.'};
@@ -150,7 +150,7 @@ function hidePicture(){picture.hidden=true;picture.removeAttribute('src');if(pic
 function touch(){guestIdle.touch();}
 function syncIdle(){
   if((!ready&&!touchMode)||ending)return;
-  guestIdle.setBusy(['preparing','countdown','generating'].includes(engine.phase)||photoEmail.status==='sending');
+  guestIdle.setBusy(['preparing','countdown','generating'].includes(engine.phase)||photoEmail.status==='sending'||(pendingContactImage&&!photoEmail.confirmed));
 }
 async function ensureCamera(signal){
   if(signal.aborted)throw new DOMException('Cancelled','AbortError');
@@ -210,7 +210,7 @@ const engine=new TurespanaEngine({
   },
   generate:async({source,count,style,signal})=>{
     const form=new FormData();form.append('image',source,'guest-photo.jpg');form.append('guestCount',String(count));form.append('style',style);form.append('destinationId',engine.destination);
-    const res=await fetch(location.origin==='https://turespana-imex-kiosk.powerwyze-2010.chatgpt.site'?'https://turespana-imex-kiosk.vercel.app/api/host-photo':'/api/host-photo',{method:'POST',body:form,signal:AbortSignal.any([signal,AbortSignal.timeout(185000)])});
+    const res=await fetch(location.origin==='https://turespana-imex-kiosk.powerwyze-2010.chatgpt.site'?'https://turespana-imex-kiosk.vercel.app/api/host-photo':'/api/host-photo',{method:'POST',body:form,signal:AbortSignal.any([signal,AbortSignal.timeout(295000)])});
     if(!res.ok){
       const problem=await res.json().catch(()=>({}));
       if(problem.code==='PORTRAIT_QUALITY_MISMATCH')throw new Error('That portrait did not meet the outfit, likeness or framing check. Your original photo is saved. Please retry or retake.');
@@ -227,14 +227,14 @@ const engine=new TurespanaEngine({
     syncIdle();
     if(state.phase!=='generating')stopEventTalk();
     hidePicture();
-    const waitingContact=state.phase==='result'&&image&&(!validName(photoEmail.name)||!validEmail(photoEmail.draft));
+    const waitingContact=state.phase==='result'&&image&&!photoEmail.confirmed;
     pendingContactImage=waitingContact?image:null;
     phase(waitingContact?'generating':state.phase);
     if(state.phase==='generating'&&lastPhase!=='generating'){$('emailTitle').textContent='Your image is generating…';$('emailHelp').textContent='Enter your name and email now. Confirm to email your photo when it is ready.';photoEmail.beginGeneration();contactKeyboardLayout();}
     else if(state.phase==='result')photoEmail.setImage(image);
     else if(state.phase!=='generating')clearEmail();
     if(state.phase==='result'&&image&&!waitingContact){pictureUrl=URL.createObjectURL(image);picture.src=pictureUrl;picture.hidden=false;$('emailOpen').hidden=!['sending','sent'].includes(photoEmail.status)&&(!['review','error'].includes(photoEmail.status)||!validEmail(photoEmail.draft)||!validName(photoEmail.name));}
-    if(waitingContact){text('Your photo is ready.','Enter your name and email to reveal it.');$('emailTitle').textContent='Your photo is ready';$('emailHelp').textContent='Enter your name and a valid email to continue.';}
+    if(waitingContact){text('Your photo is ready.','Finish your name and email, then tap Confirm to reveal it.');$('emailTitle').textContent='Your photo is ready';$('emailHelp').textContent='Enter your name and email, then tap Confirm to continue.';}
     else if(state.phase==='preparing')text('Getting the camera ready.','Your countdown starts as soon as the camera is ready.');
     else if(state.phase==='countdown')text('Look toward the camera.','Check your framing in the top-left preview.');
     else if(state.phase==='generating')text('A little Spanish magic.','Your host is still here. Feel free to talk.');
@@ -245,7 +245,7 @@ const engine=new TurespanaEngine({
     if(ready){
       note('Booth state: '+JSON.stringify(state));
       if(state.phase!==lastPhase){
-        if(waitingContact)note('The checked photo is ready but is not revealed. The visitor must enter a name and valid email to continue. Ask them to complete the visible contact form; do not claim it was sent or revealed.',true);
+        if(waitingContact)note('The checked photo is ready but is not revealed. The visitor must finish their name/email and tap Confirm to continue; keep the form visible until that tap. Ask them to complete the visible contact form; do not claim it was sent or revealed.',true);
         else if(state.phase==='result')note('The generated photo has passed the guest check, decoded successfully, and is now displayed. Stop the event explanation. Tell the visitor the photo is ready, do not ask for name or email and do not open the contact form. If the guest confirmed delivery during generation, it is now being attempted. Otherwise, a compact Email my photo button is available only for complete saved details. Do not claim delivery until the app confirms it.',true);
         if(state.phase==='error')note('The photo workflow failed: '+state.error+' Do not retry unless the visitor asks.',true);
         if(state.phase==='countdown')send({type:'session.instructions.append',delegation_id:null,content:'The camera is ready and the visible five-second countdown has started now. Stay quiet until the app reports generating. Do not say or count any numbers; the app plays synchronized countdown sounds.'});
@@ -408,7 +408,7 @@ document.addEventListener('pointerdown',touch);
 document.addEventListener('keydown',touch);
 document.addEventListener('keydown',e=>{
   if(!$('emailPanel').hidden){
-    if(e.key==='Escape'){e.preventDefault();$('emailStatus').textContent='Enter your name and a valid email to continue.';}
+    if(e.key==='Escape'){e.preventDefault();$('emailStatus').textContent='Enter your name and email, then tap Confirm to continue.';}
     if(e.key==='Tab'){
       const enabled=[...$('emailPanel').querySelectorAll('button:not(:disabled),input:not(:disabled),a[href]')];
       const first=enabled[0],last=enabled.at(-1);

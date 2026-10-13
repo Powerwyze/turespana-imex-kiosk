@@ -354,7 +354,7 @@ try{
   await page.waitForFunction(()=>document.body.dataset.phase==='error');
   assert.equal(await page.locator('#picture').isVisible(),false);
   await page.waitForTimeout(300);assert.equal(generations,2);
-  fail=false;release=null;await tool('retry_picture',{confirmed:true,style:''});await page.waitForTimeout(150);assert.equal(generations,3);await page.locator('#guestNameInput').fill('Retry Guest');await page.locator('#emailInput').fill('retry@example.com');release();
+  fail=false;release=null;await tool('retry_picture',{confirmed:true,style:''});await page.waitForTimeout(150);assert.equal(generations,3);await page.locator('#guestNameInput').fill('Retry Guest');await page.locator('#emailInput').fill('retry@example.com');await page.locator('#emailConfirm').click();release();
   await page.waitForFunction(()=>document.body.dataset.phase==='result');
   // A reset during work suppresses the old result and stops the camera.
   release=null;await tool('retry_picture',{confirmed:true,style:''});await page.waitForTimeout(150);
@@ -541,17 +541,17 @@ try{
   const emailsBeforeDraft=emails;
   await page.locator('#emailPanel').waitFor({state:'visible'});
   assert.equal(await page.locator('#emailCancel').count(),0,'No Skip button remains');
-  release();await page.getByText('Enter your name and a valid email to continue.',{exact:true}).waitFor();
+  release();await page.getByText('Enter your name and email, then tap Confirm to continue.',{exact:true}).waitFor();
   assert.equal(await page.locator('#picture').isVisible(),false,'A fast result cannot bypass required contact entry');
   await page.keyboard.press('Escape');assert.equal(await page.locator('#emailPanel').isVisible(),true);await page.screenshot({path:'artifacts/required-contact-phone.png'});
   await page.locator('#guestNameInput').fill('Waiting Guest');assert.equal(await page.locator('#picture').isVisible(),false);
   await page.locator('#emailInput').fill('invalid');assert.equal(await page.locator('#picture').isVisible(),false);
   await page.locator('#emailInput').fill('waiting@example.com');
   assert.equal(await page.locator('#marketingOptIn').isChecked(),false);
-  assert.equal(emails,emailsBeforeDraft);
+  assert.equal(emails,emailsBeforeDraft);assert.equal(await page.locator('#emailPanel').isVisible(),true,'Valid fields alone must not close the form');assert.equal(await page.locator('#picture').isVisible(),false);await page.locator('#emailConfirm').click();
   await page.waitForFunction(()=>document.body.dataset.phase==='result');await page.screenshot({path:'artifacts/required-contact-result-phone.png'});
   assert.equal(await page.locator('#emailPanel').isVisible(),false);
-  assert.equal(emails,emailsBeforeDraft,'No confirmation means no automatic send');
+  await page.waitForFunction(()=>document.querySelector('#emailToast').textContent.includes('accepted'));assert.equal(emails,emailsBeforeDraft+1,'Explicit Confirm sends exactly once');
   await tool('show_email_confirmation',{email:'late@example.com'});
   assert.equal(await page.locator('#emailPanel').isVisible(),false);
   await page.locator('[data-touch=finish]').click();

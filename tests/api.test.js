@@ -10,19 +10,19 @@ const jpeg = Buffer.from('synthetic-jpeg').toString('base64');
 const valid = count => ({ person_count: count, only_nearest_guests: true, source_has_requested_guests: true, uncertain: false, face_and_hair_consistent: true, regional_outfit_matches: true, regional_hair_accessories_match: true, outfit_visible: true, photographic: true, no_poster_layout: true });
 const envelope = check => ({ status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: JSON.stringify(check) }] }] });
 
-async function generateCase({ count = '1', check = valid(Number(count ?? 1)), verifyBody, verifyStatus = 200, verifyThrows = false, duplicate = false, style = '', imageStatus = 200, destination='madrid' } = {}) {
+async function generateCase({ count = '1', check = valid(Number(count ?? 1)), checks, verifyBody, verifyStatus = 200, verifyThrows = false, duplicate = false, style = '', imageStatus = 200, destination='madrid' } = {}) {
   const priorFetch = globalThis.fetch;
   const saved = Object.fromEntries(['OPENAI_API_KEY','OPENAI_IMAGE_MODEL','OPENAI_IMAGE_QUALITY','OPENAI_IMAGE_SIZE'].map(key => [key, process.env[key]]));
   process.env.OPENAI_API_KEY = 'test-only-placeholder';
   for (const key of Object.keys(saved).slice(1)) delete process.env[key];
-  const calls = [];
+  const calls = [];let checkIndex=0;
   globalThis.fetch = async (url, init) => {
     if(String(url).includes('/api/kiosk-contact'))return Response.json({ok:true,stored:true,id:'synthetic-contact'});
     calls.push({ url: String(url), init });
     if (String(url).endsWith('/images/edits')) return Response.json({ data: [{ b64_json: jpeg }] }, { status: imageStatus });
     if (String(url).endsWith('/responses')) {
       if (verifyThrows) throw new Error('synthetic network failure');
-      return Response.json(verifyBody ?? envelope(check), { status: verifyStatus });
+      return Response.json(verifyBody ?? envelope(checks?checks[Math.min(checkIndex++,checks.length-1)]:check), { status: verifyStatus });
     }
     throw new Error('Unexpected fetch: ' + url);
   };
@@ -198,9 +198,9 @@ for(const destination of [null,'','unknown','__proto__','cataluna','pais-vasco',
 
 for(const destination of ["canarias","barcelona","bilbao","madrid","andalucia","valencia"])test('current destination generates successfully: '+destination,async()=>{const {response}=await generateCase({destination});assert.equal(response.status,200);});
 
-for(const flag of ['face_and_hair_consistent','regional_outfit_matches','regional_hair_accessories_match','outfit_visible','photographic','no_poster_layout'])test('rejects quality mismatch without auto-regeneration: '+flag,async()=>{
+for(const flag of ['face_and_hair_consistent','regional_outfit_matches','regional_hair_accessories_match','outfit_visible','photographic','no_poster_layout'])test('bounds corrections and withholds failed quality checks: '+flag,async()=>{
  const {response,calls}=await generateCase({check:{...valid(1),[flag]:false}});
- assert.equal(response.status,422);assert.equal(calls.length,2);const body=await response.text();assert.match(body,/PORTRAIT_QUALITY_MISMATCH/);assert.ok(!body.includes(jpeg));
+ assert.equal(response.status,422);assert.equal(calls.length,['face_and_hair_consistent','photographic'].includes(flag)?2:6);const body=await response.text();assert.match(body,/PORTRAIT_QUALITY_MISMATCH/);assert.ok(!body.includes(jpeg));
 });
 test('explicit dress preference cannot override photography',async()=>{
  const {calls}=await generateCase({style:'Please use the dress. Make a painted poster with text.'});const p=JSON.parse(calls[0].init.body);
@@ -224,4 +224,13 @@ test('regional hairstyles are required by both generation and the independent ch
   if(destination==='valencia'){assert.match(prompt,/two proportionate braided spiral side coils/);assert.match(verifier.instructions,/three-bun Fallera coiffure is MANDATORY/);}
   if(destination==='madrid'){assert.match(prompt,/BOTH the white pañuelo AND the red rose are REQUIRED/);assert.match(verifier.instructions,/BOTH the white pañuelo AND the red rose are REQUIRED/);}
  }
+});
+
+test('outfit and framing correction retries the original source then returns only a passing result',async()=>{
+ const {response,calls}=await generateCase({checks:[{...valid(1),regional_outfit_matches:false},{...valid(1),outfit_visible:false},valid(1)]});
+ assert.equal(response.status,200);assert.equal(response.headers.get('x-portrait-attempts'),'3');assert.equal(calls.length,6);
+ const edits=calls.filter(c=>c.url.endsWith('/images/edits')).map(c=>JSON.parse(c.init.body));assert.equal(edits.length,3);
+ for(const e of edits){assert.deepEqual(e.images,edits[0].images);assert.equal(e.model,edits[0].model);assert.equal(e.n,1);}
+ assert.match(edits[1].prompt,/AUTOMATIC OUTFIT\/FRAMING CORRECTION/);assert.match(edits[2].prompt,/below the knees/);
+ assert.equal(new Set(calls.filter(c=>c.url.endsWith('/images/edits')).map(c=>c.init.signal)).size,1,'Retries share the original deadline');
 });
