@@ -1,3 +1,4 @@
+import {PeaceTrigger} from './host-peace.js';
 import {mountHomeVideos} from './home-videos.js';
 import {mountHomeLanguage,homeText} from './home-language.js';
 import {brandPortrait} from './portrait-branding.js';
@@ -27,6 +28,7 @@ function contactKeyboardLayout(reset=false){
 $('contactKeyboardToggle').addEventListener('click',()=>{contactKeyboardOpen=!contactKeyboardOpen;contactKeyboardLayout();});
 window.addEventListener('resize',()=>contactKeyboardLayout(true));contactKeyboardLayout();
 const captions=new HostCaptions($('hostCaptions'),$('hostCaptionText'),$('stage'),face);
+let peace=null,peaceArmed=false,peaceEpoch=0;
 let cameraPreparation=null,cameraEpoch=0,touchMode=false,touchUI=null;
 const homeLanguage=mountHomeLanguage({onChange:()=>touchUI?.render()});
 mountHomeVideos();
@@ -40,6 +42,7 @@ const wait=(ms,signal)=>new Promise((resolve,reject)=>{
 });
 function text(title,hint=''){ $('headline').textContent=title;$('hint').textContent=hint; }
 function phase(value){
+ if(value!=='listening'){peaceArmed=false;peaceEpoch++;peace?.stop();}
  if(value!=='generating'){ $('emailPanel').hidden=true;document.body.dataset.emailOpen='false';if($('emailPanel').contains(document.activeElement))document.activeElement.blur();captions.placeIn(null);}
  queueMicrotask(()=>touchUI?.render());if(document.body.dataset.phase!==value)captions.clear();document.body.dataset.phase=value;contactKeyboardLayout();placeHomeLogo();homeLanguage.refresh();$('sentryToggle').disabled=!sentry.enabled&&!['idle','error'].includes(value);}
 function placeHomeLogo(){
@@ -147,7 +150,7 @@ function reviewEmail(value){
 }
 function clearEmail(){pendingContactImage=null;photoEmail.reset();$('emailInput').value='';$('emailOpen').hidden=true;$('emailToast').hidden=true;}
 function hideCountdown(){$('countdown').hidden=true;$('viewfinder').hidden=true;}
-function stopCamera(){cameraEpoch++;cameraPreparation=null;cameraStream?.getTracks().forEach(t=>t.stop());cameraStream=null;camera.srcObject=null;hideCountdown();}
+function stopCamera(){peaceArmed=false;peaceEpoch++;peace?.stop();cameraEpoch++;cameraPreparation=null;cameraStream?.getTracks().forEach(t=>t.stop());cameraStream=null;camera.srcObject=null;hideCountdown();}
 function hidePicture(){picture.hidden=true;picture.removeAttribute('src');if(pictureUrl)URL.revokeObjectURL(pictureUrl);pictureUrl=null;}
 function touch(){guestIdle.touch();}
 function syncIdle(){
@@ -433,7 +436,15 @@ async function touchAction(name,args){
  if(ready)note('The visitor explicitly tapped a booth button: '+name+'. Current state: '+JSON.stringify(engine.snapshot())+'. Do not repeat the same action.');
  touchUI?.render();
 }
-touchUI=mountTouchControls({getState:()=>({...engine.snapshot(),phase:document.body.dataset.phase,active:ready||touchMode,statusMessage:$('hint').textContent,emailOpen:!$('emailPanel').hidden,emailSent:photoEmail.status==='sent'}),start:startTouchPhoto,voice:()=>begin(),action:touchAction,finish:()=>end(),labels:destinations});
+function canPeaceTrigger(){return peaceArmed&&!document.hidden&&(ready||touchMode)&&engine.phase==='listening'&&document.body.dataset.phase==='listening'&&!!engine.count&&!!engine.destination&&!ending;}
+peace=new PeaceTrigger({video:camera,canTrigger:canPeaceTrigger,onTrigger:()=>{if(!canPeaceTrigger())return;touch();engine.execute('take_photo',{confirmed:true,style:''});},onUnavailable:()=>{if(canPeaceTrigger())text('Ready for your photo?','Gesture detection unavailable. Say yes, okay, or take the picture, or tap Take photo.');}});
+async function armPeace(armed){
+ if(peaceArmed===armed)return;
+ peaceArmed=armed;const epoch=++peaceEpoch;
+ if(!armed){peace.stop();return;}
+ try{await ensureCamera(new AbortController().signal);if(epoch===peaceEpoch&&canPeaceTrigger())peace.start();}catch{if(epoch===peaceEpoch)text('Camera permission needed.','Tap Take photo and allow camera access.');}
+}
+touchUI=mountTouchControls({onReadiness:armPeace,getState:()=>({...engine.snapshot(),phase:document.body.dataset.phase,active:ready||touchMode,statusMessage:$('hint').textContent,emailOpen:!$('emailPanel').hidden,emailSent:photoEmail.status==='sent'}),start:startTouchPhoto,voice:()=>begin(),action:touchAction,finish:()=>end(),labels:destinations});
 for(const button of document.querySelectorAll('.destination-pick'))button.addEventListener('click',()=>{
  if(!ready&&!touchMode)startTouchPhoto();
  touchAction('set_destination',{destinationId:button.dataset.destination});

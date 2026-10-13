@@ -29,6 +29,10 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci --ignore-scripts
+      - name: Fetch official gesture model and test fixture on cloud runner
+        run: |
+          test -s public/assets/gesture-recognizer.task || curl --fail --location --retry 2 https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task -o public/assets/gesture-recognizer.task
+          test -s tests/fixtures/victory.jpg || curl --fail --location --retry 2 https://storage.googleapis.com/mediapipe-assets/victory.jpg -o tests/fixtures/victory.jpg
       - run: npm test
       - name: Install browser tools on the cloud runner
         run: npm install --no-save --package-lock=false playwright@1.56.1
@@ -67,7 +71,7 @@ jobs:
           cp artifacts/host-countdown-mobile.png docs/review/host-countdown-mobile.png
           git config user.name 'PowerWyze build'
           git config user.email 'actions@users.noreply.github.com'
-          git add docs/review
+          git add docs/review public/assets/gesture-recognizer.task tests/fixtures/victory.jpg
           if ! git diff --cached --quiet; then
             git commit -m "Save required Spain contact-entry browser evidence"
             git pull --rebase origin codex/imex-generation-only-contact

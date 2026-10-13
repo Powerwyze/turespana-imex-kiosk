@@ -5,7 +5,7 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 const root=path.resolve(import.meta.dirname,'..');
 assert.equal(await fs.readFile(path.join(root,'public/index.html'),'utf8'),await fs.readFile(path.join(root,'public/host.html'),'utf8'),'Root homepage and kiosk entry point must stay in sync');
-const allowed=["/index.html","/assets/examples/regional-clothing.jpg","/assets/spain-background.png", "/assets/examples/andalucia.webp", "/assets/examples/madrid.webp", "/assets/examples/barcelona.webp", "/assets/examples/bilbao.webp", "/assets/examples/canarias.webp", "/assets/examples/valencia.webp"].concat(['/home-videos.js','/contact-policy.js','/assets/spain-info-logo.png','/home-language.js','/portrait-branding.js','/host.html','/host.css','/host.js','/host-engine.js','/host-connection.js','/host-touch.js','/turespana-engine.js','/host-countdown.js','/host-idle.js','/host-captions.js','/host-email.js','/host-avatar.js','/host-sentry.js','/host-sentry-gate.js','/host-sentry-worker.js','/assets/person-detector.tflite','/tests/fixtures/sentry-person.jpg','/email-shortcuts.js','/assets/spain-sun.glb','/assets/spain-sun-fallback.svg','/assets/flow-event-background.jpg','/assets/fonts/fraunces.woff2','/assets/fonts/borel.woff2']);
+const allowed=['/host-peace.js','/host-peace-gate.js','/host-peace-worker.js','/assets/gesture-recognizer.task','/tests/fixtures/victory.jpg',"/index.html","/assets/examples/regional-clothing.jpg","/assets/spain-background.png", "/assets/examples/andalucia.webp", "/assets/examples/madrid.webp", "/assets/examples/barcelona.webp", "/assets/examples/bilbao.webp", "/assets/examples/canarias.webp", "/assets/examples/valencia.webp"].concat(['/home-videos.js','/contact-policy.js','/assets/spain-info-logo.png','/home-language.js','/portrait-branding.js','/host.html','/host.css','/host.js','/host-engine.js','/host-connection.js','/host-touch.js','/turespana-engine.js','/host-countdown.js','/host-idle.js','/host-captions.js','/host-email.js','/host-avatar.js','/host-sentry.js','/host-sentry-gate.js','/host-sentry-worker.js','/assets/person-detector.tflite','/tests/fixtures/sentry-person.jpg','/email-shortcuts.js','/assets/spain-sun.glb','/assets/spain-sun-fallback.svg','/assets/flow-event-background.jpg','/assets/fonts/fraunces.woff2','/assets/fonts/borel.woff2']);
 const server=http.createServer(async(req,res)=>{
   const pathname=new URL(req.url,'http://localhost').pathname==='/'?'/index.html':new URL(req.url,'http://localhost').pathname;
   if(!allowed.includes(pathname)&&!/^\/assets\/spain-videos\/(manifest\.json|spain-\d{2}\.mp4)$/.test(pathname)&&!/^\/vendor\/(three|vision)\/[a-zA-Z0-9/_.-]+\.(js|mjs|wasm)$/.test(pathname)){res.writeHead(404);res.end();return;}
@@ -27,6 +27,20 @@ const page=await context.newPage();const errors=[];page.on('pageerror',e=>{error
 // Generate a genuine browser SDP artifact for an independent server configuration smoke check.
 await page.goto('http://127.0.0.1:4181/');
 await page.waitForFunction(()=>document.querySelector('#homeOfficialLogo').complete,null,{timeout:20000});
+// Run the real bundled MediaPipe model in its worker on the official victory fixture.
+const gestureSmoke=await page.evaluate(async()=>{
+ const worker=new Worker('/host-peace-worker.js');
+ try{return await new Promise((resolve,reject)=>{
+  const timeout=setTimeout(()=>reject(new Error('Gesture model timeout')),25000);
+  worker.onerror=()=>{clearTimeout(timeout);reject(new Error('Gesture worker failed'));};
+  worker.onmessage=async({data})=>{
+   if(data.type==='ready'){const bitmap=await createImageBitmap(await(await fetch('/tests/fixtures/victory.jpg')).blob());worker.postMessage({type:'frame',bitmap},[bitmap]);}
+   if(data.type==='gesture'){clearTimeout(timeout);resolve(data.victory);}
+   if(data.type==='error'){clearTimeout(timeout);reject(new Error('Gesture model failed'));}
+  };worker.postMessage({type:'init'});
+ });}finally{worker.terminate();}
+});
+assert.equal(gestureSmoke,true,'Real model recognizes official peace-sign fixture');
 assert.equal(await page.locator('#avatar').count(),0);
 assert.equal(await page.locator('#avatarFallback').count(),0);
 

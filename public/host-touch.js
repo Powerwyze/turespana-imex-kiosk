@@ -1,9 +1,10 @@
 import {homeText} from './home-language.js';
-export function mountTouchControls({getState,start,voice,action,finish,labels}){
+export function mountTouchControls({getState,start,voice,action,finish,labels,onReadiness=()=>{}}){
  const panel=document.getElementById('touchControls'),email=document.getElementById('emailOpen');
  let edit=null,last='';
  function render(){
   const s=getState(),busy=['preparing','countdown','generating'].includes(s.phase);
+  onReadiness(s.phase==='listening'&&s.active&&!!s.guestCount&&!!s.destinationId&&!edit&&!s.emailOpen);
   panel.hidden=s.emailOpen;
   document.querySelectorAll('.destination-pick').forEach(b=>{b.disabled=busy||s.phase==='result'||s.emailOpen||s.phase==='connecting';b.removeAttribute('aria-pressed');});
   if(s.phase==='idle')edit=null;
@@ -39,7 +40,7 @@ export function mountTouchControls({getState,start,voice,action,finish,labels}){
    for(const [id,label] of Object.entries(labels))button(label,'destination-'+id,()=>choose('set_destination',{destinationId:id}));
    button('Back','back',()=>{edit='people';render();},true);
   }else{
-   title.textContent='Ready for your photo?';hint.textContent=s.guestCount+' '+(s.guestCount===1?'person':'people')+' · '+labels[s.destinationId]+' · Five-second countdown';
+   title.textContent='Ready for your photo?';hint.textContent=s.guestCount+' '+(s.guestCount===1?'person':'people')+' · '+labels[s.destinationId]+' · Say yes, okay, or take the picture — or hold up a peace sign ✌ for a moment. Five-second countdown.';
    button('Take photo','capture',()=>action('take_photo',{confirmed:true,style:''}));
    button('Change place','place',()=>{edit='destination';render();},true);
    button('Change people','people',()=>{edit='people';render();},true);
