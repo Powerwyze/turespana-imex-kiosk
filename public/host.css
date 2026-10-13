@@ -312,3 +312,29 @@ body[data-phase=generating] #stage>#hostCaptions{top:74px!important;bottom:auto!
 body:not([data-phase=generating]) #emailPanel{display:none!important}
 body[data-phase=generating] #emailPanel{background:rgba(5,18,40,.90)}
 body[data-phase=generating] #destinationExamples{display:none}
+
+/* Photo-first booth: a visible camera before group and destination selection. */
+#destinationExamples{display:none!important}
+#viewfinder{top:21%;left:50%;transform:translateX(-50%);width:min(84vw,720px);max-height:none;z-index:3;border:2px solid #ffffffa0;border-radius:24px;pointer-events:none;background:#071d40}
+#viewfinder h2{margin:14px;text-align:center;font-size:clamp(22px,3vw,32px);color:white}
+#viewfinder .camera-frame{width:100%;height:min(38dvh,420px);aspect-ratio:auto}
+#camera{inset:0;width:100%;height:100%;object-fit:contain;transform:scaleX(-1)}
+#viewfinder span{font-size:12px;letter-spacing:.08em;padding:10px}
+body[data-phase=idle] #stage{display:block;padding:0}
+body[data-phase=idle] #intro{position:absolute;top:80px;left:5%;right:5%;height:auto;display:block;text-align:center}
+body[data-phase=idle] .brand-row{justify-content:center}
+body[data-phase=idle] #intro .eyebrow,body[data-phase=idle] #intro .event-title{display:none}
+body[data-phase=idle] #homeLogoSlot{display:none}
+body[data-phase=idle] #touchControls{position:absolute;left:50%;bottom:3dvh;transform:translateX(-50%);width:min(92vw,850px);margin:0;z-index:6}
+body[data-phase=idle] #touchTitle{display:none}
+body[data-phase=idle] #message{display:none}
+body[data-phase=listening] #face,body[data-phase=connecting] #face,body[data-phase=preparing] #face,body[data-phase=countdown] #face,body[data-phase=choosing_people] #face,body[data-phase=choosing_destination] #face{position:absolute!important;top:24px!important;right:24px!important;left:auto!important;bottom:auto!important;width:64px!important;transform:none!important}
+body[data-phase=countdown] #countdown{z-index:8;top:42%;font-size:clamp(90px,18vw,190px)}
+body[data-phase=choosing_people] #touchControls,body[data-phase=choosing_destination] #touchControls{bottom:12dvh}
+body[data-phase=choosing_people] #message,body[data-phase=choosing_destination] #message{bottom:auto;top:20%}
+@media(orientation:landscape) and (max-height:650px){
+ #viewfinder{top:18%;left:28%;width:46vw}#viewfinder .camera-frame{height:48dvh}
+ body[data-phase=idle] #intro{top:14px;left:3%;right:auto}
+ body[data-phase=idle] #touchControls,body[data-phase=listening] #touchControls,body[data-phase=countdown] #touchControls{left:auto;right:3%;bottom:10%;width:43%;transform:none}
+ body[data-phase=countdown] #countdown{left:28%;top:48%}
+}

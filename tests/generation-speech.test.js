@@ -28,7 +28,7 @@ test('touch capture triggers narration during generation without delaying the im
  const engine=new TurespanaEngine({capture:async()=>new Blob(['source']),generate:()=>{generated=true;return new Promise(resolve=>release=resolve);},onChange:state=>{
   if(state.phase==='generating')narration=f.speech.start(state.destinationId);else f.speech.stop();
  }});
- await engine.execute('set_destination',{destinationId:'canarias'});await f.speech.prefetch('canarias');await engine.execute('set_guest_count',{count:1});await engine.execute('take_photo',{confirmed:true});
+ await engine.execute('take_photo',{confirmed:true});await engine.job;await engine.execute('set_guest_count',{count:1});await f.speech.prefetch('canarias');await engine.execute('set_destination',{destinationId:'canarias'});
  await new Promise(resolve=>setImmediate(resolve));await narration;assert.equal(generated,true);assert.equal(f.played.length,1);assert.equal(engine.phase,'generating');
  release(new Blob(['portrait']));await engine.job;assert.equal(f.stopped.length,1);
 });

@@ -1,13 +1,14 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {TurespanaEngine,destinations} from '../public/turespana-engine.js';
 import {liveSessionConfig} from '../lib/host-config.js';
-test('destination is explicit, guarded during capture, and cleared for the next guest',async()=>{
- let release,calls=0;const e=new TurespanaEngine({prepare:()=>new Promise(r=>release=r),capture:async()=>'',generate:async()=>{calls++;return 'image';}});
- await e.execute('set_guest_count',{count:1});assert.match((await e.execute('take_photo',{confirmed:true})).error,/destination/);assert.equal(calls,0);
- assert.ok((await e.execute('set_destination',{destinationId:'unknown'})).error);
- for(const destinationId of ["canarias","barcelona","bilbao","madrid","andalucia","valencia"])assert.equal((await e.execute('set_destination',{destinationId})).destinationId,destinationId);
+test('destination follows capture and group size, and resets for the next guest',async()=>{
+ let release,calls=0;const e=new TurespanaEngine({prepare:()=>new Promise(r=>release=r),capture:async()=>new Blob(['source']),generate:async()=>{calls++;return 'image';}});
+ assert.ok((await e.execute('set_destination',{destinationId:'madrid'})).error);
  await e.execute('take_photo',{confirmed:true});assert.ok((await e.execute('set_destination',{destinationId:'madrid'})).error);release();await e.job;
- assert.ok((await e.execute('set_destination',{destinationId:'madrid'})).error);e.reset();assert.equal(e.snapshot().destinationId,null);assert.equal(e.source,null);
+ assert.equal(e.phase,'choosing_people');await e.execute('set_guest_count',{count:1});
+ assert.ok((await e.execute('set_destination',{destinationId:'unknown'})).error);assert.equal(calls,0);
+ await e.execute('set_destination',{destinationId:'madrid'});await e.job;assert.equal(calls,1);
+ assert.ok((await e.execute('set_destination',{destinationId:'bilbao'})).error);e.reset();assert.equal(e.snapshot().destinationId,null);assert.equal(e.source,null);
 });
 test('host offers six Spanish destinations and only touch-confirmed email',()=>{
  const c=liveSessionConfig();assert.ok(c.delegation.responses.tools.find(t=>t.name==='set_destination'));assert.match(c.instructions,/Lola/);assert.match(c.instructions,/English or Spanish/);assert.doesNotMatch(c.instructions,/Damn Good|Fort Lauderdale/);assert.equal(c.delegation.responses.tools.some(t=>t.name==='send_email'),false);
@@ -43,3 +44,4 @@ test('voice tools, portrait catalog and example galleries offer the same ordered
   assert.deepEqual([...html.matchAll(/data-destination="([^"]+)"/g)].map(m=>m[1]),expected);
  }
 });
+

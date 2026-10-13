@@ -42,9 +42,9 @@
     <button id="emailConfirm" type="button" disabled>Confirm &amp; email when ready</button>
     <p class="email-note">Your name, email and marketing choice are saved for this photo experience.</p>
   </section>
-  <aside id="viewfinder" aria-label="Live camera preview during countdown" hidden>
-    <div class="camera-frame"><video id="camera" autoplay playsinline muted aria-label="Your camera framing, rotated 90 degrees left"></video></div>
-    <span>YOUR FRAME</span>
+  <aside id="viewfinder" aria-label="Live photo booth camera preview">
+    <h2 data-home-text="takePicture">Take a picture</h2><div class="camera-frame"><video id="camera" autoplay playsinline muted aria-label="Your camera framing"></video></div>
+    <span id="cameraStatus" role="status">YOUR FRAME</span>
   </aside>
   <div id="countdown" aria-live="assertive" hidden></div>
   <button id="sentryToggle" type="button" aria-pressed="false">Enable camera sentry</button>
