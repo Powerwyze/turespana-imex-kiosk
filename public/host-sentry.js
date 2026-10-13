@@ -4,11 +4,11 @@ export class CameraSentry{
     this.video=video;this.canGreet=canGreet;this.onVisitor=onVisitor;this.onStatus=onStatus;
     this.gate=new PresenceGate();this.enabled=false;this.epoch=0;this.pending=false;this.inference=false;this.frameId=0;this.lastFrameAt=0;
   }
-  async enable(){
+  async enable(existingStream=null){
     if(this.enabled)return;this.enabled=true;const epoch=++this.epoch;
     this.gate.reset();this.onStatus('starting');
     try{
-      const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1920},height:{ideal:1080}},audio:false});
+      const stream=existingStream?.getVideoTracks().some(t=>t.readyState==='live')?existingStream.clone():await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1920},height:{ideal:1080}},audio:false});
       if(epoch!==this.epoch){stream.getTracks().forEach(t=>t.stop());return;}
       this.stream=stream;this.video.srcObject=stream;await this.video.play();
       this.worker=new Worker('/host-sentry-worker.js');

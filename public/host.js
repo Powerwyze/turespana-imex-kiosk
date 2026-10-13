@@ -34,7 +34,7 @@ let cameraPreparation=null,cameraEpoch=0,touchMode=false,touchUI=null,pageLeavin
 const homeLanguage=mountHomeLanguage({onChange:()=>touchUI?.render()});
 mountHomeVideos();
 let peer,events,mic,cameraStream,context,analyser,sourceNode,ready=false,connecting=false,ending=false;
-let sessionEpoch=0,startTimer,closeTimer,maxTimer,pictureUrl=null,requestController=null,level=0,lastPhase='',eventTimer,eventIndex=0,lastVoiceAt=0,guestInterrupted=false,sentryAudioContext=null,sentrySetup=0,sentryEnabling=false,rearmImmediately=false;
+let sessionEpoch=0,startTimer,closeTimer,maxTimer,pictureUrl=null,requestController=null,level=0,lastPhase='',eventTimer,eventIndex=0,lastVoiceAt=0,guestInterrupted=false,sentryAudioContext=null,sentrySetup=0,sentryEnabling=false,rearmImmediately=false,sentryWanted=true;
 const wait=(ms,signal)=>new Promise((resolve,reject)=>{
   if(signal?.aborted)return reject(new DOMException('Cancelled','AbortError'));
   const abort=()=>{clearTimeout(timer);reject(new DOMException('Cancelled','AbortError'));};
@@ -79,9 +79,9 @@ function stopSentry(){
   sentrySetup++;sentryEnabling=false;sentry.disable();sentryAudioContext?.close().catch(()=>{});sentryAudioContext=null;
 }
 $('sentryToggle').addEventListener('click',async()=>{
-  if(sentry.enabled||sentryEnabling){stopSentry();if(ready||connecting)end();else text('Your Spanish story starts here.','Tap the logo to begin · AI photo host');return;}
+  if(sentry.enabled||sentryEnabling){sentryWanted=false;stopSentry();if(ready||connecting)end();else text('Your Spanish story starts here.','Tap the logo to begin · AI photo host');return;}
   if(ready||connecting)return;
-  const setup=++sentrySetup;sentryEnabling=true;
+  sentryWanted=true;const setup=++sentrySetup;sentryEnabling=true;
   $('sentryToggle').textContent='Stop sentry setup';
   try{
     // Unlock sound once during the operator gesture; guests need no tap.
@@ -91,7 +91,7 @@ $('sentryToggle').addEventListener('click',async()=>{
     const permission=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
     permission.getTracks().forEach(t=>t.stop());
     if(setup!==sentrySetup)return;
-    await sentry.enable();
+    await sentry.enable(cameraStream);
   }catch(error){
     if(setup===sentrySetup){stopSentry();$('sentryToggle').textContent=homeText('enableSentry');text('Camera sentry needs permission.',error.name==='NotAllowedError'?'Allow microphone and camera access, then enable sentry again.':'Tap Enable camera sentry to try again.');}
   }finally{if(setup===sentrySetup)sentryEnabling=false;}
@@ -297,7 +297,7 @@ function cleanup(message='Tap the logo to begin · AI photo host'){
   toolLoop.clear();engine.reset();hidePicture();$('countdown').hidden=true;
   $('end').hidden=true;$('audioResume').hidden=true;
   face.setAttribute('aria-label','Start talking to your AI photo host');
-  phase('idle');if(!document.hidden)void openHomeCamera();text(sentry.enabled?'Looking good starts here.':'Your Spanish story starts here.',sentry.enabled?'Camera sentry is on · Walk into view to begin.':message);
+  phase('idle');if(!document.hidden)void openHomeCamera().then(startDefaultSentry);text(sentry.enabled?'Looking good starts here.':'Your Spanish story starts here.',sentry.enabled?'Camera sentry is on · Walk into view to begin.':message);
 }
 function end({idle=false}={}){
   if(ending)return;
@@ -319,7 +319,7 @@ async function begin({sentryGreeting=null}={}){
   connecting=true;const epoch=++sessionEpoch;captions.clear();
   phase('connecting');text('Hello, adventurer.',sentryGreeting?'Your AI photo host is joining you.':'Allow your microphone to meet your host.');
   try{
-    context=sentryAudioContext||new AudioContext();await context.resume();
+    context=sentryAudioContext||new AudioContext();void context.resume().catch(()=>{});if(context.state!=='running')$('audioResume').hidden=false;
     requestController=new AbortController();
     const connection=new RTCPeerConnection();peer=connection;
     connection.addEventListener('track',event=>{
@@ -378,13 +378,13 @@ async function begin({sentryGreeting=null}={}){
   }catch(error){
     if(epoch!==sessionEpoch)return;
     const message=error.name==='NotAllowedError'?'Please allow microphone access, then tap the logo again.':error.message;
-    if(error.code==='VOICE_BILLING_REQUIRED')stopSentry();
+    if(error.code==='VOICE_BILLING_REQUIRED'){sentryWanted=false;stopSentry();}
     cleanup(message);phase('error');text(error.code==='VOICE_BILLING_REQUIRED'?'Your host is unavailable.':'Let’s get connected.',message);
   }
 }
-face.addEventListener('click',()=>{if(!ready)begin();else if(audio.paused)audio.play().catch(()=>{$('audioResume').hidden=false;});});
+face.addEventListener('click',()=>{if(!ready)begin();else if(audio.paused){void context?.resume().catch(()=>{});audio.play().catch(()=>{$('audioResume').hidden=false;});}});
 $('end').addEventListener('click',end);
-$('audioResume').addEventListener('click',async()=>{if(!ready&&engine.phase==='generating'){await generationSpeech.unlock();void generationSpeech.start(engine.destination);$('audioResume').hidden=true;}else audio.play().then(()=>{$('audioResume').hidden=true;}).catch(()=>{});});
+$('audioResume').addEventListener('click',async()=>{if(!ready&&engine.phase==='generating'){await generationSpeech.unlock();void generationSpeech.start(engine.destination);$('audioResume').hidden=true;}else {void context?.resume().catch(()=>{});audio.play().then(()=>{$('audioResume').hidden=true;}).catch(()=>{});}});
 $('emailOpen').addEventListener('click',async()=>{touch();if(engine.phase==='result')await photoEmail.confirm();});
 $('guestNameInput').addEventListener('input',()=>{photoEmail.editName($('guestNameInput').value);touch();});
 $('marketingOptIn').addEventListener('change',()=>{photoEmail.chooseMarketing($('marketingOptIn').checked);touch();});
@@ -437,9 +437,9 @@ document.addEventListener('keydown',e=>{
   }else if(e.key==='Escape')end();
 });
 window.addEventListener('pagehide',()=>{pageLeaving=true;stopSentry();send({type:'session.close'});cleanup();});
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&document.body.dataset.phase==='idle')void openHomeCamera();if(!$('emailPanel').hidden){if(document.hidden)guestIdle.setBusy(true);else syncIdle();return;}if(document.hidden){stopSentry();end();}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&document.body.dataset.phase==='idle')void openHomeCamera().then(startDefaultSentry);if(!$('emailPanel').hidden){if(document.hidden)guestIdle.setBusy(true);else syncIdle();return;}if(document.hidden){stopSentry();end();}});
 function startTouchPhoto(){
- if(!ready){stopSentry();send({type:'session.close'});cleanup();touchMode=true;}
+ if(!ready){sentry.consume();send({type:'session.close'});cleanup();touchMode=true;}
  else {clearEmail();engine.reset();}
  void generationSpeech.unlock();
  guestIdle.start(150000);void touchAction('take_photo',{confirmed:true,style:''});
@@ -474,4 +474,9 @@ for(const button of document.querySelectorAll('.destination-pick'))button.addEve
  touchAction('set_destination',{destinationId:button.dataset.destination});
 });
 touchUI.render();
-void openHomeCamera();
+void openHomeCamera().then(startDefaultSentry);
+
+async function startDefaultSentry(){
+ if(!sentryWanted||pageLeaving||document.hidden||sentry.enabled||sentryEnabling||touchMode||ready||connecting||!cameraStream)return;
+ await sentry.enable(cameraStream);
+}
