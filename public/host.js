@@ -42,6 +42,7 @@ const wait=(ms,signal)=>new Promise((resolve,reject)=>{
 });
 function text(title,hint=''){ $('headline').textContent=title;$('hint').textContent=hint; }
 function phase(value){
+ if(value!=='generating')$('generationStatus').hidden=true;
  if(value!=='listening'){peaceArmed=false;peaceEpoch++;peace?.stop();}
  if(value!=='generating'){ $('emailPanel').hidden=true;document.body.dataset.emailOpen='false';if($('emailPanel').contains(document.activeElement))document.activeElement.blur();captions.placeIn(null);}
  queueMicrotask(()=>touchUI?.render());if(document.body.dataset.phase!==value)captions.clear();document.body.dataset.phase=value;contactKeyboardLayout();placeHomeLogo();homeLanguage.refresh();$('sentryToggle').disabled=!sentry.enabled&&!['idle','error'].includes(value);}
@@ -229,6 +230,7 @@ const engine=new TurespanaEngine({
     return await brandPortrait(blob,destinations[engine.destination]);
   },
   onChange:(state,image)=>{
+    $('generationStatus').hidden=state.phase!=='generating';
     syncIdle();
     if(state.phase!=='generating')stopEventTalk();
     hidePicture();

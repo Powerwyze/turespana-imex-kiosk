@@ -312,3 +312,7 @@ body[data-phase=generating] #stage>#hostCaptions{top:74px!important;bottom:auto!
 body:not([data-phase=generating]) #emailPanel{display:none!important}
 body[data-phase=generating] #emailPanel{background:rgba(5,18,40,.90)}
 body[data-phase=generating] #destinationExamples{display:none}
+
+/* Non-blocking video status; never covers contact inputs. */
+#generationStatus{position:fixed;top:max(14px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:35;padding:12px 22px;border-radius:999px;background:rgba(20,25,29,.88);color:#fff;border:1px solid #ffffff55;font:600 clamp(16px,2.2vw,25px)/1.25 system-ui,sans-serif;white-space:nowrap;pointer-events:none;box-shadow:0 4px 24px #0004}
+#generationStatus[hidden]{display:none}

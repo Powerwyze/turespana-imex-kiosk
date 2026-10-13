@@ -280,7 +280,7 @@ try{
   assert.equal(await page.locator('#camera').evaluate(e=>e.srcObject===null),true);
   await fs.writeFile('artifacts/countdown-report.json',JSON.stringify({...timing,duration},null,2));
   await say('While your portrait develops, enjoy the Spain tourism experience with other IMEX visitors!');
-  await page.screenshot({path:'artifacts/host-generating-portrait.png'});assert.equal(generations,1);
+  assert.equal(await page.locator('#generationStatus').isVisible(),true);assert.equal(await page.locator('#generationStatus').textContent(),'Image is generating');await page.screenshot({path:'artifacts/host-generating-portrait.png'});assert.equal(generations,1);
   await tool('take_photo',{confirmed:true,style:''});await page.waitForTimeout(100);assert.equal(generations,1);
   // Full contact form is available during generation only.
   await tool('show_email_confirmation',{email:'alex@exampl.com'});
