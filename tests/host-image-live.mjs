@@ -1,4 +1,4 @@
-if(process.env.APP_TEST_IMAGE_1)process.env.APP_TEST_IMAGE_B64=[1,2,3,4,5].map(i=>process.env['APP_TEST_IMAGE_'+i]||'').join('');
+const privateTestImageB64=process.env.APP_TEST_IMAGE_B64||[1,2,3,4,5].map(i=>process.env['APP_TEST_IMAGE_'+i]||'').join('');
 // One opt-in real image request using the repository's approved reference as a synthetic one-person source.
 import { chromium } from 'playwright';
 import fs from 'node:fs/promises';
@@ -10,7 +10,7 @@ try{
   const context=await browser.newContext();const page=await context.newPage();
   await page.goto(target);
   const origin=new URL(page.url()).origin;
-  const input=process.env.APP_TEST_IMAGE_B64?Buffer.from(process.env.APP_TEST_IMAGE_B64,'base64'):await fs.readFile('tests/fixtures/sentry-person.jpg');
+  const input=privateTestImageB64?Buffer.from(privateTestImageB64,'base64'):await fs.readFile('tests/fixtures/sentry-person.jpg');
   // Exercise Chromium's same-origin fetch path, exactly as the kiosk does.
   const result=await page.evaluate(async source=>{
     const data=Uint8Array.from(atob(source),c=>c.charCodeAt(0));
