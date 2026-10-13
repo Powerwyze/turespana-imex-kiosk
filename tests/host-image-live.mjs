@@ -9,7 +9,7 @@ try{
   const context=await browser.newContext();const page=await context.newPage();
   await page.goto(target);
   const origin=new URL(page.url()).origin;
-  const input=await fs.readFile('tests/fixtures/sentry-person.jpg');
+  const input=process.env.APP_TEST_IMAGE_B64?Buffer.from(process.env.APP_TEST_IMAGE_B64,'base64'):await fs.readFile('tests/fixtures/sentry-person.jpg');
   // Exercise Chromium's same-origin fetch path, exactly as the kiosk does.
   const result=await page.evaluate(async source=>{
     const data=Uint8Array.from(atob(source),c=>c.charCodeAt(0));
@@ -17,7 +17,7 @@ try{
     const response=await fetch(location.origin==='https://turespana-imex-kiosk.powerwyze-2010.chatgpt.site'?'https://turespana-imex-kiosk.vercel.app/api/host-photo':'/api/host-photo',{method:'POST',body:form,signal:AbortSignal.timeout(295000)});
     if(!response.ok)return {status:response.status,error:await response.text()};
     const bytes=new Uint8Array(await response.arrayBuffer());let binary='';for(const byte of bytes)binary+=String.fromCharCode(byte);
-    return {status:response.status,type:response.headers.get('content-type'),pipeline:response.headers.get('x-portrait-pipeline'),attempts:Number(response.headers.get('x-portrait-attempts')),model:response.headers.get('x-image-model'),base64:btoa(binary)};
+    return {status:response.status,fallback:response.headers.get('x-portrait-fallback'),type:response.headers.get('content-type'),pipeline:response.headers.get('x-portrait-pipeline'),attempts:Number(response.headers.get('x-portrait-attempts')),model:response.headers.get('x-image-model'),base64:btoa(binary)};
   },input.toString('base64'));
   if(result.status!==200){console.log('Image smoke failed:',JSON.stringify(result));throw new Error('Image generation or guest verification did not succeed.');}
   assert.match(result.type,/^image\//);assert.ok(result.attempts>=1&&result.attempts<=3);
@@ -27,5 +27,5 @@ try{
   const dimensions=await page.evaluate(async base64=>{
     const image=new Image();image.src='data:image/jpeg;base64,'+base64;await image.decode();return {width:image.naturalWidth,height:image.naturalHeight};
   },bytes.toString('base64'));
-  await fs.writeFile('artifacts/live-image-report.json',JSON.stringify({status:result.status,pipeline:result.pipeline,model:result.model,attempts:result.attempts,...dimensions},null,2));console.log('Real image generation and independent guest check passed:',JSON.stringify({attempts:result.attempts,...dimensions}));
+  await fs.writeFile('artifacts/live-image-report.json',JSON.stringify({status:result.status,pipeline:result.pipeline,model:result.model,attempts:result.attempts,fallback:result.fallback,...dimensions},null,2));console.log('Real image generation and independent guest check passed:',JSON.stringify({attempts:result.attempts,fallback:result.fallback,...dimensions}));
 }finally{await browser.close();}

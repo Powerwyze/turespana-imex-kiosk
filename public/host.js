@@ -227,7 +227,7 @@ const engine=new TurespanaEngine({
     const blob=await res.blob();
     if(!blob.size||!blob.type.startsWith('image/'))throw new Error('No picture was returned. Ask me to try again.');
     // Decode before reporting success or revealing the image.
-    return await brandPortrait(blob,destinations[engine.destination]);
+    return await brandPortrait(blob,destinations[engine.destination],{original:res.headers.get('x-portrait-fallback')==='original'});
   },
   onChange:(state,image)=>{
     $('generationStatus').hidden=state.phase!=='generating';

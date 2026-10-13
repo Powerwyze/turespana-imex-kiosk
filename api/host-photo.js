@@ -3,7 +3,7 @@ const SITE_ORIGIN='https://turespana-imex-kiosk.powerwyze-2010.chatgpt.site';
 function json(body,status){return new Response(JSON.stringify(body),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store'}});}
 function cors(req){
   const origin=req.headers.get('origin');
-  return origin===SITE_ORIGIN?{'Access-Control-Allow-Origin':origin,'Vary':'Origin','Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type','Access-Control-Expose-Headers':'X-Portrait-Pipeline, X-Image-Model','Access-Control-Max-Age':'600'}:{};
+  return origin===SITE_ORIGIN?{'Access-Control-Allow-Origin':origin,'Vary':'Origin','Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type','Access-Control-Expose-Headers':'X-Portrait-Pipeline, X-Image-Model, X-Portrait-Fallback','Access-Control-Max-Age':'600'}:{};
 }
 export function OPTIONS(req){return new Response(null,{status:req.headers.get('origin')===SITE_ORIGIN?204:403,headers:cors(req)});}
 export async function POST(req){
@@ -17,7 +17,7 @@ export async function POST(req){
     if(fd.getAll('guestCount').length>1||typeof count!=='string'||!/^[123]$/.test(count))throw new PortraitError('INVALID_GUEST_COUNT','Choose 1, 2, or 3 people.',400);
     if(fd.getAll('image').length!==1)throw new PortraitError('INVALID_PHOTO','Please take a new photo.',400);
     const result=await generatePortrait({file:fd.get('image'),destinationId:fd.get('destinationId'),guestCount:Number(count),style:String(fd.get('style')||'').slice(0,600),signal:req.signal});
-    response=new Response(result.bytes,{status:200,headers:{'Content-Type':result.mimeType,'Cache-Control':'no-store','X-Portrait-Pipeline':result.pipeline,'X-Image-Model':result.model,'X-Portrait-Attempts':String(result.attempts)}});
+    response=new Response(result.bytes,{status:200,headers:{'Content-Type':result.mimeType,'Cache-Control':'no-store','X-Portrait-Pipeline':result.pipeline,'X-Image-Model':result.model,'X-Portrait-Attempts':String(result.attempts),'X-Portrait-Fallback':result.fallback||'none'}});
   }catch(e){
     response=e instanceof PortraitError?json({code:e.code,error:e.message},e.status):json({code:'GENERATION_UNAVAILABLE',error:'The portrait could not be completed. Your original photo is saved for retry.'},503);
   }
