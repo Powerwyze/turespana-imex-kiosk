@@ -316,3 +316,19 @@ body[data-phase=generating] #destinationExamples{display:none}
 /* Non-blocking video status; never covers contact inputs. */
 #generationStatus{position:fixed;top:max(14px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:35;padding:12px 22px;border-radius:999px;background:rgba(20,25,29,.88);color:#fff;border:1px solid #ffffff55;font:600 clamp(16px,2.2vw,25px)/1.25 system-ui,sans-serif;white-space:nowrap;pointer-events:none;box-shadow:0 4px 24px #0004}
 #generationStatus[hidden]{display:none}
+
+/* Keep generation speech centered over the film, with no clipped outer box. */
+body[data-phase=generating] #stage>#hostCaptions{
+ position:fixed!important;top:50%!important;bottom:auto!important;left:50%!important;right:auto!important;
+ transform:translate(-50%,-50%)!important;width:min(92vw,960px)!important;
+ max-height:none;overflow:visible;box-sizing:border-box;padding:clamp(14px,2.4vw,28px);
+ z-index:13;pointer-events:auto;
+}
+body[data-phase=generating] #stage>#hostCaptions:not([hidden]){display:block}
+body[data-phase=generating] #hostCaptionText{
+ font-size:clamp(22px,3vw,40px);line-height:1.4;max-height:min(44dvh,11.2em);
+ overflow-y:auto;overflow-x:hidden;white-space:normal;overflow-wrap:anywhere;
+ scrollbar-width:thin;pointer-events:auto;padding:0 4px;
+}
+body[data-phase=generating] #emailPanel #hostCaptions{max-height:none;overflow:visible;pointer-events:auto}
+body[data-phase=generating] #emailPanel #hostCaptionText{font-size:clamp(18px,2.3vw,28px);max-height:min(25dvh,7em)}

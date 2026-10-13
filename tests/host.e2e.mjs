@@ -313,6 +313,15 @@ try{
   await tool('show_email_confirmation',{email:'other@example.com'});
   assert.equal(await page.locator('#emailPanel').isVisible(),false,'Voice host cannot reopen a confirmed contact form during generation');
   assert.equal(await page.locator('#emailInput').inputValue(),'alex+p@gmail.com','Late voice tool preserves confirmed recipient');
+  // Generation captions stay centered, fully inside the viewport, including landscape.
+  await say('Spain offers extraordinary art, architecture and regional food. '.repeat(8)+'Ask Lola about your destination.');
+  for(const [label,width,height] of [['kiosk',1080,1920],['phone',390,844],['landscape',844,390]]){
+    await page.setViewportSize({width,height});await page.waitForTimeout(150);
+    const c=await page.locator('#hostCaptions').evaluate(e=>{const r=e.getBoundingClientRect(),t=document.querySelector('#hostCaptionText'),q=t.getBoundingClientRect();return {visible:getComputedStyle(e).display!=='none',center:Math.abs((r.top+r.bottom)/2-innerHeight/2),inside:r.top>=0&&r.bottom<=innerHeight&&r.left>=0&&r.right<=innerWidth,textInside:q.top>=r.top&&q.bottom<=r.bottom,latest:t.scrollHeight-t.clientHeight-t.scrollTop<2};});
+    assert.ok(c.visible&&c.center<2&&c.inside&&c.textInside&&c.latest,'Readable centered generation captions '+label+': '+JSON.stringify(c));
+    await page.screenshot({path:'artifacts/host-generation-captions-'+label+'.png'});
+  }
+  await page.setViewportSize({width:1080,height:1920});
   release();await page.waitForFunction(()=>document.body.dataset.phase==='result');
   // Result area is separate from large actions/captions at kiosk and mobile sizes.
   for(const [label,width,height] of [['kiosk',1080,1920],['phone',390,844],['compact',390,667]]){
