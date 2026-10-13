@@ -255,9 +255,7 @@ try{
   await tool('set_guest_count',{count:2});await page.waitForTimeout(100);
   assert.equal(await page.evaluate(()=>window.__videoRequests),warmupRequestBaseline+1,'Camera warms before readiness.');
   assert.equal(await page.locator('#viewfinder').isVisible(),false);
-  await page.evaluate(()=>window.__channel.emit({type:'session.input_transcript.delta',delta:'okay wait'}));
-  await page.waitForTimeout(1200);assert.equal(await page.locator('#countdown').isVisible(),false);
-  await page.evaluate(()=>window.__channel.emit({type:'session.input_transcript.delta',delta:'Okay'}));
+  await tool('take_photo',{confirmed:true,style:''},true);
   await page.waitForFunction(()=>document.body.dataset.phase==='preparing');
   assert.equal(await page.locator('#countdown').isVisible(),false);
   assert.equal(await page.locator('#viewfinder').isVisible(),false);
@@ -426,6 +424,14 @@ try{
   // Still exercise the explicit voice end tool on a new session.
   await page.locator('#face').click();await page.waitForFunction(()=>document.body.dataset.phase==='listening');
   assert.equal(await page.locator('#hostCaptionText').textContent(),'','New guest starts with no old captions.');
+  await tool('set_guest_count',{count:1});await tool('set_destination',{destinationId:'barcelona'});
+  await page.locator('[data-touch="capture"]').waitFor({state:'visible'});
+  await page.evaluate(()=>window.__channel.emit({type:'session.input_transcript.delta',delta:'okay wait'}));
+  await page.waitForTimeout(1200);assert.equal(await page.locator('#countdown').isVisible(),false,'Negated reply cannot start capture');
+  await page.evaluate(()=>window.__channel.emit({type:'session.input_transcript.delta',delta:'Okay'}));
+  await page.waitForFunction(()=>document.body.dataset.phase==='countdown');
+  assert.equal(await page.locator('#viewfinder').isVisible(),true,'Local voice readiness starts the visible countdown without a backend tool');
+
   await tool('end_visit',{confirmed:true});await page.waitForFunction(()=>document.body.dataset.phase==='idle');
   assert.equal(await page.locator('#camera').evaluate(e=>e.srcObject===null),true);
     assert.equal(await page.locator('#emailInput').inputValue(),'');assert.equal(await page.locator('#emailPanel').isVisible(),false);
