@@ -13,9 +13,15 @@ jobs:
           node-version: '24'
       - run: npm install --no-save --package-lock=false playwright@1.56.1
       - run: npx playwright install --with-deps chromium
-      - run: node tests/host-image-live.mjs
+      - run: |
+          test -n "$APP_TEST_IMAGE_1"
+          node tests/host-image-live.mjs
         env:
-          APP_TEST_IMAGE_B64: ${{ secrets.APP_TEST_IMAGE_B64 }}
+          APP_TEST_IMAGE_1: ${{ secrets.APP_TEST_IMAGE_1 }}
+          APP_TEST_IMAGE_2: ${{ secrets.APP_TEST_IMAGE_2 }}
+          APP_TEST_IMAGE_3: ${{ secrets.APP_TEST_IMAGE_3 }}
+          APP_TEST_IMAGE_4: ${{ secrets.APP_TEST_IMAGE_4 }}
+          APP_TEST_IMAGE_5: ${{ secrets.APP_TEST_IMAGE_5 }}
           TURESPANA_HOST_PREVIEW_URL: https://turespana-imex-kiosk.vercel.app
       - name: Print safe verification report only
         run: cat artifacts/live-image-report.json
