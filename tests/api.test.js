@@ -56,7 +56,7 @@ for (const count of [1, 2, 3]) {
     assert.equal(payload.images.length, 1);
     assert.match(payload.prompt,/REGION FOR THIS TRANSFORMATION: Madrid/);
     assert.match(payload.prompt,/full-body or three-quarter/);
-    assert.match(payload.prompt,/Never deliver a headshot, chest-up or waist-up crop/);
+    assert.match(payload.prompt,/Do not force hands or unseen anatomy into view/);
     assert.equal(payload.images[0].image_url, "data:image/jpeg;base64,"+Buffer.from("synthetic-source").toString("base64"));
     assert.ok(payload.prompt.includes(masterTransformationPrompt));
     assert.match(payload.prompt,/IDENTITY IS THE HIGHEST PRIORITY/);
