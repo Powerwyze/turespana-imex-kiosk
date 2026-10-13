@@ -102,6 +102,7 @@ function startEventTalk(){
     note('The image is still generating. Briefly talk about '+topic+' using only your supplied event facts. Do not invent destination facts. Leave room for questions. Do not repeat yourself or promise timing.',true);
   },30000);
 }
+let pendingContactImage=null;
 const photoEmail=new PhotoEmail({
   deliver:async({email,name,marketingOptIn,consentVersion,image,signal})=>{
     const base64=await new Promise((resolve,reject)=>{
@@ -113,6 +114,7 @@ const photoEmail=new PhotoEmail({
     if(!response.ok||!result.ok)throw new Error('Delivery was not confirmed.');
   },
   onChange:state=>{
+    if(pendingContactImage&&state.hasName&&validEmail(photoEmail.draft))revealContactResult();
     syncIdle();queueMicrotask(()=>touchUI?.render());
     const open=document.body.dataset.phase==='generating'&&state.status==='review';
     $('emailPanel').hidden=!open;document.body.dataset.emailOpen=String(open);
@@ -120,7 +122,6 @@ const photoEmail=new PhotoEmail({
     const sending=state.status==='sending';
     $('emailInput').disabled=sending;$('guestNameInput').disabled=sending;$('marketingOptIn').disabled=sending;
     $('marketingOptIn').checked=state.marketingOptIn;
-    $('emailCancel').disabled=sending;
     document.querySelectorAll('#emailKeyboard button,#emailDomains button').forEach(b=>b.disabled=sending);
     $('emailConfirm').disabled=state.queued||sending||!validEmail($('emailInput').value)||!validName($('guestNameInput').value);
     $('emailConfirm').textContent=state.queued?'Confirmed · Waiting for photo':'Confirm & email when ready';
@@ -133,13 +134,16 @@ const photoEmail=new PhotoEmail({
     $('emailOpen').textContent=state.status==='sending'?'Sending…':state.status==='sent'?'Email sent':state.status==='error'?'Retry email':'Email my photo';
   }
 });
+function revealContactResult(){
+ const image=pendingContactImage;if(!image)return;pendingContactImage=null;hidePicture();phase('result');pictureUrl=URL.createObjectURL(image);picture.src=pictureUrl;picture.hidden=false;text('Your Spanish photo is ready.','Confirm to email your photo.');photoEmail.emit();if(ready)note('The guest completed their name and email. Reveal the checked photo now. Email still requires their confirmation tap; do not claim it was sent.',true);
+}
 function reviewEmail(value){
-  if(engine.phase!=='generating')return {error:'Contact entry is available only while the image generates. Do not ask for contact details after the reveal.'};
+  if(engine.phase!=='generating'&&!pendingContactImage)return {error:'Contact entry is available only while the image generates. Do not ask for contact details after the reveal.'};
   const result=photoEmail.review(value||photoEmail.draft);
   if(result.shown){$('emailInput').value=photoEmail.draft;$('emailConfirm').disabled=!validEmail(photoEmail.draft)||!validName($('guestNameInput').value);activeContactInput=validName($('guestNameInput').value)?$('emailInput'):$('guestNameInput');activeContactInput.focus({preventScroll:true});}
   return result;
 }
-function clearEmail(){photoEmail.reset();$('emailInput').value='';$('emailOpen').hidden=true;$('emailToast').hidden=true;}
+function clearEmail(){pendingContactImage=null;photoEmail.reset();$('emailInput').value='';$('emailOpen').hidden=true;$('emailToast').hidden=true;}
 function hideCountdown(){$('countdown').hidden=true;$('viewfinder').hidden=true;}
 function stopCamera(){cameraEpoch++;cameraPreparation=null;cameraStream?.getTracks().forEach(t=>t.stop());cameraStream=null;camera.srcObject=null;hideCountdown();}
 function hidePicture(){picture.hidden=true;picture.removeAttribute('src');if(pictureUrl)URL.revokeObjectURL(pictureUrl);pictureUrl=null;}
@@ -223,12 +227,15 @@ const engine=new TurespanaEngine({
     syncIdle();
     if(state.phase!=='generating')stopEventTalk();
     hidePicture();
-    phase(state.phase);
-    if(state.phase==='generating'&&lastPhase!=='generating'){photoEmail.beginGeneration();contactKeyboardLayout();}
+    const waitingContact=state.phase==='result'&&image&&(!validName(photoEmail.name)||!validEmail(photoEmail.draft));
+    pendingContactImage=waitingContact?image:null;
+    phase(waitingContact?'generating':state.phase);
+    if(state.phase==='generating'&&lastPhase!=='generating'){$('emailTitle').textContent='Your image is generating…';$('emailHelp').textContent='Enter your name and email now. Confirm to email your photo when it is ready.';photoEmail.beginGeneration();contactKeyboardLayout();}
     else if(state.phase==='result')photoEmail.setImage(image);
     else if(state.phase!=='generating')clearEmail();
-    if(state.phase==='result'&&image){pictureUrl=URL.createObjectURL(image);picture.src=pictureUrl;picture.hidden=false;$('emailOpen').hidden=!['sending','sent'].includes(photoEmail.status)&&(!['review','error'].includes(photoEmail.status)||!validEmail(photoEmail.draft)||!validName(photoEmail.name));}
-    if(state.phase==='preparing')text('Getting the camera ready.','Your countdown starts as soon as the camera is ready.');
+    if(state.phase==='result'&&image&&!waitingContact){pictureUrl=URL.createObjectURL(image);picture.src=pictureUrl;picture.hidden=false;$('emailOpen').hidden=!['sending','sent'].includes(photoEmail.status)&&(!['review','error'].includes(photoEmail.status)||!validEmail(photoEmail.draft)||!validName(photoEmail.name));}
+    if(waitingContact){text('Your photo is ready.','Enter your name and email to reveal it.');$('emailTitle').textContent='Your photo is ready';$('emailHelp').textContent='Enter your name and a valid email to continue.';}
+    else if(state.phase==='preparing')text('Getting the camera ready.','Your countdown starts as soon as the camera is ready.');
     else if(state.phase==='countdown')text('Look toward the camera.','Check your framing in the top-left preview.');
     else if(state.phase==='generating')text('A little Spanish magic.','Your host is still here. Feel free to talk.');
     else if(state.phase==='error')text('Let’s try that again.',state.error);
@@ -238,7 +245,8 @@ const engine=new TurespanaEngine({
     if(ready){
       note('Booth state: '+JSON.stringify(state));
       if(state.phase!==lastPhase){
-        if(state.phase==='result')note('The generated photo has passed the guest check, decoded successfully, and is now displayed. Stop the event explanation. Tell the visitor the photo is ready, do not ask for name or email and do not open the contact form. If the guest confirmed delivery during generation, it is now being attempted. Otherwise, a compact Email my photo button is available only for complete saved details. Do not claim delivery until the app confirms it.',true);
+        if(waitingContact)note('The checked photo is ready but is not revealed. The visitor must enter a name and valid email to continue. Ask them to complete the visible contact form; do not claim it was sent or revealed.',true);
+        else if(state.phase==='result')note('The generated photo has passed the guest check, decoded successfully, and is now displayed. Stop the event explanation. Tell the visitor the photo is ready, do not ask for name or email and do not open the contact form. If the guest confirmed delivery during generation, it is now being attempted. Otherwise, a compact Email my photo button is available only for complete saved details. Do not claim delivery until the app confirms it.',true);
         if(state.phase==='error')note('The photo workflow failed: '+state.error+' Do not retry unless the visitor asks.',true);
         if(state.phase==='countdown')send({type:'session.instructions.append',delegation_id:null,content:'The camera is ready and the visible five-second countdown has started now. Stay quiet until the app reports generating. Do not say or count any numbers; the app plays synchronized countdown sounds.'});
         if(state.phase==='generating')startEventTalk();
@@ -359,7 +367,6 @@ face.addEventListener('click',()=>{if(!ready)begin();else if(audio.paused)audio.
 $('end').addEventListener('click',end);
 $('audioResume').addEventListener('click',()=>{audio.play().then(()=>{$('audioResume').hidden=true;}).catch(()=>{});});
 $('emailOpen').addEventListener('click',async()=>{touch();if(engine.phase==='result')await photoEmail.confirm();});
-$('emailCancel').addEventListener('click',()=>{photoEmail.cancel();$('emailInput').value='';$('emailOpen').hidden=true;note('The visitor skipped email. Do not ask for their email again.');});
 $('guestNameInput').addEventListener('input',()=>{photoEmail.editName($('guestNameInput').value);touch();});
 $('marketingOptIn').addEventListener('change',()=>{photoEmail.chooseMarketing($('marketingOptIn').checked);touch();});
 for(const id of ['guestNameInput','emailInput'])$(id).addEventListener('focus',()=>{activeContactInput=$(id);$('emailDomains').hidden=!contactKeyboardOpen||id!=='emailInput';});
@@ -401,7 +408,7 @@ document.addEventListener('pointerdown',touch);
 document.addEventListener('keydown',touch);
 document.addEventListener('keydown',e=>{
   if(!$('emailPanel').hidden){
-    if(e.key==='Escape'){e.preventDefault();if(photoEmail.status!=='sending')$('emailCancel').click();}
+    if(e.key==='Escape'){e.preventDefault();$('emailStatus').textContent='Enter your name and a valid email to continue.';}
     if(e.key==='Tab'){
       const enabled=[...$('emailPanel').querySelectorAll('button:not(:disabled),input:not(:disabled),a[href]')];
       const first=enabled[0],last=enabled.at(-1);
