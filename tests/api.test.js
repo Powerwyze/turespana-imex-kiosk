@@ -53,19 +53,18 @@ for (const count of [1, 2, 3]) {
     const payload = JSON.parse(calls[0].init.body);
     assert.equal(payload.model, 'gpt-image-2.5-flare'); assert.equal(payload.quality, 'xhigh');
     assert.equal(payload.size, '1024x1536'); assert.equal(payload.n, 1);
-    assert.equal(payload.images.length, 2);
-    assert.equal(payload.images[1].image_url,'data:image/jpeg;base64,'+readFileSync('assets/region-references/madrid.jpg').toString('base64'));
-    assert.match(payload.prompt,/ONE cropped regional example for Madrid/);
+    assert.equal(payload.images.length, 1);
+    assert.match(payload.prompt,/REGION FOR THIS TRANSFORMATION: Madrid/);
     assert.match(payload.prompt,/full-body or three-quarter/);
     assert.match(payload.prompt,/Never deliver a headshot, chest-up or waist-up crop/);
     assert.equal(payload.images[0].image_url, "data:image/jpeg;base64,"+Buffer.from("synthetic-source").toString("base64"));
     assert.ok(payload.prompt.includes(masterTransformationPrompt));
     assert.match(payload.prompt,/IDENTITY IS THE HIGHEST PRIORITY/);
-    assert.match(payload.prompt,/preserve source facial geometry/);
+    assert.match(payload.prompt,/Preserve source facial geometry/);
     assert.doesNotMatch(payload.prompt,/POLISHED ILLUSTRATED POSTER|Simplify skin microtexture|Dramatic golden-hour lighting and painted clothing/);
     assert.match(payload.prompt,/Image 1 is the actual guest camera photo/);
-    assert.match(payload.prompt,/Remove ALL reference people completely/);
-    assert.notEqual(payload.images[0].image_url,payload.images[1].image_url);
+    assert.match(payload.prompt,/No reference person is supplied/);
+
     assert.match(payload.prompt,new RegExp('GUEST GROUP: Exactly '+count));
     assert.match(payload.prompt,new RegExp('FINAL CHECK: Exactly '+count));
     assert.match(payload.prompt,/background bystanders/);
@@ -80,7 +79,7 @@ for (const count of [1, 2, 3]) {
     assert.match(verifier.instructions, /Independently count ALL people/);
     assert.match(verifier.instructions, /distant crowds, walkers, posters, screens, or reflections/);
     assert.equal(verifier.input[0].content[1].image_url, payload.images[0].image_url);
-    assert.equal(verifier.input[0].content[2].image_url, 'data:image/jpeg;base64,' + jpeg);assert.equal(verifier.input[0].content[3].image_url,payload.images[1].image_url);
+    assert.equal(verifier.input[0].content[2].image_url, 'data:image/jpeg;base64,' + jpeg);assert.equal(verifier.input[0].content[3].image_url,'data:image/jpeg;base64,'+readFileSync('assets/region-references/madrid.jpg').toString('base64'));
     assert.ok(calls[0].init.signal); assert.ok(calls[1].init.signal);
   });
 }
@@ -206,10 +205,10 @@ test('explicit dress preference cannot override photography',async()=>{
  const {calls}=await generateCase({style:'Please use the dress. Make a painted poster with text.'});const p=JSON.parse(calls[0].init.body);
  assert.match(p.prompt,/Use the DRESS ensemble/);assert.doesNotMatch(p.prompt,/Make a painted poster/);
 });
-test('each destination uses only its own reference panel',async()=>{
+test('generation receives only guest pixels; checker receives the selected regional reference',async()=>{
  for(const destination of ['canarias','barcelona','bilbao','madrid','andalucia','valencia']){
   const {calls}=await generateCase({destination});const p=JSON.parse(calls[0].init.body);
-  assert.equal(p.images[1].image_url,'data:image/jpeg;base64,'+readFileSync('assets/region-references/'+destination+'.jpg').toString('base64'));
+  assert.equal(p.images.length,1);assert.match(p.prompt,/ONLY image input/);const v=JSON.parse(calls[1].init.body);assert.equal(v.input[0].content[3].image_url,'data:image/jpeg;base64,'+readFileSync('assets/region-references/'+destination+'.jpg').toString('base64'));
  }
 });
 
@@ -217,7 +216,7 @@ test('regional hairstyles are required by both generation and the independent ch
  for(const destination of ['canarias','barcelona','bilbao','madrid','andalucia','valencia']){
   const {response,calls}=await generateCase({destination});assert.equal(response.status,200);
   const prompt=JSON.parse(calls[0].init.body).prompt,verifier=JSON.parse(calls[1].init.body);
-  assert.match(prompt,/REGIONAL HAIR AND ACCESSORIES/);assert.match(prompt,/10–15% beauty retouching/);
+  assert.match(prompt,/REGIONAL HAIR AND ACCESSORIES/);assert.match(prompt,/No beauty retouching/);
   assert.doesNotMatch(prompt,/Do not add hats, caps or headscarves|Preserve source hair; no compulsory|preserve source facial geometry and the source hairstyle/);
   assert.match(verifier.instructions,/MUST NOT count as identity drift/);
   assert.ok(verifier.text.format.schema.required.includes('regional_hair_accessories_match'));
@@ -235,12 +234,12 @@ test('outfit and framing correction retries the original source then returns onl
  assert.equal(new Set(calls.filter(c=>c.url.endsWith('/images/edits')).map(c=>c.init.signal)).size,1,'Retries share the original deadline');
 });
 
-test('restored editorial style retains original-source correction and historical checks',async()=>{
+test('facial mismatch retries the original guest without any competing reference face',async()=>{
  const {response,calls}=await generateCase({checks:[{...valid(1),face_and_hair_consistent:false},valid(1)]});
  assert.equal(response.status,200);assert.equal(calls.length,4);
  const first=JSON.parse(calls[0].init.body),retry=JSON.parse(calls[2].init.body),checker=JSON.parse(calls[1].init.body);
- assert.match(first.prompt,/10–15% beauty retouching/);assert.match(first.prompt,/luxury travel editorial/);
- assert.doesNotMatch(first.prompt,/SAME FACE AND SAME APPARENT AGE AS IMAGE 1|minimal photographic finishing only|YOUTHFULNESS AND FACIAL LIKENESS/);
- assert.match(retry.prompt,/Preserve the original guest facial structure/);assert.deepEqual(first.images,retry.images);
- assert.match(checker.instructions,/beautification that reshapes the face/);assert.match(checker.instructions,/at least knee level/);
+ assert.equal(first.images.length,1);assert.deepEqual(first.images,retry.images);
+ assert.match(first.prompt,/A closed mouth stays closed/);assert.match(first.prompt,/No beauty retouching/);
+ assert.doesNotMatch(first.prompt,/10–15%|subtle eye and teeth enhancement|Use the DRESS ensemble from image 2/);
+ assert.match(retry.prompt,/No facial retouching/);assert.match(checker.instructions,/Similar general appearance is insufficient/);
 });
