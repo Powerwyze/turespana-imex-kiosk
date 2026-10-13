@@ -17,7 +17,7 @@ on:
         type: boolean
         default: false
 permissions:
-  contents: read
+  contents: write
 jobs:
   test:
     if: github.event_name != 'push' || !contains(github.event.head_commit.message, 'Bootstrap Turespana')
@@ -55,8 +55,25 @@ jobs:
         env:
           TURESPANA_HOST_PREVIEW_URL: ${{ vars.TURESPANA_HOST_PREVIEW_URL }}
         run: node tests/host-image-live.mjs
+      - name: Save required-contact screenshot in remote review branch
+        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/codex/imex-generation-only-contact'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh auth setup-git
+          mkdir -p docs/review
+          cp artifacts/required-contact-phone.png docs/review/required-contact-phone.png
+          git config user.name 'PowerWyze build'
+          git config user.email 'actions@users.noreply.github.com'
+          git add docs/review
+          if ! git diff --cached --quiet; then
+            git commit -m "Save required Spain contact-entry browser evidence"
+            git pull --rebase origin codex/imex-generation-only-contact
+            git push origin HEAD:codex/imex-generation-only-contact
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
+        continue-on-error: true
         with:
           name: turespana-host-verification
           path: artifacts/

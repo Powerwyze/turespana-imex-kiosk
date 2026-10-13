@@ -543,7 +543,7 @@ try{
   assert.equal(await page.locator('#emailCancel').count(),0,'No Skip button remains');
   release();await page.getByText('Enter your name and a valid email to continue.',{exact:true}).waitFor();
   assert.equal(await page.locator('#picture').isVisible(),false,'A fast result cannot bypass required contact entry');
-  await page.keyboard.press('Escape');assert.equal(await page.locator('#emailPanel').isVisible(),true);
+  await page.keyboard.press('Escape');assert.equal(await page.locator('#emailPanel').isVisible(),true);await page.screenshot({path:'artifacts/required-contact-phone.png'});
   await page.locator('#guestNameInput').fill('Waiting Guest');assert.equal(await page.locator('#picture').isVisible(),false);
   await page.locator('#emailInput').fill('invalid');assert.equal(await page.locator('#picture').isVisible(),false);
   await page.locator('#emailInput').fill('waiting@example.com');
