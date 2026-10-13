@@ -116,7 +116,7 @@ const photoEmail=new PhotoEmail({
   onChange:state=>{
     if(pendingContactImage&&state.confirmed)revealContactResult();
     syncIdle();queueMicrotask(()=>touchUI?.render());
-    const open=document.body.dataset.phase==='generating'&&state.status==='review'&&!state.confirmed;
+    const open=(document.body.dataset.phase==='generating'||(document.body.dataset.phase==='error'&&photoEmail.collecting))&&state.status==='review'&&!state.confirmed;
     $('emailPanel').hidden=!open;document.body.dataset.emailOpen=String(open);
     captions.placeIn(open?$('emailPanel'):null);
     const sending=state.status==='sending';
@@ -150,7 +150,7 @@ function hidePicture(){picture.hidden=true;picture.removeAttribute('src');if(pic
 function touch(){guestIdle.touch();}
 function syncIdle(){
   if((!ready&&!touchMode)||ending)return;
-  guestIdle.setBusy(['preparing','countdown','generating'].includes(engine.phase)||photoEmail.status==='sending'||(pendingContactImage&&!photoEmail.confirmed));
+  guestIdle.setBusy(['preparing','countdown','generating'].includes(engine.phase)||photoEmail.status==='sending'||((pendingContactImage||(engine.phase==='error'&&photoEmail.collecting))&&!photoEmail.confirmed));
 }
 async function ensureCamera(signal){
   if(signal.aborted)throw new DOMException('Cancelled','AbortError');
@@ -230,8 +230,9 @@ const engine=new TurespanaEngine({
     const waitingContact=state.phase==='result'&&image&&!photoEmail.confirmed;
     pendingContactImage=waitingContact?image:null;
     phase(waitingContact?'generating':state.phase);
-    if(state.phase==='generating'&&lastPhase!=='generating'){$('emailTitle').textContent='Your image is generating…';$('emailHelp').textContent='Enter your name and email now. Confirm to email your photo when it is ready.';photoEmail.beginGeneration();contactKeyboardLayout();}
+    if(state.phase==='generating'&&lastPhase!=='generating'){$('emailTitle').textContent='Your image is generating…';$('emailHelp').textContent='Enter your name and email now. Confirm to email your photo when it is ready.';if(lastPhase==='error')photoEmail.resumeGeneration();else photoEmail.beginGeneration();contactKeyboardLayout();}
     else if(state.phase==='result')photoEmail.setImage(image);
+    else if(state.phase==='error'){photoEmail.emit();$('emailTitle').textContent='Finish your details';$('emailHelp').textContent='The photo needs another attempt. Your details stay here until you confirm.';}
     else if(state.phase!=='generating')clearEmail();
     if(state.phase==='result'&&image&&!waitingContact){pictureUrl=URL.createObjectURL(image);picture.src=pictureUrl;picture.hidden=false;$('emailOpen').hidden=!['sending','sent'].includes(photoEmail.status)&&(!['review','error'].includes(photoEmail.status)||!validEmail(photoEmail.draft)||!validName(photoEmail.name));}
     if(waitingContact){text('Your photo is ready.','Finish your name and email, then tap Confirm to reveal it.');$('emailTitle').textContent='Your photo is ready';$('emailHelp').textContent='Enter your name and email, then tap Confirm to continue.';}

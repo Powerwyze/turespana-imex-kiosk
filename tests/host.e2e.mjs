@@ -101,7 +101,9 @@ await page.addInitScript(()=>{
     return getMedia(constraints);
   };
   window.addEventListener('DOMContentLoaded',()=>{
-    window.__countdownTiming={ticks:[],preparing:null,captured:null,generating:null};
+    window.__countdownTiming={ticks:[],countdownStarted:null,preparing:null,captured:null,generating:null};
+    const countdown=document.getElementById('countdown'),textContent=Object.getOwnPropertyDescriptor(Node.prototype,'textContent');
+    Object.defineProperty(countdown,'textContent',{get(){return textContent.get.call(this);},set(value){if(Number(value)===5&&window.__countdownTiming.countdownStarted===null)window.__countdownTiming.countdownStarted=performance.now();textContent.set.call(this,value);}});
     const capture=document.getElementById('capture').getContext('2d'),draw=capture.drawImage.bind(capture);
     capture.drawImage=(...args)=>{window.__countdownTiming.captured=performance.now();return draw(...args);};
     new MutationObserver(()=>{
@@ -254,7 +256,7 @@ try{
   await page.waitForFunction(()=>document.body.dataset.phase==='generating',{},{timeout:10000});
   const timing=await page.evaluate(()=>window.__countdownTiming);
   assert.deepEqual(timing.ticks.map(t=>t.n),[5,4,3,2,1]);
-  const duration=timing.captured-timing.ticks[0].at;
+  const duration=timing.captured-timing.countdownStarted;
   await fs.writeFile('artifacts/countdown-report.json',JSON.stringify({...timing,duration},null,2));
   assert.ok(duration>=4850&&duration<5800,'Countdown must last five seconds, measured '+duration);
   assert.ok(timing.ticks[0].at-timing.preparing>=500,'Delayed camera must not consume countdown time.');

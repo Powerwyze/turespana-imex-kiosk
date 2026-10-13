@@ -12,6 +12,7 @@ export class PhotoEmail{
  emit(){this.onChange(this.snapshot());}
  reset(){this.epoch++;this.controller?.abort();this.controller=null;this.collecting=false;this.confirmed=false;this.queued=false;this.image=null;this.draft='';this.name='';this.marketingOptIn=false;this.status='empty';this.error='';this.emit();}
  beginGeneration(){this.reset();this.collecting=true;this.status='review';this.emit();}
+ resumeGeneration(){this.collecting=true;this.image=null;this.status='review';this.error='';this.emit();}
  setImage(image){
   if(image===this.image)return;
   if(this.collecting&&image){const queued=this.queued;this.collecting=false;this.image=image;this.queued=false;this.emit();if(queued)void this.confirm();return;}
@@ -29,7 +30,7 @@ export class PhotoEmail{
  edit(value){if(!['review','error'].includes(this.status))return;const next=normalizeEmail(value).slice(0,254);if(next!==this.draft)this.marketingOptIn=false;this.confirmed=false;this.queued=false;this.draft=next;this.error='';this.status='review';this.emit();}
  editName(value){if(!['review','error'].includes(this.status))return;this.confirmed=false;this.queued=false;this.name=String(value??'').slice(0,120);this.error='';this.status='review';this.emit();}
  chooseMarketing(value){if(!['review','error'].includes(this.status))return;this.confirmed=false;this.queued=false;this.marketingOptIn=value===true;this.emit();}
- cancel(){if(this.status==='sending')return;this.queued=false;this.collecting=false;this.draft='';this.name='';this.marketingOptIn=false;this.status='empty';this.error='';this.emit();}
+ cancel(){if(this.status==='sending')return;this.confirmed=false;this.queued=false;this.collecting=false;this.draft='';this.name='';this.marketingOptIn=false;this.status='empty';this.error='';this.emit();}
  async confirm(){
   if(!['review','error'].includes(this.status)||!validEmail(this.draft)||!validName(this.name))return false;
   this.confirmed=true;this.emit();

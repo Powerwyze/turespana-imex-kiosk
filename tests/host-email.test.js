@@ -53,3 +53,8 @@ test('completed image and valid drafts do not imply touch confirmation',async()=
  assert.equal(e.snapshot().confirmed,false);assert.equal(sends,0);e.editName('Guest Updated');assert.equal(e.snapshot().confirmed,false);
  await e.confirm();assert.equal(e.snapshot().confirmed,true);assert.equal(sends,1);e.reset();assert.equal(e.snapshot().confirmed,false);
 });
+
+test('a failed image attempt resumes generation without losing contact draft or queued confirmation',async()=>{
+ const e=new PhotoEmail({deliver:async()=>{}});e.beginGeneration();e.editName('Guest');e.edit('guest@example.com');e.chooseMarketing(true);e.resumeGeneration();assert.equal(e.name,'Guest');assert.equal(e.draft,'guest@example.com');assert.equal(e.marketingOptIn,true);assert.equal(e.confirmed,false);
+ await e.confirm();e.resumeGeneration();assert.equal(e.confirmed,true);assert.equal(e.queued,true);e.cancel();assert.equal(e.confirmed,false);
+});
