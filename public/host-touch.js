@@ -40,7 +40,12 @@ export function mountTouchControls({getState,start,voice,action,finish,labels,on
    button('Retake photo','retake',()=>action('take_photo',{confirmed:true,style:''}),true);
   }else if(!s.destinationId||edit==='destination'){
    title.textContent='Which city would you like?';row.classList.add('destinations');
-   for(const [id,label] of Object.entries(labels))button(label,'destination-'+id,()=>choose('set_destination',{destinationId:id}));
+   for(const [index,[id,label]] of Object.entries(labels).entries()){
+    const card=button(label,'destination-'+id,()=>choose('set_destination',{destinationId:id}));
+    card.classList.add('destination-card');card.setAttribute('aria-label','See yourself in '+label);
+    const image=document.createElement('img');image.src='/assets/examples/regional-clothing.jpg';image.alt='';image.style.setProperty('--column',String(index%3));image.style.setProperty('--row',String(Math.floor(index/3)));
+    const caption=document.createElement('span');caption.textContent=label;card.replaceChildren(image,caption);
+   }
    button('Back','back',()=>{edit='people';render();},true);
   }else{
    title.textContent='Ready for your photo?';hint.textContent=s.guestCount+' '+(s.guestCount===1?'person':'people')+' · '+labels[s.destinationId]+' · Say yes, okay, or take the picture — or hold up a peace sign ✌ for a moment. Five-second countdown.';

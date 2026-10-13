@@ -338,3 +338,14 @@ body[data-phase=choosing_people] #message,body[data-phase=choosing_destination] 
  body[data-phase=idle] #touchControls,body[data-phase=listening] #touchControls,body[data-phase=countdown] #touchControls{left:auto;right:3%;bottom:10%;width:43%;transform:none}
  body[data-phase=countdown] #countdown{left:28%;top:48%}
 }
+
+/* Destination examples are the selection buttons after capture. */
+body[data-phase=choosing_destination] #touchControls{top:max(145px,18dvh);bottom:auto;left:50%;transform:translateX(-50%);width:min(92vw,900px);max-height:calc(100dvh - max(145px,18dvh) - 16px);overflow:auto}
+body[data-phase=choosing_destination] #message{display:none}
+.touch-actions.destinations{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.touch-actions.destinations .destination-card{position:relative;display:block;overflow:hidden;isolation:isolate;width:100%;height:clamp(110px,18dvh,220px);min-height:0;padding:0;border:1px solid #ffffff90;border-radius:14px;background:#071d40;color:white}
+.touch-actions.destinations .destination-card img{position:absolute;width:300%;height:200%;max-width:none;left:calc(var(--column) * -100%);top:calc(var(--row) * -100%);object-fit:fill;pointer-events:none}
+.touch-actions.destinations .destination-card span{position:absolute;left:0;right:0;bottom:0;padding:24px 6px 10px;background:linear-gradient(transparent,#06172bf2);font-size:clamp(17px,2.4vw,24px);text-shadow:0 1px 3px #000;pointer-events:none}
+.touch-actions.destinations button[data-touch=back]{grid-column:1/-1;min-height:48px;padding:10px}
+@media(min-width:700px){.touch-actions.destinations{grid-template-columns:repeat(3,minmax(0,1fr))}.touch-actions.destinations .destination-card{height:clamp(150px,25dvh,260px)}}
+@media(orientation:landscape) and (max-height:650px){body[data-phase=choosing_destination] #touchControls{top:90px;max-height:calc(100dvh - 100px)}.touch-actions.destinations{grid-template-columns:repeat(3,minmax(0,1fr))}.touch-actions.destinations .destination-card{height:25dvh;min-height:100px}}

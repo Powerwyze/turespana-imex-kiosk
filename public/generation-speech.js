@@ -7,7 +7,7 @@ export class GenerationSpeech{
  prefetch(destination){
   if(!generationLine(destination))return Promise.resolve(null);
   if(!this.cache.has(destination)){
-   const promise=this.fetchImpl('/api/host-narration?destinationId='+encodeURIComponent(destination))
+   const promise=this.fetchImpl('/api/host-narration?v=2&destinationId='+encodeURIComponent(destination))
     .then(response=>{if(!response.ok)throw Error('Voice unavailable');return response.arrayBuffer();})
     .catch(()=>{this.cache.delete(destination);return null;});
    this.cache.set(destination,promise);
