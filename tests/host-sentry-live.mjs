@@ -30,7 +30,7 @@ await page.route('**/api/host-greeting',async route=>{
 });
 page.on('response',r=>{if(new URL(r.url()).pathname==='/api/host-session')sessionCalls++;});
 try{
-  await page.goto(url);await page.waitForFunction(()=>document.querySelector('#face').dataset.avatar==='ready');
+  await page.goto(url);await page.locator('#face').waitFor({state:'visible'});await page.waitForFunction(()=>document.querySelector('#sentryToggle')&&!document.querySelector('#sentryToggle').disabled);
   await page.locator('#sentryToggle').click();
   await page.waitForFunction(()=>document.body.dataset.phase==='listening',null,{timeout:70000});
   await page.waitForFunction(()=>window.__events.filter(e=>e.type==='session.output_transcript.delta').map(e=>e.delta).join('').length>65,null,{timeout:30000});
