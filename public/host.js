@@ -18,7 +18,7 @@ const $=id=>document.getElementById(id);
 const face=$('face'),camera=$('camera'),audio=$('voice'),picture=$('picture');
 camera.style.filter=CAPTURE_FILTER;
 $('marketingCopy').innerHTML=consentLabelMarkup();
-let activeContactInput=$('guestNameInput'),keyboardShift=false,contactKeyboardOpen=innerWidth>600;
+let activeContactInput=$('emailInput'),keyboardShift=false,contactKeyboardOpen=innerWidth>600;
 function contactKeyboardLayout(reset=false){
  if(reset)contactKeyboardOpen=innerWidth>600;
  $('emailKeyboard').hidden=!contactKeyboardOpen;
@@ -150,7 +150,7 @@ function reviewEmail(value){
   if(photoEmail.confirmed)return {error:'Contact details are already confirmed. Keep the contact form closed and continue the generation video.'};
   if(engine.phase!=='generating'&&!pendingContactImage)return {error:'Contact entry is available only while the image generates. Do not ask for contact details after the reveal.'};
   const result=photoEmail.review(value||photoEmail.draft);
-  if(result.shown){$('emailInput').value=photoEmail.draft;$('emailConfirm').disabled=!validEmail(photoEmail.draft)||!validName($('guestNameInput').value);activeContactInput=validName($('guestNameInput').value)?$('emailInput'):$('guestNameInput');activeContactInput.focus({preventScroll:true});}
+  if(result.shown){$('emailInput').value=photoEmail.draft;$('emailConfirm').disabled=!validEmail(photoEmail.draft)||!validName($('guestNameInput').value);activeContactInput=!validEmail($('emailInput').value)?$('emailInput'):!validName($('guestNameInput').value)?$('guestNameInput'):$('emailInput');activeContactInput.focus({preventScroll:true});}
   return result;
 }
 function clearEmail(){pendingContactImage=null;photoEmail.reset();$('emailInput').value='';$('emailOpen').hidden=true;$('emailToast').hidden=true;}
