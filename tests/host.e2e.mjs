@@ -358,6 +358,7 @@ try{
   await page.waitForTimeout(300);assert.equal(generations,2);
   fail=false;release=null;await tool('retry_picture',{confirmed:true,style:''});await page.waitForTimeout(150);assert.equal(generations,3);await page.locator('#guestNameInput').fill('Retry Guest');await page.locator('#emailInput').fill('retry@example.com');await page.locator('#emailConfirm').click();release();
   await page.waitForFunction(()=>document.body.dataset.phase==='result');
+  await page.waitForFunction(()=>document.querySelector('#emailToast').textContent.includes('accepted'));
   // A reset during work suppresses the old result and stops the camera.
   release=null;await tool('retry_picture',{confirmed:true,style:''});await page.waitForTimeout(150);
   await tool('reset_booth',{confirmed:true});release();await page.waitForTimeout(300);
