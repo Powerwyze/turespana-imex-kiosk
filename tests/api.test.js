@@ -217,7 +217,7 @@ test('regional hairstyles are required by both generation and the independent ch
  for(const destination of ['canarias','barcelona','bilbao','madrid','andalucia','valencia']){
   const {response,calls}=await generateCase({destination});assert.equal(response.status,200);
   const prompt=JSON.parse(calls[0].init.body).prompt,verifier=JSON.parse(calls[1].init.body);
-  assert.match(prompt,/REGIONAL HAIR AND ACCESSORIES/);assert.match(prompt,/minimal photographic finishing only/);
+  assert.match(prompt,/REGIONAL HAIR AND ACCESSORIES/);assert.match(prompt,/10–15% beauty retouching/);
   assert.doesNotMatch(prompt,/Do not add hats, caps or headscarves|Preserve source hair; no compulsory|preserve source facial geometry and the source hairstyle/);
   assert.match(verifier.instructions,/MUST NOT count as identity drift/);
   assert.ok(verifier.text.format.schema.required.includes('regional_hair_accessories_match'));
@@ -235,11 +235,12 @@ test('outfit and framing correction retries the original source then returns onl
  assert.equal(new Set(calls.filter(c=>c.url.endsWith('/images/edits')).map(c=>c.init.signal)).size,1,'Retries share the original deadline');
 });
 
-test('age drift is corrected automatically using the original guest, while checker tolerates minor costume details',async()=>{
+test('restored editorial style retains original-source correction and historical checks',async()=>{
  const {response,calls}=await generateCase({checks:[{...valid(1),face_and_hair_consistent:false},valid(1)]});
  assert.equal(response.status,200);assert.equal(calls.length,4);
  const first=JSON.parse(calls[0].init.body),retry=JSON.parse(calls[2].init.body),checker=JSON.parse(calls[1].init.body);
- assert.match(first.prompt,/SAME FACE AND SAME APPARENT AGE AS IMAGE 1/);assert.match(first.prompt,/Never invent wrinkles/);
- assert.match(retry.prompt,/Correct age drift in either direction/);assert.deepEqual(first.images,retry.images);
- assert.match(checker.instructions,/Small embroidery/);assert.match(checker.instructions,/mid-thigh/);assert.match(checker.instructions,/substantial age drift/);
+ assert.match(first.prompt,/10–15% beauty retouching/);assert.match(first.prompt,/luxury travel editorial/);
+ assert.doesNotMatch(first.prompt,/SAME FACE AND SAME APPARENT AGE AS IMAGE 1|minimal photographic finishing only|YOUTHFULNESS AND FACIAL LIKENESS/);
+ assert.match(retry.prompt,/Preserve the original guest facial structure/);assert.deepEqual(first.images,retry.images);
+ assert.match(checker.instructions,/beautification that reshapes the face/);assert.match(checker.instructions,/at least knee level/);
 });
