@@ -334,16 +334,9 @@ async function begin({sentryGreeting=null}={}){
         $('end').hidden=false;face.setAttribute('aria-label','Your AI photo host is listening');
         phase('listening');text('I’m listening.',sentryGreeting?'Say hello, or ask for your photo.':'Tell me how many people are in your photo.');guestIdle.start(sentry.enabled?30000:150000);syncIdle();
         maxTimer=setTimeout(end,600000);
-        const greeting=crypto.randomUUID();
-        const listener=({data})=>{
-          let ack;try{ack=JSON.parse(data);}catch{return;}
-          if(ack.type==='session.instructions.appended'&&ack.client_event_id===greeting){
-            channel.removeEventListener('message',listener);
-            note(sentryGreeting?'A nearby visitor was detected by camera sentry. Deliver the frame-based welcome now, then listen. Do not take a photo yet.':'A new visitor has tapped the Spain logo and is ready to meet the AI photo host. Greet them now and ask how many people are posing.',true);
-          }
-        };
-        channel.addEventListener('message',listener);
-        send({type:'session.instructions.append',event_id:greeting,delegation_id:null,content:sentryGreeting?'Speak first in English. Use this greeting based on the latest camera frame: '+JSON.stringify(sentryGreeting)+' Then listen. If they want a photo, ask how many people are posing and get explicit readiness before capture. Do not claim to see a live video feed.':'Speak first in English: welcome the visitor, identify yourself as an AI photo host, and ask whether one, two, or three people are posing. Then listen.'});
+        // Request speech directly once the session is ready; do not wait for
+        // an optional instructions acknowledgment before welcoming the visitor.
+        note(sentryGreeting?'A nearby visitor was detected by camera sentry. Speak first now in English, without waiting for a tap or guest speech. Welcome them as Lola, their Spain AI photo host. Use this current-frame greeting as context: '+JSON.stringify(sentryGreeting)+' Invite them to take a Spain portrait, then pause and listen. Do not repeat the welcome, mention meetings or booth staff, or take a photo yet. If they want a photo, ask how many people are posing and wait for explicit readiness. Do not claim a live video feed.':'A new visitor has tapped the Spain logo. Speak first now in English: welcome them as Lola, their Spain AI photo host, and ask whether one, two, or three people are posing. Then listen.',true);
         note('Initial booth state: '+JSON.stringify(engine.snapshot()));
       } else if(event.type==='session.closed'){cleanup();}
       else if(event.type==='session.input_transcript.delta'){if(typeof event.delta==='string'&&event.delta.trim()){touch();guestInterrupted=true;lastVoiceAt=Date.now();captions.nextTurn();}}

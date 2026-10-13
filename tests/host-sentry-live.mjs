@@ -19,7 +19,9 @@ await page.addInitScript(()=>{
     terminate(){this.onmessage=null;}
   };
 });
-const frame='data:image/jpeg;base64,'+(await fs.readFile('tests/fixtures/sentry-person.jpg')).toString('base64');
+const privatePhoto=[1,2,3,4,5].map(i=>process.env['APP_TEST_IMAGE_'+i]||'').join('');
+if(!privatePhoto)throw new Error('Private test photo is required.');
+const frame='data:image/jpeg;base64,'+privatePhoto;
 await page.route('**/api/host-greeting',async route=>{
   visionCalls++;
   const response=await route.fetch({postData:JSON.stringify({frame})});greeting=await response.json();
