@@ -16,8 +16,9 @@ export async function POST(req){
     const count=fd.get('guestCount')??'1';
     if(fd.getAll('guestCount').length>1||typeof count!=='string'||!/^[123]$/.test(count))throw new PortraitError('INVALID_GUEST_COUNT','Choose 1, 2, or 3 people.',400);
     if(fd.getAll('image').length!==1)throw new PortraitError('INVALID_PHOTO','Please take a new photo.',400);
+    const started=Date.now();
     const result=await generatePortrait({file:fd.get('image'),destinationId:fd.get('destinationId'),guestCount:Number(count),style:String(fd.get('style')||'').slice(0,600),signal:req.signal});
-    response=new Response(result.bytes,{status:200,headers:{'Content-Type':result.mimeType,'Cache-Control':'no-store','X-Portrait-Pipeline':result.pipeline,'X-Image-Model':result.model,'X-Portrait-Attempts':String(result.attempts),'X-Portrait-Fallback':result.fallback||'none'}});
+    response=new Response(result.bytes,{status:200,headers:{'Content-Type':result.mimeType,'Cache-Control':'no-store','X-Portrait-Pipeline':result.pipeline,'X-Image-Model':result.model,'X-Portrait-Attempts':String(result.attempts),'X-Portrait-Fallback':result.fallback||'none','X-Portrait-Duration-Ms':String(Date.now()-started)}});
   }catch(e){
     response=e instanceof PortraitError?json({code:e.code,error:e.message},e.status):json({code:'GENERATION_UNAVAILABLE',error:'The portrait could not be completed. Your original photo is saved for retry.'},503);
   }
