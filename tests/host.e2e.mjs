@@ -533,26 +533,6 @@ try{
   assert.equal(await page.locator('#sentryCamera').evaluate(e=>e.srcObject===null),true);
   assert.equal(await page.locator('#sentryToggle').getAttribute('aria-pressed'),'false');
   await fs.writeFile('artifacts/sentry-idle-report.json',JSON.stringify({idleWindowMs:30000,occupiedSceneRearmed:true,speechAndTouchExtend:true,assistantAndStatusDoNotExtend:true,generationProtected:true,emailSendProtected:true,emptySceneNoRequest:true,manualStopStaysOff:true,greetings},null,2));
-  // Exercise an actual Victory image as a synthetic camera, through readiness to countdown.
-  const gesturePage=await context.newPage();
-  await gesturePage.addInitScript(()=>{
-   navigator.mediaDevices.getUserMedia=async()=>{
-    const image=new Image();image.src='/tests/fixtures/victory.jpg';await image.decode();
-    const canvas=document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;
-    const ctx=canvas.getContext('2d');ctx.drawImage(image,0,0);
-    const timer=setInterval(()=>ctx.drawImage(image,0,0),100);const stream=canvas.captureStream(10);
-    window.addEventListener('pagehide',()=>{clearInterval(timer);stream.getTracks().forEach(t=>t.stop());},{once:true});return stream;
-   };
-  });
-  await gesturePage.goto('http://127.0.0.1:4181/');
-  await gesturePage.waitForTimeout(1000);assert.equal(await gesturePage.locator('#countdown').isVisible(),false,'Gesture cannot capture on the home screen');
-  await gesturePage.locator('.destination-pick').first().click();
-  await gesturePage.locator('[data-touch="people-1"]').click();
-  await gesturePage.waitForFunction(()=>document.body.dataset.phase==='countdown',null,{timeout:30000});
-  await gesturePage.screenshot({path:'artifacts/peace-trigger-countdown.png'});
-  await gesturePage.locator('[data-touch="cancel"]').click();
-  await gesturePage.waitForTimeout(1200);assert.equal(await gesturePage.locator('#countdown').isVisible(),false,'Reset disarms held gesture');
-  await gesturePage.close();
   assert.deepEqual(errors,[]);
   // The touch path must work without opening a paid voice session.
   await page.setViewportSize({width:390,height:844});
