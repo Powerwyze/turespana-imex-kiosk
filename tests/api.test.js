@@ -240,6 +240,6 @@ test('age drift is corrected automatically using the original guest, while check
  assert.equal(response.status,200);assert.equal(calls.length,4);
  const first=JSON.parse(calls[0].init.body),retry=JSON.parse(calls[2].init.body),checker=JSON.parse(calls[1].init.body);
  assert.match(first.prompt,/SAME FACE AND SAME APPARENT AGE AS IMAGE 1/);assert.match(first.prompt,/Never invent wrinkles/);
- assert.match(retry.prompt,/Remove any added ageing/);assert.deepEqual(first.images,retry.images);
+ assert.match(retry.prompt,/Correct age drift in either direction/);assert.deepEqual(first.images,retry.images);
  assert.match(checker.instructions,/Small embroidery/);assert.match(checker.instructions,/mid-thigh/);assert.match(checker.instructions,/substantial age drift/);
 });
