@@ -1,39 +1,30 @@
 name: One bounded Spain correction live check
-on:
-  workflow_dispatch:
-  push:
-    branches: [codex/imex-generation-only-contact]
+on: workflow_dispatch
 permissions:
-  contents: write
+  contents: read
 jobs:
   image:
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[correction-live-check]')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: codex/imex-generation-only-contact
-          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
       - run: npm install --no-save --package-lock=false playwright@1.56.1
       - run: npx playwright install --with-deps chromium
-      - run: node tests/host-image-live.mjs
+      - run: |
+          test -n "$APP_TEST_IMAGE_1"
+          node tests/host-image-live.mjs
         env:
+          APP_TEST_IMAGE_1: ${{ secrets.APP_TEST_IMAGE_1 }}
+          APP_TEST_IMAGE_2: ${{ secrets.APP_TEST_IMAGE_2 }}
+          APP_TEST_IMAGE_3: ${{ secrets.APP_TEST_IMAGE_3 }}
+          APP_TEST_IMAGE_4: ${{ secrets.APP_TEST_IMAGE_4 }}
+          APP_TEST_IMAGE_5: ${{ secrets.APP_TEST_IMAGE_5 }}
           TURESPANA_HOST_PREVIEW_URL: https://turespana-imex-kiosk.vercel.app
-      - name: Save approved public-fixture result and safe report remotely
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh auth setup-git
-          mkdir -p docs/review
-          cp artifacts/live-generated-test.jpg docs/review/spain-live-portrait.jpg
-          cp artifacts/live-image-report.json docs/review/spain-live-image-report.json
-          git config user.name 'PowerWyze build'
-          git config user.email 'actions@users.noreply.github.com'
-          git add docs/review
-          git commit -m "Save bounded Spain public-fixture verification evidence"
-          git pull --rebase origin codex/imex-generation-only-contact
-          git push origin HEAD:codex/imex-generation-only-contact
+      - name: Print safe verification report only
+        run: cat artifacts/live-image-report.json
+      - name: Remove private result
+        if: always()
+        run: rm -rf artifacts
