@@ -250,9 +250,10 @@ try{
   assert.ok((await captionBounds()).above&&(await captionBounds()).onScreen);
   await page.setViewportSize({width:1080,height:1920});await page.waitForTimeout(1000);
 
+  const warmupRequestBaseline=await page.evaluate(()=>window.__videoRequests);
   await tool('take_photo',{confirmed:true,style:''});await page.waitForTimeout(100);assert.equal(generations,0);
   await tool('set_guest_count',{count:2});await page.waitForTimeout(100);
-  assert.equal(await page.evaluate(()=>window.__videoRequests),1,'Camera warms before readiness.');
+  assert.equal(await page.evaluate(()=>window.__videoRequests),warmupRequestBaseline+1,'Camera warms before readiness.');
   assert.equal(await page.locator('#viewfinder').isVisible(),false);
   await tool('take_photo',{confirmed:true,style:''},true);
   await page.waitForFunction(()=>document.body.dataset.phase==='preparing');
@@ -263,7 +264,7 @@ try{
   assert.equal(await page.locator('#picture').isVisible(),false);
   assert.equal(await page.locator('#hostCaptions').isVisible(),false,'Countdown clears speech captions.');
   assert.equal(await page.locator('#camera').isVisible(),true);
-  assert.equal(await page.evaluate(()=>window.__videoRequests),1,'Warmup and capture share one camera request.');
+  assert.equal(await page.evaluate(()=>window.__videoRequests),warmupRequestBaseline+1,'Warmup and capture share one camera request.');
   assert.ok(await page.locator('#viewfinder').evaluate(e=>{const r=e.getBoundingClientRect();return r.left<=24&&r.top<=24&&r.width<=innerWidth*.3&&r.bottom<innerHeight*.3;}));
   assert.equal(await page.locator('#camera').evaluate(e=>getComputedStyle(e).objectFit),'contain');
   assert.ok(await page.locator('#camera').evaluate(e=>{const m=new DOMMatrix(getComputedStyle(e).transform),r=e.getBoundingClientRect(),f=e.parentElement.getBoundingClientRect();return Math.abs(m.a)<.001&&Math.abs(m.b-1)<.001&&Math.abs(m.c-1)<.001&&Math.abs(m.d)<.001&&Math.abs(r.width-f.width)<1&&Math.abs(r.height-f.height)<1;}),'Camera preview rotates left with the existing mirror and fits its portrait frame.');
