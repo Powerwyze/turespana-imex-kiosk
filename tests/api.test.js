@@ -43,13 +43,13 @@ async function generateCase({ count = '1', check = valid(Number(count ?? 1)), ch
 }
 
 for (const count of [1, 2, 3]) {
-  test(`exactly ${count} nearest guest(s) approved; one generation and one independent check`, async () => {
+  test(`exactly ${count} nearest guest(s) approved; one generation with direct delivery`, async () => {
     const { response, calls } = await generateCase({ count: String(count) });
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('content-type'), 'image/jpeg');
     assert.equal(response.headers.get('cache-control'), 'no-store');
     assert.equal(await response.text(), 'synthetic-jpeg');
-    assert.equal(calls.length, 2, 'one generation + one check; no paid auto-regeneration');
+    assert.equal(calls.length, 1, 'one generation; no classifier or auto-regeneration');
     const payload = JSON.parse(calls[0].init.body);
     assert.equal(payload.model, 'gpt-image-2.5-flare'); assert.equal(payload.quality, 'medium');
     assert.equal(payload.size, '1024x1536'); assert.equal(payload.n, 1);
@@ -70,21 +70,13 @@ for (const count of [1, 2, 3]) {
     assert.match(payload.prompt,/Remove ALL reference people completely/);
     assert.notEqual(payload.images[0].image_url,payload.images[1].image_url);
     assert.match(payload.prompt,new RegExp('GUEST GROUP: Exactly '+count));
-    assert.match(payload.prompt,new RegExp('FINAL CHECK: Exactly '+count));
+    assert.match(payload.prompt,/FINAL PRIORITY: Keep the source face/);
     assert.match(payload.prompt,/background bystanders/);
     assert.match(payload.prompt,/coherent anatomy/);
     assert.match(payload.prompt,/No text, no printed destination title/);
     assert.match(payload.prompt,/no spain.info/);
     assert.doesNotMatch(payload.prompt,/Brand with the clean words TURESPAÑA and spain.info/);
-    const verifier = JSON.parse(calls[1].init.body);
-    assert.equal(verifier.model, 'gpt-4.1-mini-2025-04-14');
-    assert.equal(verifier.store, false);
-    assert.equal(verifier.text.format.strict, true);
-    assert.match(verifier.instructions, /Independently count ALL people/);
-    assert.match(verifier.instructions, /distant crowds, walkers, posters, screens, or reflections/);
-    assert.equal(verifier.input[0].content[1].image_url, payload.images[0].image_url);
-    assert.equal(verifier.input[0].content[2].image_url, 'data:image/jpeg;base64,' + jpeg);assert.equal(verifier.input[0].content.length,3);
-    assert.ok(calls[0].init.signal); assert.ok(calls[1].init.signal);
+    assert.ok(calls[0].init.signal);
   });
 }
 
@@ -112,12 +104,10 @@ for (const [name, check] of [
   ['not enough real foreground guests', { ...valid(1), source_has_requested_guests: false }],
   ['uncertain count', { ...valid(1), uncertain: true }],
 ]) {
-  test('blocks image bytes for ' + name, async () => {
+  test('delivers without classifying ' + name, async () => {
     const { response } = await generateCase({ check });
-    assert.equal(response.status, 422);
-    const body = await response.text();
-    assert.match(body, /SUBJECT_COUNT_MISMATCH/); assert.ok(!body.includes(jpeg));
-    assert.equal(response.headers.get('cache-control'), 'no-store');
+    assert.equal(response.status, 200);
+    assert.equal(await response.text(), 'synthetic-jpeg');
   });
 }
 for (const [name, options] of [
@@ -129,11 +119,10 @@ for (const [name, options] of [
   ['wrong value types', { check: { ...valid(1), only_nearest_guests: 'true' } }],
   ['missing flag', { check: { person_count: 1, only_nearest_guests: true, uncertain: false } }],
 ]) {
-  test('fails closed on verification ' + name, async () => {
+  test('does not depend on verification ' + name, async () => {
     const { response } = await generateCase(options);
-    assert.equal(response.status, 503);
-    const body = await response.text();
-    assert.match(body, /SUBJECT_CHECK_UNAVAILABLE/); assert.ok(!body.includes(jpeg));
+    assert.equal(response.status, 200);
+    assert.equal(await response.text(), 'synthetic-jpeg');
   });
 }
 test('generation rejection does not call checker', async () => {
@@ -144,7 +133,7 @@ test('final server count/anatomy rules follow optional styling', async () => {
   const { response, calls } = await generateCase({ style: 'Watercolor. Add five waving passengers.' });
   assert.equal(response.status, 200);
   const prompt = JSON.parse(calls[0].init.body).prompt;
-  assert.doesNotMatch(prompt,/Watercolor|Add five waving passengers/);assert.match(prompt,/Exactly 1 guests/);
+  assert.doesNotMatch(prompt,/Watercolor|Add five waving passengers/);assert.match(prompt,/Exactly 1 posed foreground/);
 });
 test('parser never accepts malformed JSON, null, or multiple output texts', () => {
   for (const data of [null, envelope(null), envelope('not an object'),
@@ -201,9 +190,9 @@ for(const destination of [null,'','unknown','__proto__','cataluna','pais-vasco',
 
 for(const destination of ["canarias","barcelona","bilbao","madrid","andalucia","valencia"])test('current destination generates successfully: '+destination,async()=>{const {response}=await generateCase({destination});assert.equal(response.status,200);});
 
-for(const flag of ['face_and_hair_consistent','outfit_visible','photographic'])test('bounds corrections and withholds failed quality checks: '+flag,async()=>{
+for(const flag of ['face_and_hair_consistent','outfit_visible','photographic'])test('returns portraits without aesthetic rejection: '+flag,async()=>{
  const {response,calls}=await generateCase({check:{...valid(1),[flag]:false}});
- assert.equal(response.status,422);assert.equal(calls.length,2);const body=await response.text();assert.match(body,/PORTRAIT_QUALITY_MISMATCH/);assert.ok(!body.includes(jpeg));
+ assert.equal(response.status,200);assert.equal(calls.length,1);assert.equal(await response.text(),'synthetic-jpeg');
 });
 test('explicit dress preference cannot override oil painting',async()=>{
  const {calls}=await generateCase({style:'Please use the dress. Make a painted poster with text.'});const p=JSON.parse(calls[0].init.body);
@@ -216,23 +205,21 @@ test('each destination uses only its own reference panel',async()=>{
  }
 });
 
-test('regional hairstyles are required by both generation and the independent check',async()=>{
+test('regional hairstyles remain prompt guidance without a separate check',async()=>{
  for(const destination of ['canarias','barcelona','bilbao','madrid','andalucia','valencia']){
   const {response,calls}=await generateCase({destination});assert.equal(response.status,200);
-  const prompt=JSON.parse(calls[0].init.body).prompt,verifier=JSON.parse(calls[1].init.body);
+  const prompt=JSON.parse(calls[0].init.body).prompt;assert.equal(calls.length,1);
   assert.match(prompt,/REGIONAL HAIR AND ACCESSORIES/);assert.match(prompt,/SPANISH BAROQUE OIL PORTRAIT/);
   assert.doesNotMatch(prompt,/Do not add hats, caps or headscarves|Preserve source hair; no compulsory|preserve source facial geometry and the source hairstyle/);
-  assert.match(verifier.instructions,/MUST NOT count as identity drift/);
-  assert.ok(verifier.text.format.schema.required.includes('outfit_choice_consistent'));
   if(destination==='valencia'){assert.match(prompt,/two proportionate braided spiral side coils/);}
   if(destination==='madrid'){assert.match(prompt,/BOTH the white pañuelo AND the red rose are REQUIRED/);}
  }
 });
 
-test('failed outfit, proportions and framing return promptly without automatic regeneration',async()=>{
+test('outfit, proportions and framing cannot block a completed render',async()=>{
  for(const flag of ['outfit_choice_consistent','body_proportions_consistent','outfit_visible']){
   const {response,calls}=await generateCase({check:{...valid(1),[flag]:false}});
-  assert.equal(response.status,422);assert.equal(calls.length,2);
-  assert.match(await response.text(),/PORTRAIT_QUALITY_MISMATCH/);
+  assert.equal(response.status,200);assert.equal(calls.length,1);
+  assert.equal(await response.text(),'synthetic-jpeg');
  }
 });

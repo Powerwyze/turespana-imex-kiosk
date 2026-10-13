@@ -147,7 +147,7 @@ const photoEmail=new PhotoEmail({
   }
 });
 function revealContactResult(){
- const image=pendingContactImage;if(!image)return;pendingContactImage=null;hidePicture();phase('result');pictureUrl=URL.createObjectURL(image);picture.src=pictureUrl;picture.hidden=false;text('Your Spanish photo is ready.','Confirm to email your photo.');photoEmail.emit();if(ready)note('The guest confirmed their name and email on screen. Reveal the checked photo now. Email still requires their confirmation tap; do not claim it was sent.',true);
+ const image=pendingContactImage;if(!image)return;pendingContactImage=null;hidePicture();phase('result');pictureUrl=URL.createObjectURL(image);picture.src=pictureUrl;picture.hidden=false;text('Your Spanish photo is ready.','Confirm to email your photo.');photoEmail.emit();if(ready)note('The guest confirmed their name and email on screen. Reveal the finished photo now. Email still requires their confirmation tap; do not claim it was sent.',true);
 }
 function reviewEmail(value){
   if(photoEmail.confirmed)return {error:'Contact details are already confirmed. Keep the contact form closed and continue the generation video.'};
@@ -260,8 +260,8 @@ const engine=new TurespanaEngine({
     if(ready){
       note('Booth state: '+JSON.stringify(state));
       if(state.phase!==lastPhase){
-        if(waitingContact)note('The checked photo is ready but is not revealed. The visitor must finish their name/email and tap Confirm to continue; keep the form visible until that tap. Ask them to complete the visible contact form; do not claim it was sent or revealed.',true);
-        else if(state.phase==='result')note('The generated photo has passed the guest check, decoded successfully, and is now displayed. Stop the event explanation. Tell the visitor the photo is ready, do not ask for name or email and do not open the contact form. If the guest confirmed delivery during generation, it is now being attempted. Otherwise, a compact Email my photo button is available only for complete saved details. Do not claim delivery until the app confirms it.',true);
+        if(waitingContact)note('The finished photo is ready but is not revealed. The visitor must finish their name/email and tap Confirm to continue; keep the form visible until that tap. Ask them to complete the visible contact form; do not claim it was sent or revealed.',true);
+        else if(state.phase==='result')note('The generated photo has decoded successfully and is now displayed. Stop the event explanation. Tell the visitor the photo is ready, do not ask for name or email and do not open the contact form. If the guest confirmed delivery during generation, it is now being attempted. Otherwise, a compact Email my photo button is available only for complete saved details. Do not claim delivery until the app confirms it.',true);
         if(state.phase==='error')note('The photo workflow failed: '+state.error+' Do not retry unless the visitor asks.',true);
         if(state.phase==='countdown')send({type:'session.instructions.append',delegation_id:null,content:'The camera is ready and the visible five-second countdown has started now. Stay quiet until the app reports generating. Do not say or count any numbers; the app plays synchronized countdown sounds.'});
 
