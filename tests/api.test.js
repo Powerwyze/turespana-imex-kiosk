@@ -217,7 +217,7 @@ test('regional hairstyles are required by both generation and the independent ch
  for(const destination of ['canarias','barcelona','bilbao','madrid','andalucia','valencia']){
   const {response,calls}=await generateCase({destination});assert.equal(response.status,200);
   const prompt=JSON.parse(calls[0].init.body).prompt,verifier=JSON.parse(calls[1].init.body);
-  assert.match(prompt,/REGIONAL HAIR AND ACCESSORIES/);assert.match(prompt,/10–15% beauty retouching/);
+  assert.match(prompt,/REGIONAL HAIR AND ACCESSORIES/);assert.match(prompt,/minimal photographic finishing only/);
   assert.doesNotMatch(prompt,/Do not add hats, caps or headscarves|Preserve source hair; no compulsory|preserve source facial geometry and the source hairstyle/);
   assert.match(verifier.instructions,/MUST NOT count as identity drift/);
   assert.ok(verifier.text.format.schema.required.includes('regional_hair_accessories_match'));
@@ -239,7 +239,7 @@ test('age drift is corrected automatically using the original guest, while check
  const {response,calls}=await generateCase({checks:[{...valid(1),face_and_hair_consistent:false},valid(1)]});
  assert.equal(response.status,200);assert.equal(calls.length,4);
  const first=JSON.parse(calls[0].init.body),retry=JSON.parse(calls[2].init.body),checker=JSON.parse(calls[1].init.body);
- assert.match(first.prompt,/APPARENT AGE IS LOCKED TO IMAGE 1/);assert.match(first.prompt,/Do not add wrinkles/);
+ assert.match(first.prompt,/SAME FACE AND SAME APPARENT AGE AS IMAGE 1/);assert.match(first.prompt,/Never invent wrinkles/);
  assert.match(retry.prompt,/Remove any added ageing/);assert.deepEqual(first.images,retry.images);
  assert.match(checker.instructions,/Small embroidery/);assert.match(checker.instructions,/mid-thigh/);assert.match(checker.instructions,/substantial age drift/);
 });
