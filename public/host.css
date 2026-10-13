@@ -349,3 +349,8 @@ body[data-phase=choosing_destination] #message{display:none}
 .touch-actions.destinations button[data-touch=back]{grid-column:1/-1;min-height:48px;padding:10px}
 @media(min-width:700px){.touch-actions.destinations{grid-template-columns:repeat(3,minmax(0,1fr))}.touch-actions.destinations .destination-card{height:clamp(150px,25dvh,260px)}}
 @media(orientation:landscape) and (max-height:650px){body[data-phase=choosing_destination] #touchControls{top:90px;max-height:calc(100dvh - 100px)}.touch-actions.destinations{grid-template-columns:repeat(3,minmax(0,1fr))}.touch-actions.destinations .destination-card{height:25dvh;min-height:100px}}
+
+/* Start capture directly from the live viewfinder. */
+#viewfinderCapture{position:absolute;z-index:2;left:12px;right:12px;bottom:14px;width:calc(100% - 24px);min-height:58px;padding:14px 16px;border:0;border-radius:16px;background:#ffdf39;color:#102039;font:700 clamp(16px,2.3vw,25px)/1.2 Arial,sans-serif;box-shadow:0 4px 18px #0005;cursor:pointer;pointer-events:auto;touch-action:manipulation}
+#viewfinderCapture:focus-visible{outline:3px solid white;outline-offset:3px}
+#viewfinderCapture:active{filter:brightness(.94)}

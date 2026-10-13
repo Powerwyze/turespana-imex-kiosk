@@ -9,6 +9,7 @@ export function mountTouchControls({getState,start,voice,action,finish,labels,on
   document.querySelectorAll('.destination-pick').forEach(b=>{b.disabled=s.phase!=='choosing_destination'||s.emailOpen;b.removeAttribute('aria-pressed');});
   if(s.phase==='idle')edit=null;
   const signature=JSON.stringify([s,edit,document.documentElement.lang]);if(signature===last)return;last=signature;
+  document.getElementById('viewfinderCapture')?.remove();
   const title=document.createElement('h2');title.id='touchTitle';
   const hint=document.createElement('p');hint.className='touch-help';
   const row=document.createElement('div');row.className='touch-actions';
@@ -16,7 +17,7 @@ export function mountTouchControls({getState,start,voice,action,finish,labels,on
   const choose=(name,args)=>{edit=null;action(name,args);};
   if(s.phase==='idle'||(s.phase==='error'&&!s.active)){
    title.textContent=homeText('adventure');hint.textContent=s.phase==='error'?(s.statusMessage||'You can use the buttons or reconnect to your host.'):homeText('help');
-   button(homeText('takePicture'),'start',start);button(homeText('talk'),'voice',voice,true);
+   button(homeText('captureAction'),'start',start);button(homeText('talk'),'voice',voice,true);
   }else if(s.phase==='connecting'){
    title.textContent='Connecting to Lola…';button('Cancel','cancel',finish,true);
   }else if(busy){
@@ -33,7 +34,7 @@ export function mountTouchControls({getState,start,voice,action,finish,labels,on
    button('Start over','restart',start,true);
   }else if(!s.hasPhoto){
    title.textContent='See yourself in Spain';hint.textContent='Look at the camera. Your photo starts after a seven-second countdown.';
-   button('See yourself in Spain','capture',()=>action('take_photo',{confirmed:true,style:''}));
+   button(homeText('captureAction'),'capture',()=>action('take_photo',{confirmed:true,style:''}));
   }else if(!s.guestCount||edit==='people'){
    title.textContent='How many people?';hint.textContent=(labels[s.destinationId]?labels[s.destinationId]+' · ':'')+'How many people are in the picture?';
    for(const count of [1,2,3])button(count+' '+(count===1?'person':'people'),'people-'+count,()=>choose('set_guest_count',{count}));
@@ -55,6 +56,10 @@ export function mountTouchControls({getState,start,voice,action,finish,labels,on
   }
   // Keep the original email button and its confirmation-only handler alive.
   row.prepend(email);panel.replaceChildren(title,hint,row);
+  if(s.phase==='idle'||(s.phase==='listening'&&!s.hasPhoto)){
+   const captureButton=row.querySelector('[data-touch=start],[data-touch=capture]');
+   if(captureButton){captureButton.id='viewfinderCapture';document.querySelector('#viewfinder .camera-frame').append(captureButton);}
+  }
  }
  return {render};
 }
