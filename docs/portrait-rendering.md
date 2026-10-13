@@ -7,3 +7,7 @@ Image 1 supplies guest identity, image 2 supplies the selected regional clothing
 The independent checker accepts painterly interpretation while retaining subject-count, likeness, age, wardrobe, hairstyle and framing checks. Its legacy `photographic` field now measures the oil-paint style, and correction retries reinforce that same style. The reference is included in both Vercel image functions.
 
 The homepage examples remain the existing previews. Generative constraints and visual consistency checks cannot guarantee exact likeness.
+
+## Relaxed acceptance
+
+Guests may be off-center, with natural chest-up or waist-up crops. Their faces and a useful portion of their upper bodies should remain visible; full-body or below-knee framing is optional. The host no longer asks guests to center themselves. Costume, accessory and layout observations are advisory. The legacy `photographic` check measures basic usability only, never exact brushwork or resemblance to the reference style. Subject count, recognizable likeness and basic visibility remain required.

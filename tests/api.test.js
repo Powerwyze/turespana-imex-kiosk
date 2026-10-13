@@ -59,8 +59,8 @@ for (const count of [1, 2, 3]) {
     assert.match(payload.prompt,/Spanish Baroque/);
     assert.equal(payload.images[1].image_url,'data:image/jpeg;base64,'+readFileSync('assets/region-references/madrid.jpg').toString('base64'));
     assert.match(payload.prompt,/ONE cropped regional example for Madrid/);
-    assert.match(payload.prompt,/full-body or three-quarter/);
-    assert.match(payload.prompt,/Never deliver a headshot, chest-up or waist-up crop/);
+    assert.match(payload.prompt,/upper-body, waist-up and three-quarter/);
+    assert.match(payload.prompt,/Guests do not need to be centered/);
     assert.equal(payload.images[0].image_url, "data:image/jpeg;base64,"+Buffer.from("synthetic-source").toString("base64"));
     assert.ok(payload.prompt.includes(masterTransformationPrompt));
     assert.match(payload.prompt,/IDENTITY IS THE HIGHEST PRIORITY/);
@@ -201,7 +201,7 @@ for(const destination of [null,'','unknown','__proto__','cataluna','pais-vasco',
 
 for(const destination of ["canarias","barcelona","bilbao","madrid","andalucia","valencia"])test('current destination generates successfully: '+destination,async()=>{const {response}=await generateCase({destination});assert.equal(response.status,200);});
 
-for(const flag of ['face_and_hair_consistent','regional_outfit_matches','regional_hair_accessories_match','outfit_visible','photographic','no_poster_layout'])test('bounds corrections and withholds failed quality checks: '+flag,async()=>{
+for(const flag of ['face_and_hair_consistent','outfit_visible','photographic'])test('bounds corrections and withholds failed quality checks: '+flag,async()=>{
  const {response,calls}=await generateCase({check:{...valid(1),[flag]:false}});
  assert.equal(response.status,422);assert.equal(calls.length,6);const body=await response.text();assert.match(body,/PORTRAIT_QUALITY_MISMATCH/);assert.ok(!body.includes(jpeg));
 });
@@ -230,11 +230,11 @@ test('regional hairstyles are required by both generation and the independent ch
 });
 
 test('outfit and framing correction retries the original source then returns only a passing result',async()=>{
- const {response,calls}=await generateCase({checks:[{...valid(1),regional_outfit_matches:false},{...valid(1),outfit_visible:false},valid(1)]});
+ const {response,calls}=await generateCase({checks:[{...valid(1),photographic:false},{...valid(1),outfit_visible:false},valid(1)]});
  assert.equal(response.status,200);assert.equal(response.headers.get('x-portrait-attempts'),'3');assert.equal(calls.length,6);
  const edits=calls.filter(c=>c.url.endsWith('/images/edits')).map(c=>JSON.parse(c.init.body));assert.equal(edits.length,3);
  for(const e of edits){assert.deepEqual(e.images,edits[0].images);assert.equal(e.model,edits[0].model);assert.equal(e.n,1);}
- assert.match(edits[1].prompt,/AUTOMATIC OUTFIT\/FRAMING CORRECTION/);assert.match(edits[2].prompt,/below the knees/);
+ assert.match(edits[1].prompt,/AUTOMATIC OUTFIT\/FRAMING CORRECTION/);assert.match(edits[2].prompt,/Off-center and chest-up or waist-up crops are fine/);
  assert.equal(new Set(calls.filter(c=>c.url.endsWith('/images/edits')).map(c=>c.init.signal)).size,1,'Retries share the original deadline');
 });
 
