@@ -17,3 +17,7 @@ Guests may be off-center, with natural chest-up or waist-up crops. Their faces a
 Generation and verification share the same outfit selection rules. Source shirts, jackets, suits, shorts and trousers map to the regional trouser ensemble; clearly visible dresses or skirts map to the dress ensemble. Ambiguous clothing defaults to trousers. Explicit single-guest choices override this; unassigned group requests do not change everyone. No gender inference is used. Negated dress requests never select a dress.
 
 Two required checks now protect outfit choice and source body proportions. Wrong dress/trouser assignment, borrowed reference-model bodies and obvious head/body, shoulder, waist or build distortions trigger correction from the original source and are withheld if correction fails. Small costume differences and relaxed off-center cropping remain accepted. These are generative constraints and visual checks, not an absolute guarantee against errors.
+
+## Interactive generation latency
+
+The kiosk uses high image quality at 1024×1536 instead of extra-high, preserving the image model and all likeness, outfit-choice and body-proportion checks. It makes at most two image attempts (one correction) within a shared 180-second deadline; a correction starts only within the first 90 seconds. Failed portraits are still withheld. Successful responses include aggregate generation, verification and total Server-Timing durations, and each attempt logs non-sensitive timings for latency diagnosis.
