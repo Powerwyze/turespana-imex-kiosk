@@ -45,6 +45,8 @@ jobs:
           google-chrome --version
       - name: Verify current photo-first voice, gesture, contact, and caption flow
         run: node tests/kiosk-flow.e2e.mjs
+      - name: Verify keyboard and transcript spacing across visible viewport sizes
+        run: node tests/contact-layout.e2e.mjs
       - name: Verify local face finishing with the real detector
         run: node tests/portrait-retouch-browser.mjs
       - name: Verify live voice and tool control on the remote preview

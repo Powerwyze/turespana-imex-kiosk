@@ -16,10 +16,13 @@ import {CameraSentry} from './host-sentry.js';
 import {runCountdown} from './host-countdown.js';
 import {GuestIdle} from './host-idle.js';
 import {HostCaptions} from './host-captions.js';
+import {mountContactViewport} from './contact-viewport.js';
 const $=id=>document.getElementById(id);
 const face=$('face'),camera=$('camera'),audio=$('voice'),picture=$('picture');
 $('marketingCopy').innerHTML=consentLabelMarkup();
+const contactViewport=mountContactViewport({panel:$('emailPanel'),inputs:[$('guestNameInput'),$('emailInput')]});
 let activeContactInput=$('guestNameInput'),keyboardShift=false,contactKeyboardOpen=innerWidth>600;
+let contactLayoutWidth=innerWidth;
 function contactKeyboardLayout(reset=false){
  if(reset)contactKeyboardOpen=innerWidth>600;
  $('emailKeyboard').hidden=!contactKeyboardOpen;
@@ -28,9 +31,10 @@ function contactKeyboardLayout(reset=false){
  $('contactKeyboardToggle').setAttribute('aria-expanded',String(contactKeyboardOpen));
  $('guestNameInput').inputMode=contactKeyboardOpen?'none':'text';
  $('emailInput').inputMode=contactKeyboardOpen?'none':'email';
+ contactViewport.refresh();
 }
 $('contactKeyboardToggle').addEventListener('click',()=>{contactKeyboardOpen=!contactKeyboardOpen;contactKeyboardLayout();});
-window.addEventListener('resize',()=>contactKeyboardLayout(true));contactKeyboardLayout();
+window.addEventListener('resize',()=>{const widthChanged=Math.abs(innerWidth-contactLayoutWidth)>1;contactLayoutWidth=innerWidth;contactKeyboardLayout(widthChanged);});contactKeyboardLayout();
 const captions=new HostCaptions($('hostCaptions'),$('hostCaptionText'),$('stage'),face);
 let peace=null,peaceArmed=false,peaceEpoch=0,peaceLoading=false;
 let speechQuietTimer,greetingTimer,hostSpeaking=false,greetingPending=false,autoCaptureAfterGreeting=false,lastCaptureTurn=-1;
