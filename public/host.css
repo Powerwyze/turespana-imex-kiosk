@@ -400,21 +400,21 @@ body[data-phase=generating] #hostCaptionText{font-size:clamp(18px,2.2vw,30px);li
 /* Use uppercase key legends for readability, including accented letters. */
 #emailKeyboard button{text-transform:uppercase}
 
-/* One permanent, two-line transcript footer. Every screen reserves its space. */
+/* One permanent, two-line transcript at the top. Every screen reserves its space. */
 :root{
  --transcript-font:clamp(20px,2.6vw,32px);
- --transcript-height:calc(var(--transcript-font)*2.6 + 42px + env(safe-area-inset-bottom));
+ --transcript-height:calc(var(--transcript-font)*2.6 + 42px + env(safe-area-inset-top));
  --viewport-height:100dvh;
  --viewport-top:0px;
  --booth-height:calc(var(--viewport-height) - var(--transcript-height));
 }
-#stage{position:fixed;top:var(--viewport-top);left:0;height:var(--booth-height)}
+#stage{position:fixed;top:calc(var(--viewport-top) + var(--transcript-height));left:0;height:var(--booth-height)}
 body[data-phase] #stage>#hostCaptions{
- position:fixed!important;inset:calc(var(--viewport-top) + var(--viewport-height) - var(--transcript-height)) 0 auto!important;transform:none!important;
+ position:fixed!important;inset:var(--viewport-top) 0 auto!important;transform:none!important;
  display:flex!important;flex-direction:column;align-items:center;justify-content:center;
  width:100%!important;height:var(--transcript-height)!important;min-height:var(--transcript-height);max-height:none!important;
- margin:0!important;padding:10px max(16px,4vw) calc(12px + env(safe-area-inset-bottom))!important;
- border:0;border-top:1px solid #ffffff55;border-radius:0;background:#071d40;box-shadow:0 -4px 20px #0003;
+ margin:0!important;padding:calc(10px + env(safe-area-inset-top)) max(16px,4vw) 12px!important;
+ border:0;border-bottom:1px solid #ffffff55;border-radius:0;background:#071d40;box-shadow:0 4px 20px #0003;
  overflow:hidden;z-index:30;pointer-events:none;backdrop-filter:none;
 }
 #hostCaptions .caption-speaker{display:block;flex:none;height:14px;line-height:14px;font-size:11px;margin:0 0 5px;letter-spacing:.12em;color:#ffdf39}
@@ -450,7 +450,7 @@ body[data-native-input=true] #stage #emailPanel{max-height:calc(100% - 24px)}
 body[data-phase=result] #stage{grid-template-rows:minmax(0,1fr) auto auto}
 body[data-phase=result] #touchControls{grid-row:3}
 body[data-phase=result] #emailToast{grid-row:2}
-/* The former top transcript space is available to the camera again. */
+/* Camera positions are relative to the stage below the reserved transcript. */
 #viewfinder{top:clamp(140px,19%,360px)}
 body[data-phase=idle] #viewfinder .camera-frame{height:min(28dvh,420px)}
 body[data-phase=idle] #homeExample{width:calc(clamp(80px,14dvh,240px) * 405 / 640)}

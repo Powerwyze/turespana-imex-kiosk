@@ -12,7 +12,7 @@ Peace recognition starts with the home camera, independent of the voice connecti
 
 ## Captions and portraits
 
-`HostCaptions` stays in one bottom footer for every phase. Layouts reserve the footer height independently of contact forms and touch controls. It displays complete two-line pages; streamed speech advances pages, recorded narration uses its decoded duration, and browser synthesis uses speech boundary events. Recorded timing is approximate, not word-level alignment.
+`HostCaptions` stays in one top bar for every phase. The stage starts below its reserved height, keeping the viewfinder, contact forms, keyboards and touch controls clear of the transcript. Both areas follow the visible viewport when a native keyboard opens. It displays complete two-line pages; streamed speech advances pages, recorded narration uses its decoded duration, and browser synthesis uses speech boundary events. Recorded timing is approximate, not word-level alignment.
 
 The photographic generation remains one medium-quality image request with facial identity first and no aesthetic rejection loop. See `portrait-rendering.md` for the bounded local face-finishing worker. Finishing happens before branding; the same finished image is displayed and supplied to email delivery. Failed finishing returns the generated image.
 

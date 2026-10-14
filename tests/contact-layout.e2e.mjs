@@ -40,18 +40,20 @@ await page.route('**/api/**',route=>{
 });
 async function resize(width,height){await page.setViewportSize({width,height});await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));}
 async function keyboard(open){if(await page.locator('#contactKeyboardToggle').getAttribute('aria-expanded')!==String(open))await page.locator('#contactKeyboardToggle').click();}
-async function check(label,selector,visibleBottom){
+async function check(label,selector,visibleBottom,visibleTop=0){
  await page.locator(selector).scrollIntoViewIfNeeded();
- const m=await page.evaluate(({selector,visibleBottom})=>{
-  const panel=document.querySelector('#emailPanel').getBoundingClientRect(),footer=document.querySelector('#hostCaptions').getBoundingClientRect(),field=document.querySelector(selector),r=field.getBoundingClientRect(),text=document.querySelector('#hostCaptionText'),style=getComputedStyle(text);
+ const m=await page.evaluate(({selector,visibleBottom,visibleTop})=>{
+  const panel=document.querySelector('#emailPanel').getBoundingClientRect(),transcript=document.querySelector('#hostCaptions').getBoundingClientRect(),field=document.querySelector(selector),r=field.getBoundingClientRect(),text=document.querySelector('#hostCaptionText'),style=getComputedStyle(text);
   const center={x:r.left+r.width/2,y:r.top+r.height/2};
   const hit=document.elementFromPoint(center.x,center.y);
-  return {panel:{top:panel.top,bottom:panel.bottom},footer:{top:footer.top,bottom:footer.bottom},control:{top:r.top,bottom:r.bottom},hit:hit===field||field.contains(hit),hitElement:hit?.outerHTML?.slice(0,240),center,textHeight:text.getBoundingClientRect().height,lineHeight:parseFloat(style.lineHeight),viewportBottom:visibleBottom??innerHeight};
- },{selector,visibleBottom});
- assert.ok(m.panel.bottom<=m.footer.top-10,label+': form stays above captions');
- assert.ok(Math.abs(m.footer.bottom-m.viewportBottom)<2,label+': footer follows visible screen');
+  return {panel:{top:panel.top,bottom:panel.bottom},transcript:{top:transcript.top,bottom:transcript.bottom},control:{top:r.top,bottom:r.bottom},hit:hit===field||field.contains(hit),hitElement:hit?.outerHTML?.slice(0,240),center,textHeight:text.getBoundingClientRect().height,lineHeight:parseFloat(style.lineHeight),viewportTop:visibleTop,viewportBottom:visibleBottom??innerHeight};
+ },{selector,visibleBottom,visibleTop});
+ assert.ok(m.panel.top>=m.transcript.bottom,label+': form stays below transcript');
+ assert.ok(m.panel.bottom<=m.viewportBottom-10,label+': form stays above visible screen bottom');
+ assert.ok(Math.abs(m.transcript.top-m.viewportTop)<2,label+': transcript follows visible screen top');
  assert.ok(m.control.top>=m.panel.top&&m.control.bottom<=m.panel.bottom,label+': control fully visible inside panel');
- assert.ok(m.control.bottom<=m.footer.top,label+': control is above transcript');
+ assert.ok(m.control.top>=m.transcript.bottom,label+': control is below transcript');
+ assert.ok(m.control.bottom<=m.viewportBottom,label+': control stays above visible screen bottom');
  assert.equal(m.hit,true,label+': control receives taps '+JSON.stringify(m));
  assert.ok(m.textHeight>=m.lineHeight*2-1,label+': two complete caption lines');
  reports.push({label,selector,...m});
@@ -84,10 +86,10 @@ try{
   // keyboard changes the available space.
   const field=await page.locator('#emailInput').boundingBox(),panel=await page.locator('#emailPanel').boundingBox();
   assert.ok(field.y>=panel.y&&field.y+field.height<=panel.y+panel.height,`${width} native keyboard: focused input stays visible ${JSON.stringify({field,panel,state:await page.evaluate(()=>({native:document.body.dataset.nativeInput,active:document.activeElement.id,mode:document.activeElement.inputMode,scroll:document.querySelector("#emailPanel").scrollTop}))})}`);
-  await check(`${width} native keyboard`,'#emailInput',visibleHeight+top);
+  await check(`${width} native keyboard`,'#emailInput',visibleHeight+top,top);
   await page.locator('#emailConfirm').focus();
   await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
-  await check(`${width} native confirmation`,'#emailConfirm',visibleHeight+top);
+  await check(`${width} native confirmation`,'#emailConfirm',visibleHeight+top,top);
   await resize(width,height-20);
   assert.equal(await page.locator('#contactKeyboardToggle').getAttribute('aria-expanded'),'false','Height-only resize preserves native keyboard choice');
   assert.equal(await page.locator('#emailInput').getAttribute('inputmode'),'email');

@@ -1,4 +1,4 @@
-// Lola's captions stay in one reserved footer throughout the photo experience.
+// Lola's captions stay in one reserved top bar throughout the photo experience.
 const placeholders={
   idle:'Ready for your Spain photo? Tap the camera button to begin.',
   connecting:'Connecting to Lola… You can also use the camera button.',
@@ -6,10 +6,10 @@ const placeholders={
   preparing:'Getting the camera ready. Your countdown will start shortly.',
   countdown:'Look toward the camera. Your countdown is on screen.',
   choosing_people:'Your photo is captured. Choose 1, 2, 3 or 4 people.',
-  choosing_destination:'Where would you like to go? Choose a city above.',
-  generating:'Creating your Spain photo. Enter your name and email above.',
-  result:'Your Spain photo is ready. Follow the options above.',
-  error:'Please follow the options above to continue your photo.'
+  choosing_destination:'Where would you like to go? Choose a city below.',
+  generating:'Creating your Spain photo. Enter your name and email below.',
+  result:'Your Spain photo is ready. Follow the options below.',
+  error:'Please follow the options below to continue your photo.'
 };
 
 export function captionPages(value,width,measure){

@@ -121,17 +121,17 @@ async function reset(){
  else await page.reload();
  await waitPhase('idle');
 }
-async function assertFooter(label,controls=[]){
+async function assertTranscript(label,controls=[]){
  const metrics=await page.evaluate(selectors=>{
   const box=document.querySelector('#hostCaptions'),text=document.querySelector('#hostCaptionText'),r=box.getBoundingClientRect(),t=text.getBoundingClientRect(),style=getComputedStyle(text);
-  return {visible:!box.hidden&&getComputedStyle(box).display!=='none',top:r.top,bottom:r.bottom,viewport:innerHeight,textHeight:t.height,lineHeight:parseFloat(style.lineHeight),textTop:t.top,textBottom:t.bottom,overflow:document.documentElement.scrollWidth>innerWidth+1,controls:selectors.map(selector=>{const e=document.querySelector(selector);if(!e||!e.getClientRects().length)return {selector,missing:true};const b=e.getBoundingClientRect();return {selector,top:b.top,bottom:b.bottom,left:b.left,right:b.right,covered:b.bottom>r.top+1};})};
+  return {visible:!box.hidden&&getComputedStyle(box).display!=='none',top:r.top,bottom:r.bottom,viewportTop:window.visualViewport?.offsetTop||0,viewportBottom:(window.visualViewport?.offsetTop||0)+(window.visualViewport?.height||innerHeight),textHeight:t.height,lineHeight:parseFloat(style.lineHeight),textTop:t.top,textBottom:t.bottom,overflow:document.documentElement.scrollWidth>innerWidth+1,controls:selectors.map(selector=>{const e=document.querySelector(selector);if(!e||!e.getClientRects().length)return {selector,missing:true};const b=e.getBoundingClientRect();return {selector,top:b.top,bottom:b.bottom,left:b.left,right:b.right,covered:b.top<r.bottom-1};})};
  },controls);
  assert.equal(metrics.visible,true,label+': transcript is permanent');
- assert.ok(Math.abs(metrics.bottom-metrics.viewport)<2,label+': transcript is at viewport bottom');
+ assert.ok(Math.abs(metrics.top-metrics.viewportTop)<2,label+': transcript is at visible viewport top');
  assert.ok(metrics.textHeight>=metrics.lineHeight*2-1,label+': two full lines fit');
  assert.ok(metrics.textTop>=metrics.top&&metrics.textBottom<=metrics.bottom,label+': both lines remain inside box');
  assert.equal(metrics.overflow,false,label+': no horizontal overflow');
- for(const c of metrics.controls){assert.ok(!c.missing,label+': '+c.selector+' exists');assert.ok(!c.covered,label+': '+c.selector+' is above transcript');}
+ for(const c of metrics.controls){assert.ok(!c.missing,label+': '+c.selector+' exists');assert.ok(!c.covered,label+': '+c.selector+' is below transcript');assert.ok(c.bottom<=metrics.viewportBottom+1,label+': '+c.selector+' stays above visible viewport bottom');}
  return metrics;
 }
 const report={layouts:[],checks:[]};
@@ -139,7 +139,7 @@ try{
  await page.goto(origin);await page.waitForFunction(()=>document.querySelector('#camera').videoWidth>0);
  for(const [name,width,height] of [['kiosk',1080,1920],['phone',390,844],['landscape',844,390]]){
   await page.setViewportSize({width,height});await page.waitForTimeout(150);
-  report.layouts.push({name,phase:'idle',...await assertFooter(name+' idle',['#viewfinderCapture'])});
+  report.layouts.push({name,phase:'idle',...await assertTranscript(name+' idle',['#viewfinderCapture'])});
   await page.screenshot({path:path.join(artifacts,name+'-idle.png')});
  }
  await page.setViewportSize({width:1080,height:1920});
@@ -155,7 +155,7 @@ try{
  await input('Ready.');await waitPhase('countdown');
  // AI delegation and repeated transcripts cannot race the local readiness action.
  await tool('take_photo',{confirmed:true});await input('Okay, take my picture.');
- await assertFooter('countdown');
+ await assertTranscript('countdown');
  await waitPhase('choosing_people');
  const timing=await page.evaluate(()=>({captures:window.__captures,ticks:window.__ticks,phases:window.__phases}));
  assert.equal(timing.captures.length,1,'Ready plus duplicate AI call captures exactly once');
@@ -171,7 +171,7 @@ try{
   assert.equal(sizes.length,4);
   assert.ok(sizes.every((b,i)=>b.height>=80&&b.width>width*.75&&Math.abs(b.x-sizes[0].x)<1&&(i===0||b.y>=sizes[i-1].y+sizes[i-1].height+9)),name+': four large stacked buttons');
   if(name==='kiosk')assert.ok(sizes.every(b=>b.height>=200), 'Kiosk group buttons use the available screen height');
-  for(const count of [1,2,3,4]){await page.locator('[data-touch=people-'+count+']').click({trial:true});await assertFooter(name+' people '+count,['[data-touch=people-'+count+']']);}
+  for(const count of [1,2,3,4]){await page.locator('[data-touch=people-'+count+']').click({trial:true});await assertTranscript(name+' people '+count,['[data-touch=people-'+count+']']);}
   await page.screenshot({path:path.join(artifacts,name+'-people.png')});
  }
  await page.setViewportSize({width:1080,height:1920});
@@ -184,7 +184,7 @@ try{
   // changing the selected city or assuming all six fit on a short phone screen.
   for(const card of await page.locator('.destination-card').all())await card.click({trial:true});
   await page.locator('[data-touch=back]').scrollIntoViewIfNeeded();
-  report.layouts.push({name,phase:'cities',...await assertFooter(name+' cities',['[data-touch=back]'])});
+  report.layouts.push({name,phase:'cities',...await assertTranscript(name+' cities',['[data-touch=back]'])});
   const cards=await page.locator('.destination-card').evaluateAll(elements=>elements.map(e=>{const b=e.getBoundingClientRect();return {top:b.top,bottom:b.bottom,width:b.width,height:b.height};}));
   assert.ok(cards.every(c=>c.width>50&&c.height>60),name+': image cards remain usable');
   await page.screenshot({path:path.join(artifacts,name+'-cities.png')});
@@ -200,12 +200,12 @@ try{
  await page.locator('#emailPanel').waitFor({state:'visible'});
  await page.waitForFunction(()=>!document.querySelector('#voice').muted);
  await say('Madrid is home to the Prado Museum. Enter your name and email while your Spain photo is created.');
- assert.match(await page.locator('#hostCaptionText').textContent(),/Spain/,'Current narration is shown in the footer');
+ assert.match(await page.locator('#hostCaptionText').textContent(),/Spain/,'Current narration is shown in the top transcript');
  for(const [name,width,height] of [['kiosk',1080,1920],['phone',390,844],['landscape',844,390]]){
   await page.setViewportSize({width,height});await page.waitForTimeout(150);
-  report.layouts.push({name,phase:'contact',...await assertFooter(name+' contact',['#emailPanel'])});
+  report.layouts.push({name,phase:'contact',...await assertTranscript(name+' contact',['#emailPanel'])});
   await page.locator('#emailConfirm').scrollIntoViewIfNeeded();
-  await assertFooter(name+' contact confirm',['#emailConfirm']);
+  await assertTranscript(name+' contact confirm',['#emailConfirm']);
   await page.screenshot({path:path.join(artifacts,name+'-contact.png')});
  }
  await page.setViewportSize({width:1080,height:1920});
@@ -217,7 +217,7 @@ try{
  await page.locator('#emailConfirm').click();assert.equal(mail.length,0,'Confirmed details wait for image');
  firstJob.release();await waitPhase('result');await page.waitForFunction(()=>document.querySelector('#emailToast').textContent.includes('accepted'));
  assert.equal(mail.length,1);assert.equal(mail[0].email,'kiosk-test@example.invalid');assert.equal(mail[0].name,'Test Guest');assert.equal(mail[0].marketingOptIn,false);assert.ok(mail[0].imageBase64.length>100);
- assert.equal(await page.locator('#picture').isVisible(),true);await assertFooter('result',['[data-touch=finish]']);
+ assert.equal(await page.locator('#picture').isVisible(),true);await assertTranscript('result',['[data-touch=finish]']);
  await page.screenshot({path:path.join(artifacts,'result.png')});
  report.checks.push('ready/negation/duplicates','cancel countdown preserves live camera','seven-second capture','spoken count/city order','responsive captions/cards/contact','uppercase keyboard','confirmation-only stubbed email');
  await reset();
