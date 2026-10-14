@@ -41,3 +41,17 @@ test('fixed destination clips reject arbitrary text and reuse server audio acros
   const [a,b]=await Promise.all([GET(request()),GET(request())]);assert.equal(calls,1);assert.equal(a.status,200);assert.equal(b.headers.get('content-type'),'audio/mpeg');assert.match(a.headers.get('cache-control'),/s-maxage/);
  }finally{globalThis.fetch=priorFetch;if(key===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=key;}
 });
+
+test('decoded audio supplies its duration for paced captions and stop cancels caption timing',async()=>{
+ const timing=[];let stopped=0,played=0;
+ const context={state:'running',destination:{},decodeAudioData:async()=>({duration:17.5}),createBufferSource:()=>({connect(){},disconnect(){},start(){played++;},stop(){}})};
+ const speech=new GenerationSpeech({getContext:()=>context,fetchImpl:async()=>new Response(new Uint8Array([1])),onTiming:(line,duration)=>timing.push({line,duration}),onStop:()=>stopped++,synth:null});
+ await speech.start('madrid');assert.equal(played,1);assert.equal(timing[0].duration,17.5);assert.equal(timing[0].line,generationLine('madrid'));
+ const before=stopped;speech.stop();assert.equal(stopped,before+1);
+});
+test('browser narration captions wait for speech start and follow speech boundaries',async()=>{
+ let utterance;const events=[];
+ const speech=new GenerationSpeech({getContext:()=>({state:'running'}),fetchImpl:async()=>new Response('',{status:503}),synth:{speak:value=>{utterance=value;},cancel(){}},Utterance:class{constructor(text){this.text=text;}},onTiming:(line,duration)=>events.push(['start',line,duration]),onBoundary:index=>events.push(['boundary',index])});
+ await speech.start('madrid');assert.equal(events.length,0);utterance.onstart();utterance.onboundary({charIndex:20});assert.equal(events[0][0],'start');assert.deepEqual(events[1],['boundary',20]);
+ speech.stop();utterance.onboundary({charIndex:40});assert.equal(events.length,2);
+});

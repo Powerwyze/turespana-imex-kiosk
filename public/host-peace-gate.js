@@ -1,13 +1,14 @@
-// A deliberate held V sign, not a fleeting hand pose, authorizes one countdown.
+// Require a held V sign while tolerating one missed/slow inference.
 export class PeaceGate {
- reset(){this.since=null;this.last=null;this.fired=false;}
  constructor(){this.reset();}
+ reset(){this.samples=[];this.fired=false;}
  observe(victory,now){
   if(this.fired)return false;
-  if(!victory){this.since=null;this.last=null;return false;}
-  if(this.last===null||now-this.last>900)this.since=now;
-  this.last=now;
-  if(now-this.since<800)return false;
+  this.samples=this.samples.filter(sample=>now-sample.at<=3000);
+  this.samples.push({at:now,victory:!!victory});
+  const hits=this.samples.filter(sample=>sample.victory);
+  if(!victory||hits.length<3||hits.length/this.samples.length<.7)return false;
+  if(now-hits[0].at<650||hits.some((hit,index)=>index&&hit.at-hits[index-1].at>1800))return false;
   this.fired=true;return true;
  }
 }

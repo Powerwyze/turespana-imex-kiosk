@@ -1,7 +1,7 @@
 import {generationLine} from './generation-lines.js';
 export class GenerationSpeech{
- constructor({getContext,fetchImpl=(...args)=>globalThis.fetch(...args),onText=()=>{},onBlocked=()=>{},synth=globalThis.speechSynthesis,Utterance=globalThis.SpeechSynthesisUtterance}){
-  Object.assign(this,{getContext,fetchImpl,onText,onBlocked,synth,Utterance});this.cache=new Map();this.epoch=0;this.source=null;this.active=null;
+ constructor({getContext,fetchImpl=(...args)=>globalThis.fetch(...args),onText=()=>{},onTiming=null,onBoundary=()=>{},onStop=()=>{},onBlocked=()=>{},synth=globalThis.speechSynthesis,Utterance=globalThis.SpeechSynthesisUtterance}){
+  Object.assign(this,{getContext,fetchImpl,onText,onTiming,onBoundary,onStop,onBlocked,synth,Utterance});this.cache=new Map();this.epoch=0;this.source=null;this.active=null;
  }
  unlock(){const context=this.getContext();return context?.resume().catch(()=>{});}
  prefetch(destination){
@@ -28,13 +28,19 @@ export class GenerationSpeech{
    const buffer=await context.decodeAudioData(bytes.slice(0));
    if(epoch!==this.epoch)return;
    const source=context.createBufferSource();source.buffer=buffer;source.connect(context.destination);
-   this.source=source;this.onText(line);source.start();
-   source.onended=()=>{source.disconnect();if(this.source===source)this.source=null;};
+   this.source=source;if(this.onTiming)this.onTiming(line,buffer.duration);else this.onText(line);source.start();
+   source.onended=()=>{source.disconnect();if(this.source===source){this.source=null;this.onStop();}};
   }catch{
    if(epoch!==this.epoch)return;
-   if(this.synth&&this.Utterance){const utterance=new this.Utterance(line);utterance.lang='en-US';utterance.rate=1.05;this.onText(line);this.synth.speak(utterance);}
+   if(this.synth&&this.Utterance){
+    const utterance=new this.Utterance(line);utterance.lang='en-US';utterance.rate=1.05;
+    utterance.onstart=()=>{if(epoch!==this.epoch)return;if(this.onTiming)this.onTiming(line,line.split(/\s+/).length/2.8);else this.onText(line);};
+    utterance.onboundary=event=>{if(epoch===this.epoch)this.onBoundary(event.charIndex);};
+    utterance.onend=()=>{if(epoch===this.epoch)this.onStop();};
+    this.synth.speak(utterance);
+   }
    else this.onBlocked();
   }
  }
- stop(){this.epoch++;this.active=null;if(this.source){try{this.source.stop();this.source.disconnect();}catch{}this.source=null;}this.synth?.cancel();}
+ stop(){this.epoch++;this.active=null;if(this.source){try{this.source.stop();this.source.disconnect();}catch{}this.source=null;}this.synth?.cancel();this.onStop();}
 }

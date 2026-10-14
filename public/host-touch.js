@@ -4,7 +4,7 @@ export function mountTouchControls({getState,start,voice,action,finish,labels,on
  let edit=null,last='';
  function render(){
   const s=getState(),busy=['preparing','countdown','generating'].includes(s.phase);
-  onReadiness(s.phase==='listening'&&s.active&&!s.hasPhoto&&!edit&&!s.emailOpen);
+  onReadiness(['idle','listening'].includes(s.phase)&&!s.hasPhoto&&!edit&&!s.emailOpen);
   panel.hidden=s.emailOpen;
   document.querySelectorAll('.destination-pick').forEach(b=>{b.disabled=s.phase!=='choosing_destination'||s.emailOpen;b.removeAttribute('aria-pressed');});
   if(s.phase==='idle')edit=null;
@@ -49,7 +49,7 @@ export function mountTouchControls({getState,start,voice,action,finish,labels,on
    }
    button('Back','back',()=>{edit='people';render();},true);
   }else{
-   title.textContent='Ready for your photo?';hint.textContent=s.guestCount+' '+(s.guestCount===1?'person':'people')+' · '+labels[s.destinationId]+' · Say yes, okay, or take the picture — or hold up a peace sign ✌ for a moment. Five-second countdown.';
+   title.textContent='Ready for your photo?';hint.textContent=s.guestCount+' '+(s.guestCount===1?'person':'people')+' · '+labels[s.destinationId]+' · Say yes, okay, or take the picture — or hold up a peace sign ✌ for a moment. Seven-second countdown.';
    button('Take photo','capture',()=>action('take_photo',{confirmed:true,style:''}));
    button('Change place','place',()=>{edit='destination';render();},true);
    button('Change people','people',()=>{edit='people';render();},true);

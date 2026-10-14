@@ -1,5 +1,8 @@
 import {GenerationSpeech} from './generation-speech.js';
 import {PeaceTrigger} from './host-peace.js';
+import {ReadinessTrigger,boothChoice,retakeIntent} from './host-readiness.js';
+import {HostVoiceSync} from './host-voice-sync.js';
+import {preloadPortraitRetouch,retouchPortrait} from './portrait-retouch.js';
 import {mountHomeVideos} from './home-videos.js';
 import {mountHomeLanguage,homeText} from './home-language.js';
 import {brandPortrait} from './portrait-branding.js';
@@ -29,7 +32,8 @@ function contactKeyboardLayout(reset=false){
 $('contactKeyboardToggle').addEventListener('click',()=>{contactKeyboardOpen=!contactKeyboardOpen;contactKeyboardLayout();});
 window.addEventListener('resize',()=>contactKeyboardLayout(true));contactKeyboardLayout();
 const captions=new HostCaptions($('hostCaptions'),$('hostCaptionText'),$('stage'),face);
-let peace=null,peaceArmed=false,peaceEpoch=0;
+let peace=null,peaceArmed=false,peaceEpoch=0,peaceLoading=false;
+let speechQuietTimer,greetingTimer,hostSpeaking=false,greetingPending=false,autoCaptureAfterGreeting=false,lastCaptureTurn=-1;
 let cameraPreparation=null,cameraEpoch=0,touchMode=false,touchUI=null,pageLeaving=false;
 const homeLanguage=mountHomeLanguage({onChange:()=>touchUI?.render()});
 mountHomeVideos();
@@ -43,10 +47,13 @@ const wait=(ms,signal)=>new Promise((resolve,reject)=>{
 });
 function text(title,hint=''){ $('headline').textContent=title;$('hint').textContent=hint; }
 function phase(value){
- if(value!=='listening'){peaceArmed=false;peaceEpoch++;peace?.stop();}
+ if(document.body.dataset.phase!==value)readiness.reset();
+ if(!['idle','listening'].includes(value)){peaceArmed=false;peaceEpoch++;peace?.stop();}
+ // Suppress obsolete speech until its audio drains, then announce this screen.
+ voiceSync.transition(value);
  if(value!=='generating'){ $('emailPanel').hidden=true;document.body.dataset.emailOpen='false';if($('emailPanel').contains(document.activeElement))document.activeElement.blur();captions.placeIn(null);}
  $('viewfinder').hidden=!['idle','connecting','listening','preparing','countdown'].includes(value);
- queueMicrotask(()=>touchUI?.render());if(document.body.dataset.phase!==value)captions.clear();document.body.dataset.phase=value;contactKeyboardLayout();placeHomeLogo();homeLanguage.refresh();$('sentryToggle').disabled=!sentry.enabled&&!['idle','error'].includes(value);}
+ queueMicrotask(()=>touchUI?.render());document.body.dataset.phase=value;captions.setPhase(value);contactKeyboardLayout();placeHomeLogo();homeLanguage.refresh();$('sentryToggle').disabled=!sentry.enabled&&!['idle','error'].includes(value);}
 function placeHomeLogo(){
   const slot=$('homeLogoSlot');
   if(document.body.dataset.phase==='idle'){
@@ -57,7 +64,13 @@ function placeHomeLogo(){
 }
 placeHomeLogo();
 function send(event){if(!ready||events?.readyState!=='open'||(ending&&event.type!=='session.close'))return;events.send(JSON.stringify({event_id:crypto.randomUUID(),...event}));}
-function note(content,speak=false){send({type:speak?'session.commentary.append':'session.thinking.append',delegation_id:null,content});}
+const voiceSync=new HostVoiceSync({audio,speak:content=>send({type:'session.commentary.append',delegation_id:null,content}),getLevel:()=>{if(!analyser)return 0;const samples=new Float32Array(analyser.fftSize);analyser.getFloatTimeDomainData(samples);return Math.sqrt(samples.reduce((sum,value)=>sum+value*value,0)/samples.length);}});
+function note(content,speak=false){if(speak)voiceSync.speak(content);else send({type:'session.thinking.append',delegation_id:null,content});}
+function finishSpokenTurn(){
+ if(voiceSync.getLevel()>.018){speechQuietTimer=setTimeout(finishSpokenTurn,300);return;}
+ hostSpeaking=false;greetingPending=false;clearTimeout(greetingTimer);syncIdle();
+ if(autoCaptureAfterGreeting&&!readiness.pending&&readiness.intent!=='hold')void requestCapture({origin:'greeting'});
+}
 const sentry=new CameraSentry({
   video:$('sentryCamera'),
   canGreet:()=>!touchMode&&!ready&&!connecting&&!ending&&!document.hidden,
@@ -99,6 +112,9 @@ $('sentryToggle').addEventListener('click',async()=>{
 const generationSpeech=new GenerationSpeech({
  getContext:()=>{if(!context||context.state==='closed')context=new AudioContext();return context;},
  onText:line=>{captions.clear();captions.append(line);},
+ onTiming:(line,seconds)=>captions.startTimed(line,seconds),
+ onBoundary:index=>captions.boundary(index),
+ onStop:()=>captions.stopTimed(),
  onBlocked:()=>{$('audioResume').hidden=false;}
 });
 function stopEventTalk(){clearInterval(eventTimer);eventTimer=null;generationSpeech.stop();}
@@ -128,7 +144,7 @@ const photoEmail=new PhotoEmail({
   onChange:state=>{
     if(pendingContactImage&&state.confirmed)revealContactResult();
     syncIdle();queueMicrotask(()=>touchUI?.render());
-    const open=(document.body.dataset.phase==='generating'||(document.body.dataset.phase==='error'&&photoEmail.collecting))&&state.status==='review'&&!state.confirmed;
+    const open=document.body.dataset.phase==='generating'&&state.status==='review'&&!state.confirmed;
     $('emailPanel').hidden=!open;document.body.dataset.emailOpen=String(open);
     if(!open&&$('emailPanel').contains(document.activeElement))document.activeElement.blur();
     captions.placeIn(open?$('emailPanel'):null);
@@ -164,7 +180,7 @@ function hidePicture(){picture.hidden=true;picture.removeAttribute('src');if(pic
 function touch(){guestIdle.touch();}
 function syncIdle(){
   if((!ready&&!touchMode)||ending)return;
-  guestIdle.setBusy(['preparing','countdown','generating'].includes(engine.phase)||photoEmail.status==='sending'||((pendingContactImage||(engine.phase==='error'&&photoEmail.collecting))&&!photoEmail.confirmed));
+  guestIdle.setBusy(greetingPending||hostSpeaking||peaceLoading||['preparing','countdown','generating'].includes(engine.phase)||photoEmail.status==='sending'||(pendingContactImage&&!photoEmail.confirmed));
 }
 async function ensureCamera(signal){
   if(signal.aborted)throw new DOMException('Cancelled','AbortError');
@@ -223,6 +239,7 @@ const engine=new TurespanaEngine({
     }finally{if(captureEpoch===cameraEpoch)stopCamera();}
   },
   generate:async({source,count,style,signal})=>{
+    void preloadPortraitRetouch();
     const form=new FormData();form.append('image',source,'guest-photo.jpg');form.append('guestCount',String(count));form.append('style',style);form.append('destinationId',engine.destination);
     const res=await fetch(location.origin==='https://turespana-imex-kiosk.powerwyze-2010.chatgpt.site'?'https://turespana-imex-kiosk.vercel.app/api/host-photo':'/api/host-photo',{method:'POST',body:form,signal:AbortSignal.any([signal,AbortSignal.timeout(295000)])});
     if(!res.ok){
@@ -235,7 +252,8 @@ const engine=new TurespanaEngine({
     const blob=await res.blob();
     if(!blob.size||!blob.type.startsWith('image/'))throw new Error('No picture was returned. Ask me to try again.');
     // Decode before reporting success or revealing the image.
-    return await brandPortrait(blob,destinations[engine.destination]);
+    const finished=await retouchPortrait(blob,{signal});
+    return await brandPortrait(finished,destinations[engine.destination]);
   },
   onChange:(state,image)=>{
     syncIdle();
@@ -266,6 +284,7 @@ const engine=new TurespanaEngine({
         if(state.phase==='choosing_people') {send({type:'session.instructions.append',delegation_id:null,content:'The countdown is over and the photo has been captured. Speak again now. Ask whether one, two, or three people are in the picture.'});note('Photo captured. Ask how many people are in the picture: one, two, or three.',true);}
         if(state.phase==='choosing_destination')note('The group size is recorded. Ask which city they want and point out the six choices on screen. Their city selection starts generation automatically.',true);
         if(state.phase==='error')note('The photo workflow failed: '+state.error+' Do not retry unless the visitor asks.',true);
+        if(state.phase==='listening'&&['preparing','countdown'].includes(lastPhase))send({type:'session.instructions.append',delegation_id:null,content:'Capture was cancelled. The app is listening again. Resume normal speech; wait for a new readiness confirmation before capture.'});
         if(state.phase==='countdown')send({type:'session.instructions.append',delegation_id:null,content:'The camera is ready and the visible seven-second countdown has started now. Stay quiet until the app reports choosing_people. Then ask how many people are in the captured photo. Do not say or count any numbers; the app plays synchronized countdown sounds.'});
 
       }
@@ -282,10 +301,21 @@ const toolLoop=new LiveTools({send,execute:async(name,args)=>{
   if(name==='show_email_confirmation')return reviewEmail(typeof args.email==='string'?args.email:'');
   if(photoEmail.status==='sending'&&['take_photo','retry_picture','set_destination','set_guest_count','reset_booth'].includes(name))return {error:'Wait for the current email delivery before changing the photo.'};
   if(name==='reset_booth'&&args.confirmed===true)clearEmail();
+  if(name==='take_photo')return requestCapture({origin:'model',style:args.style,confirmed:args.confirmed});
+  if(['set_guest_count','set_destination'].includes(name)){const epoch=sessionEpoch;await readiness.settled();if(epoch!==sessionEpoch||!ready||ending)return {error:'The conversation has ended.'};if(readiness.intent==='hold')return {error:'The visitor asked to wait. Keep the current screen.'};}
+  if(name==='set_guest_count'){
+   if(engine.count===args.count&&engine.source)return {accepted:true,...engine.snapshot(),message:'This group size is already recorded. Continue with the current screen.'};
+   if(engine.phase!=='choosing_people')return {error:'The group size screen has already been completed. Do not repeat or change the selection.'};
+  }
+  if(name==='set_destination'){
+   if(engine.destination===args.destinationId&&engine.source)return {accepted:true,...engine.snapshot(),message:'This destination is already recorded. Do not generate another image.'};
+   if(engine.phase!=='choosing_destination')return {error:'Follow the current screen before selecting a city.'};
+  }
   return engine.execute(name,args);
 }});
 function cleanup(message='Tap the logo to begin · AI photo host'){
-  touchMode=false;sessionEpoch++;ready=false;connecting=false;ending=false;captions.clear();
+  touchMode=false;sessionEpoch++;ready=false;connecting=false;ending=false;captions.clear();readiness.reset();
+  clearTimeout(speechQuietTimer);clearTimeout(greetingTimer);hostSpeaking=false;greetingPending=false;autoCaptureAfterGreeting=false;voiceSync.reset();
   guestIdle.stop();stopEventTalk();clearEmail();sentry.finish({immediate:rearmImmediately});rearmImmediately=false;
   requestController?.abort();requestController=null;
   clearTimeout(startTimer);clearTimeout(closeTimer);clearTimeout(maxTimer);
@@ -339,9 +369,10 @@ async function begin({sentryGreeting=null}={}){
       if(event.type==='session.started'){
         ready=true;connecting=false;clearTimeout(startTimer);
         if(sentryGreeting&&(!sentry.enabled||!sentry.gate.isFresh(performance.now()))){send({type:'session.close'});cleanup();return;}
-        guestInterrupted=false;
+        guestInterrupted=false;greetingPending=true;autoCaptureAfterGreeting=!sentryGreeting;
+        clearTimeout(greetingTimer);greetingTimer=setTimeout(()=>{greetingPending=false;syncIdle();if(autoCaptureAfterGreeting&&!readiness.pending&&readiness.intent!=='hold')void requestCapture({origin:'greeting'});},20000);
         $('end').hidden=false;face.setAttribute('aria-label','Your AI photo host is listening');
-        phase(engine.phase);text('Let’s start by taking your picture.','Tap See yourself in Spain or tell Lola to start.');guestIdle.start(sentry.enabled?30000:150000);syncIdle();
+        phase(engine.phase);text('Let’s start by taking your picture.','Tap See yourself in Spain or tell Lola to start.');guestIdle.start(sentry.enabled?60000:150000);syncIdle();
         maxTimer=setTimeout(end,600000);
         const greeting=crypto.randomUUID();
         const listener=({data})=>{
@@ -355,10 +386,11 @@ async function begin({sentryGreeting=null}={}){
         send({type:'session.instructions.append',event_id:greeting,delegation_id:null,content:sentryGreeting?'Speak first in English. Use this greeting based on the latest camera frame: '+JSON.stringify(sentryGreeting)+' Then listen. If they want a photo, say Let’s start by taking your picture, and ask them to look at the camera and confirm to start the seven-second countdown. Group size and city come after capture. Do not claim to see a live video feed.':'Speak first in English: welcome the visitor, identify yourself as an AI photo host, and say Let’s start by taking your picture. Tell them to look at the camera, then delegate take_photo with confirmed:true for the seven-second countdown. Their tap on Talk to Lola starts the photo experience. Do not ask group size or city before capture. Then listen.'});
         note('Initial booth state: '+JSON.stringify(engine.snapshot()));
       } else if(event.type==='session.closed'){cleanup();}
-      else if(event.type==='session.input_transcript.delta'){if(typeof event.delta==='string'&&event.delta.trim()){touch();guestInterrupted=true;lastVoiceAt=Date.now();captions.nextTurn();}}
+      else if(event.type==='session.input_transcript.delta'){if(typeof event.delta==='string'){readiness.append(event.delta);if(event.delta.trim()){touch();guestInterrupted=true;lastVoiceAt=Date.now();captions.nextTurn();}}}
       else if(event.type==='session.output_transcript.delta'){
-        lastVoiceAt=Date.now();
-        if(ready&&!ending&&!['idle','connecting','countdown'].includes(document.body.dataset.phase))captions.append(event.delta);
+        const currentSpeech=voiceSync.observeOutput();lastVoiceAt=Date.now();hostSpeaking=true;syncIdle();clearTimeout(speechQuietTimer);
+        speechQuietTimer=setTimeout(finishSpokenTurn,1600);
+        if(currentSpeech&&ready&&!ending&&!['idle','connecting','preparing','countdown'].includes(document.body.dataset.phase))captions.append(event.delta);
       }
       else if(event.type==='error'){
         text('Your host needs a moment.','The connection had a problem. End and tap the logo to reconnect.');
@@ -438,35 +470,77 @@ document.addEventListener('keydown',e=>{
 });
 window.addEventListener('pagehide',()=>{pageLeaving=true;stopSentry();send({type:'session.close'});cleanup();});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&document.body.dataset.phase==='idle')void openHomeCamera().then(startDefaultSentry);if(!$('emailPanel').hidden){if(document.hidden)guestIdle.setBusy(true);else syncIdle();return;}if(document.hidden){stopSentry();end();}});
-function startTouchPhoto(){
- if(!ready){sentry.consume();send({type:'session.close'});cleanup();touchMode=true;}
- else {clearEmail();engine.reset();}
- void generationSpeech.unlock();
- guestIdle.start(150000);void touchAction('take_photo',{confirmed:true,style:''});
+const readiness=new ReadinessTrigger({
+ canTrigger:()=>ready&&!ending&&((engine.phase==='listening'&&!engine.source)||(engine.source&&['choosing_people','choosing_destination','result','error'].includes(engine.phase)&&retakeIntent(readiness.buffer))),
+ onReady:()=>{void requestCapture({origin:'voice'});},
+ onStable:(utterance,intent)=>{
+  if(!ready||ending||intent==='hold')return;
+  const choice=boothChoice(utterance,engine.phase);if(!choice)return;
+  console.info('Booth action',{action:choice.name,source:'voice',phase:engine.phase});
+  void engine.execute(choice.name,choice.args).then(()=>note('The app recorded the visitor’s spoken choice. Current state: '+JSON.stringify(engine.snapshot())+'. Do not repeat the action; continue with this screen.'));
+ },
+ onHold:()=>{
+  autoCaptureAfterGreeting=false;
+  if(['preparing','countdown'].includes(engine.phase)){stopCamera();engine.reset();text('Take your time.','Say ready, hold up a peace sign, or tap the photo button when you want to begin.');}
+ }
+});
+async function requestCapture({origin='button',style='',confirmed=true}={}){
+ if(confirmed!==true)return {error:'Wait for the visitor to agree to a photo.'};
+ if(['preparing','countdown','generating'].includes(engine.phase))return {accepted:true,...engine.snapshot(),message:'This photo is already in progress. Do not repeat the action.'};
+ if(['voice','model'].includes(origin)){
+  const epoch=sessionEpoch;await readiness.settled();
+  if(epoch!==sessionEpoch||!ready||ending)return {error:'The conversation has ended.'};
+  if(readiness.intent==='hold')return {error:'The visitor asked to wait. Do not start capture.'};
+  if(engine.source&&!retakeIntent(readiness.buffer))return {accepted:true,...engine.snapshot(),message:'The photo has already been captured. Only an explicit retake request starts another countdown.'};
+  const understoodByModel=origin==='model'&&readiness.buffer.trim()&&((engine.phase==='listening'&&!engine.source)||(engine.source&&retakeIntent(readiness.buffer)));
+  if(readiness.intent!=='ready'&&!autoCaptureAfterGreeting&&!understoodByModel)return {error:'Wait for a clear ready, yes, or request to take a picture.'};
+ }
+ if(ending||photoEmail.status==='sending')return {error:'Wait for the current visit or delivery to finish.'};
+ if(['preparing','countdown','generating'].includes(engine.phase))return {accepted:true,...engine.snapshot(),message:'This photo is already in progress. Do not repeat the action.'};
+ if(['voice','model'].includes(origin)&&engine.source&&readiness.serial===lastCaptureTurn)return {accepted:true,...engine.snapshot(),message:'That request already captured the photo. Continue with the current screen.'};
+ if(origin==='greeting'&&(!autoCaptureAfterGreeting||engine.source||engine.phase!=='listening'||readiness.intent==='hold'))return {accepted:false,...engine.snapshot()};
+ if(origin==='peace'&&engine.source)return {accepted:false,...engine.snapshot()};
+ autoCaptureAfterGreeting=false;lastCaptureTurn=readiness.serial;
+ if(!ready){
+  if(connecting){send({type:'session.close'});cleanup();}
+  sentry.consume();touchMode=true;
+ }
+ clearEmail();void generationSpeech.unlock();
+ if(!guestIdle.active)guestIdle.start(150000);
+ console.info('Booth action',{action:'take_photo',source:origin,phase:engine.phase});
+ touch();const result=await engine.execute('take_photo',{confirmed:true,style});
+ if(ready)note('Capture was started by the app from '+origin+'. Current state: '+JSON.stringify(engine.snapshot())+'. Do not call take_photo again. Follow the current screen.');
+ return result;
 }
+function startTouchPhoto(){void requestCapture({origin:'button'});}
 async function openHomeCamera(){
  if(document.hidden||pageLeaving)return;
  const epoch=cameraEpoch;
  $('viewfinder').hidden=false;
- try{await ensureCamera(new AbortController().signal);$('cameraStatus').textContent='YOUR FRAME';}
+ try{await ensureCamera(new AbortController().signal);$('cameraStatus').textContent='YOUR FRAME';void armPeace(['idle','listening'].includes(document.body.dataset.phase)&&!engine.source);}
  catch(error){if(epoch<=cameraEpoch&&['idle','listening'].includes(document.body.dataset.phase)){ $('viewfinder').hidden=false;$('cameraStatus').textContent='Allow camera access, then tap See yourself in Spain';text('See yourself in Spain.','Allow camera access, then tap See yourself in Spain to begin.');}}
 }
 
 async function touchAction(name,args){
  if(photoEmail.status==='sending'||['preparing','countdown','generating'].includes(engine.phase))return;
  if(!ready)void generationSpeech.unlock();
- touch();const result=await engine.execute(name,args);
+ touch();const result=name==='take_photo'?await requestCapture({origin:'button',style:args.style,confirmed:args.confirmed}):await engine.execute(name,args);
  if(result.error&&!result.accepted)text('Check your selection.',result.error);
  if(ready)note('The visitor explicitly tapped a booth button: '+name+'. Current state: '+JSON.stringify(engine.snapshot())+'. Do not repeat the same action.');
  touchUI?.render();
 }
-function canPeaceTrigger(){return peaceArmed&&!document.hidden&&(ready||touchMode)&&engine.phase==='listening'&&document.body.dataset.phase==='listening'&&!engine.source&&!ending;}
-peace=new PeaceTrigger({video:camera,canTrigger:canPeaceTrigger,onTrigger:()=>{if(!canPeaceTrigger())return;touch();engine.execute('take_photo',{confirmed:true,style:''});},onUnavailable:()=>{if(canPeaceTrigger())text('Ready for your photo?','Gesture detection unavailable. Say yes, okay, or take the picture, or tap Take photo.');}});
+function canPeaceTrigger(){return peaceArmed&&!document.hidden&&['idle','listening'].includes(document.body.dataset.phase)&&engine.phase==='listening'&&!engine.source&&!ending&&camera.readyState>=2;}
+peace=new PeaceTrigger({
+ video:camera,canTrigger:canPeaceTrigger,
+ onTrigger:()=>{if(canPeaceTrigger())void requestCapture({origin:'peace'});},
+ onStatus:status=>{peaceLoading=['loading','retrying'].includes(status);syncIdle();if(['idle','listening'].includes(document.body.dataset.phase))$('cameraStatus').textContent=status==='ready'?'YOUR FRAME · Hold up ✌ or tap to begin':status==='loading'?'YOUR FRAME · Preparing gesture control':['retrying','unavailable'].includes(status)?'YOUR FRAME · Tap the photo button or tell Lola you’re ready':'YOUR FRAME';},
+ onUnavailable:()=>{if(canPeaceTrigger())$('cameraStatus').textContent='YOUR FRAME · Tap the photo button or tell Lola you’re ready';}
+});
 async function armPeace(armed){
  if(peaceArmed===armed)return;
  peaceArmed=armed;const epoch=++peaceEpoch;
  if(!armed){peace.stop();return;}
- try{await ensureCamera(new AbortController().signal);if(epoch===peaceEpoch&&canPeaceTrigger())peace.start();}catch{if(epoch===peaceEpoch)text('Camera permission needed.','Tap Take photo and allow camera access.');}
+ try{await ensureCamera(new AbortController().signal);if(epoch===peaceEpoch&&canPeaceTrigger())peace.start();}catch{if(epoch===peaceEpoch){peaceArmed=false;text('Camera permission needed.','Tap the photo button and allow camera access.');}}
 }
 touchUI=mountTouchControls({onReadiness:armPeace,getState:()=>({...engine.snapshot(),phase:document.body.dataset.phase,active:ready||touchMode,statusMessage:$('hint').textContent,emailOpen:!$('emailPanel').hidden,emailSent:photoEmail.status==='sent'}),start:startTouchPhoto,voice:()=>begin(),action:touchAction,finish:()=>end(),labels:destinations});
 for(const button of document.querySelectorAll('.destination-pick'))button.addEventListener('click',()=>{

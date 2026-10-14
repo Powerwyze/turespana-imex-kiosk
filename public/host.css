@@ -399,3 +399,55 @@ body[data-phase=generating] #hostCaptionText{font-size:clamp(18px,2.2vw,30px);li
 
 /* Use uppercase key legends for readability, including accented letters. */
 #emailKeyboard button{text-transform:uppercase}
+
+/* One permanent, two-line transcript footer. Every screen reserves its space. */
+:root{
+ --transcript-font:clamp(20px,2.6vw,32px);
+ --transcript-height:calc(var(--transcript-font)*2.6 + 42px + env(safe-area-inset-bottom));
+ --booth-height:calc(100dvh - var(--transcript-height));
+}
+#stage{height:var(--booth-height)}
+body[data-phase] #stage>#hostCaptions{
+ position:fixed!important;inset:auto 0 0!important;transform:none!important;
+ display:flex!important;flex-direction:column;align-items:center;justify-content:center;
+ width:100%!important;height:var(--transcript-height)!important;min-height:var(--transcript-height);max-height:none!important;
+ margin:0!important;padding:10px max(16px,4vw) calc(12px + env(safe-area-inset-bottom))!important;
+ border:0;border-top:1px solid #ffffff55;border-radius:0;background:#071d40;box-shadow:0 -4px 20px #0003;
+ overflow:hidden;z-index:30;pointer-events:none;backdrop-filter:none;
+}
+#hostCaptions .caption-speaker{display:block;flex:none;height:14px;line-height:14px;font-size:11px;margin:0 0 5px;letter-spacing:.12em;color:#ffdf39}
+#hostCaptions #hostCaptionText{
+ flex:none;width:100%;max-width:1120px;height:2.6em;min-height:2.6em;max-height:2.6em;
+ margin:0;overflow:hidden;font:500 var(--transcript-font)/1.3 Arial,sans-serif;
+ white-space:pre-wrap;text-wrap:wrap;overflow-wrap:normal;word-break:normal;color:#fff;text-align:center;
+}
+#stage #emailPanel{bottom:12px;max-height:calc(100% - 88px)}
+body[data-phase=result] #stage{grid-template-rows:minmax(0,1fr) auto auto}
+body[data-phase=result] #touchControls{grid-row:3}
+body[data-phase=result] #emailToast{grid-row:2}
+/* The former top transcript space is available to the camera again. */
+#viewfinder{top:clamp(140px,19%,360px)}
+body[data-phase=idle] #viewfinder .camera-frame{height:min(28dvh,420px)}
+body[data-phase=idle] #homeExample{width:calc(clamp(80px,14dvh,240px) * 405 / 640)}
+body[data-phase=countdown] #countdown{top:calc(clamp(140px,19%,360px) + 60px + min(15dvh,210px))}
+body[data-phase=choosing_destination] #touchControls{bottom:12px}
+.touch-actions.destinations{width:min(100%,calc((var(--booth-height) - max(120px,12dvh) - 180px)*.9))}
+@media(max-height:740px) and (orientation:portrait){
+ #viewfinder{top:136px}
+ body[data-phase=idle] #viewfinder .camera-frame{height:18dvh}
+ body[data-phase=listening] #viewfinder .camera-frame,body[data-phase=preparing] #viewfinder .camera-frame,body[data-phase=countdown] #viewfinder .camera-frame{height:26dvh}
+ body[data-phase=idle] #homeExample{width:calc(11dvh * 405 / 640)}
+ body[data-phase=countdown] #countdown{top:calc(196px + 13dvh)}
+}
+@media(orientation:landscape) and (max-height:650px){
+ :root{--transcript-font:18px}
+ #viewfinder,body[data-phase=idle] #viewfinder{top:68px;left:28%;width:46vw}
+ #viewfinder h2{font-size:20px;margin:8px}
+ #viewfinder #cameraStatus{padding:6px;font-size:10px}
+ body[data-phase=idle] #viewfinder .camera-frame{height:22dvh}
+ body[data-phase=idle] #homeExample{top:calc(100% + 6px);width:calc(12dvh * 405 / 640)}
+ #homeExample figcaption{font-size:9px;margin-top:3px}
+ #viewfinderCapture{bottom:6px;min-height:38px;padding:8px;font-size:13px}
+ body[data-phase=countdown] #countdown{left:28%;top:calc(110px + 15dvh)}
+ .touch-actions.destinations{width:min(76vw,650px);row-gap:24px}
+}

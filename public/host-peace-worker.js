@@ -8,7 +8,7 @@ self.onmessage=async({data})=>{
   }else if(data.type==='frame'){
    try{
     const result=detector.recognize(data.bitmap);
-    self.postMessage({type:'gesture',victory:result.gestures.some(hand=>hand.some(g=>g.categoryName==='Victory'&&g.score>=.7))});
+    self.postMessage({type:'gesture',victory:result.gestures.some(hand=>hand.some(g=>g.categoryName==='Victory'&&g.score>=.6))});
    }finally{data.bitmap.close();}
   }
  }catch{self.postMessage({type:'error'});}
