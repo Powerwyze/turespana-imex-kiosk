@@ -131,21 +131,34 @@ async function assertTranscript(label,controls=[]){
  assert.ok(metrics.textHeight>=metrics.lineHeight*2-1,label+': two full lines fit');
  assert.ok(metrics.textTop>=metrics.top&&metrics.textBottom<=metrics.bottom,label+': both lines remain inside box');
  assert.equal(metrics.overflow,false,label+': no horizontal overflow');
+ if(await phase()!=='idle')assert.equal(await page.locator('#homeExamples').isVisible(),false,label+': homepage examples stay hidden during the photo flow');
  for(const c of metrics.controls){assert.ok(!c.missing,label+': '+c.selector+' exists');assert.ok(!c.covered,label+': '+c.selector+' is below transcript');assert.ok(c.bottom<=metrics.viewportBottom+1,label+': '+c.selector+' stays above visible viewport bottom');}
  return metrics;
 }
 const report={layouts:[],checks:[]};
 try{
  await page.goto(origin);await page.waitForFunction(()=>document.querySelector('#camera').videoWidth>0);
+ await page.waitForFunction(()=>{const images=[...document.querySelectorAll('#homeExamples img')];return images.length===2&&images.every(image=>image.complete&&image.naturalWidth>0);});
  for(const [name,width,height] of [['kiosk',1080,1920],['phone',390,844],['landscape',844,390]]){
   await page.setViewportSize({width,height});await page.waitForTimeout(150);
   const home=await page.evaluate(()=>{
    const voice=document.querySelector('[data-touch=voice]');
    const rect=e=>{const r=e.getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,width:r.width,height:r.height};};
-   return {voice:rect(voice),viewfinder:rect(document.querySelector('#viewfinder')),stage:rect(document.querySelector('#stage'))};
+   const examples=document.querySelector('#homeExamples');
+   const photos=[...examples.querySelectorAll('img')].map(e=>({src:new URL(e.currentSrc||e.src).pathname,loaded:e.complete,naturalWidth:e.naturalWidth,naturalHeight:e.naturalHeight,fit:getComputedStyle(e).objectFit,...rect(e)}));
+   return {voice:rect(voice),viewfinder:rect(document.querySelector('#viewfinder')),stage:rect(document.querySelector('#stage')),examples:rect(examples),before:rect(examples.querySelector('.home-example-before')),after:rect(examples.querySelector('.home-example-after')),arrow:rect(examples.querySelector('.home-example-arrow')),photos};
   });
-  assert.equal(await page.locator('#homeExample').count(),0,name+': removed homepage example is absent');
-  assert.equal(await page.locator('img[src*="bilbao-before-after.jpg"]').count(),0,name+': supplied before-and-after picture is absent');
+  assert.equal(await page.locator('#homeExamples').isVisible(),true,name+': before-and-after examples are visible on the homepage');
+  assert.equal(await page.locator('#homeExamples svg.home-example-arrow, #homeExamples .home-example-arrow svg').count(),1,name+': one vector arrow connects the examples');
+  assert.deepEqual(home.photos.map(p=>p.src),['/assets/examples/andalucia-before.jpg','/assets/examples/andalucia-after.jpg'],name+': original photo is on the left and generated photo is on the right');
+  assert.deepEqual(home.photos.map(p=>[p.naturalWidth,p.naturalHeight]),[[960,1280],[712,1280]],name+': both supplied photos load at their original dimensions');
+  assert.ok(home.photos.every(p=>p.loaded&&p.width>0&&p.height>0&&p.fit==='contain'),name+': complete photos are displayed without cropping');
+  assert.ok(home.photos[0].right<=home.photos[1].left,name+': original photo precedes generated photo visually');
+  assert.ok(home.before.right<=home.arrow.left+1&&home.arrow.right<=home.after.left+1,name+': arrow stays in the gap between the photos');
+  assert.ok(home.arrow.height>0&&home.arrow.width>home.arrow.height,name+': connecting arrow points horizontally');
+  assert.ok(home.examples.left>=-1&&home.examples.right<=width+1&&home.examples.bottom<=height+1,name+': examples fit within the screen');
+  if(width>height&&height<=650)assert.ok(home.examples.top>=home.viewfinder.bottom-1||home.examples.left>=home.viewfinder.right-1,name+': short landscape examples are below or beside the camera');
+  else assert.ok(home.examples.top>=home.viewfinder.bottom-1,name+': examples sit below the viewfinder');
   assert.ok(home.voice.width>=44&&home.voice.height>=44,name+': Talk to Lola remains a usable touch target');
   assert.ok(home.voice.bottom<=home.viewfinder.top+1,name+': Talk to Lola sits above the camera: '+JSON.stringify({voice:home.voice,viewfinder:home.viewfinder}));
   await page.locator('[data-touch=voice]').click({trial:true});
@@ -155,6 +168,7 @@ try{
  }
  await page.setViewportSize({width:1080,height:1920});
  await page.locator('[data-touch=voice]').click();await waitPhase('listening');
+ assert.equal(await page.locator('#homeExamples').isVisible(),false,'Starting Lola hides the homepage examples');
  await input('Ready');await page.waitForTimeout(300);await input(' — not yet.');await page.waitForTimeout(1750);
  assert.equal(await phase(),'listening','Split negative utterance must not capture');
  assert.equal(await page.evaluate(()=>window.__captures.length),0);
@@ -168,6 +182,7 @@ try{
  await tool('take_photo',{confirmed:true});await input('Okay, take my picture.');
  await assertTranscript('countdown');
  await waitPhase('choosing_people');
+ assert.equal(await page.locator('#homeExamples').isVisible(),false,'People selection does not show the homepage examples');
  const timing=await page.evaluate(()=>({captures:window.__captures,ticks:window.__ticks,phases:window.__phases}));
  assert.equal(timing.captures.length,1,'Ready plus duplicate AI call captures exactly once');
  assert.deepEqual(timing.ticks.map(t=>t.tick),[7,6,5,4,3,2,1]);
