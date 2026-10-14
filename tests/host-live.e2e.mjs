@@ -19,22 +19,42 @@ await fs.mkdir('artifacts',{recursive:true});
 await page.addInitScript(()=>{
  const Native=window.RTCPeerConnection;
  window.__liveEvents=[];window.__liveSent=[];window.__liveChannel=null;window.__connectionStates=[];
+ window.__voiceObservations=[];window.__audioPhases=[];
+ let audioMeter,audioMeterContext;
  window.__captureTiming={start:null,captured:null};window.__captionUpdates=0;
  window.addEventListener('DOMContentLoaded',()=>{
   new MutationObserver(()=>{if(document.getElementById('hostCaptionText').textContent)window.__captionUpdates++;}).observe(document.getElementById('hostCaptionText'),{childList:true,characterData:true,subtree:true});
   const capture=document.getElementById('capture').getContext('2d'),draw=capture.drawImage.bind(capture);
   capture.drawImage=(...args)=>{window.__captureTiming.captured=performance.now();return draw(...args);};
   new MutationObserver(()=>{
-   if(document.body.dataset.phase==='countdown'&&window.__captureTiming.start===null)window.__captureTiming.start=performance.now();
+   const phase=document.body.dataset.phase,audio=document.getElementById('voice');
+   if(phase==='countdown'&&window.__captureTiming.start===null)window.__captureTiming.start=performance.now();
+   window.__audioPhases.push({phase,at:performance.now(),muted:audio.muted,paused:audio.paused});
   }).observe(document.body,{attributes:true,attributeFilter:['data-phase']});
  });
  window.RTCPeerConnection=class extends Native{
-  constructor(...args){super(...args);this.addEventListener('connectionstatechange',()=>window.__connectionStates.push({connection:this.connectionState,ice:this.iceConnectionState}));}
+  constructor(...args){
+   super(...args);this.addEventListener('connectionstatechange',()=>window.__connectionStates.push({connection:this.connectionState,ice:this.iceConnectionState}));
+   this.addEventListener('track',event=>{
+    if(event.track.kind!=='audio')return;
+    try{audioMeterContext=new AudioContext();void audioMeterContext.resume().catch(()=>{});audioMeter=audioMeterContext.createAnalyser();audioMeter.fftSize=256;audioMeterContext.createMediaStreamSource(new MediaStream([event.track])).connect(audioMeter);}catch{}
+   });
+  }
   addTrack(track,...args){if(track.kind==='audio')track.enabled=false;return super.addTrack(track,...args);}
   createDataChannel(...args){
    const channel=super.createDataChannel(...args);window.__liveChannel=channel;
    const send=channel.send.bind(channel);channel.send=data=>{try{window.__liveSent.push(JSON.parse(data));}catch{}return send(data);};
-   channel.addEventListener('message',({data})=>{try{window.__liveEvents.push(JSON.parse(data));}catch{}});
+   channel.addEventListener('message',({data})=>{
+    let event;try{event=JSON.parse(data);window.__liveEvents.push(event);}catch{return;}
+    if(event.type!=='session.output_transcript.delta')return;
+    // Host's listener is registered later. A new task runs after the entire
+    // native message dispatch, including its caption and audio gate updates.
+    setTimeout(()=>{
+     const audio=document.getElementById('voice'),box=document.getElementById('hostCaptions'),text=document.getElementById('hostCaptionText'),bounds=box.getBoundingClientRect();
+     let rms=null;if(audioMeter){const samples=new Float32Array(audioMeter.fftSize);audioMeter.getFloatTimeDomainData(samples);rms=Math.sqrt(samples.reduce((sum,value)=>sum+value*value,0)/samples.length);}
+     window.__voiceObservations.push({eventId:event.event_id,delta:event.delta,at:performance.now(),phase:document.body.dataset.phase,emailOpen:!document.getElementById('emailPanel').hidden,audioMuted:audio.muted,audioPaused:audio.paused,audioVolume:audio.volume,audioReadyState:audio.readyState,audioTime:audio.currentTime,tracks:audio.srcObject?.getAudioTracks().map(track=>({readyState:track.readyState,enabled:track.enabled,muted:track.muted}))||[],rms,captionText:text.textContent,captionVisible:!box.hidden&&getComputedStyle(box).display!=='none'&&bounds.height>0&&bounds.top>=0&&bounds.bottom<=innerHeight+1});
+    },0);
+   });
    return channel;
   }
  };
@@ -79,6 +99,9 @@ try{
  await page.waitForFunction(()=>window.__liveEvents.some(e=>e.type==='session.output_transcript.delta'));
  await waitPhase('countdown');await page.screenshot({path:'artifacts/host-live-countdown.png'});
  await waitPhase('choosing_people');
+ const countdownAudio=await page.evaluate(()=>({phases:window.__audioPhases.filter(item=>item.phase==='countdown'),output:window.__voiceObservations.filter(item=>item.phase==='countdown')}));
+ assert.ok(countdownAudio.phases.length>0,'Countdown audibility was observed');
+ assert.ok(countdownAudio.phases.every(item=>item.muted)&&countdownAudio.output.every(item=>item.audioMuted),'Lola remains muted during countdown');
  assert.equal(generationCalls,0,'Capture precedes count, destination and image work');
  const duration=await page.evaluate(()=>window.__captureTiming.captured-window.__captureTiming.start);
  assert.ok(duration>=6900&&duration<9000,'Seven-second live countdown: '+duration);
@@ -88,10 +111,29 @@ try{
  await ask('We choose Canarias. Please select Canarias and begin our image.');
  await waitPhase('generating');await page.locator('#emailPanel').waitFor({state:'visible'});
  assert.equal(generationCalls,1);
+ await page.waitForFunction(()=>{
+  const started=window.__audioPhases.find(item=>item.phase==='generating')?.at;
+  const allowed=window.__voiceObservations.filter(item=>item.phase==='generating'&&item.at-started<15000&&item.emailOpen&&!item.audioMuted&&!item.audioPaused&&item.audioVolume>0&&item.audioReadyState>=2&&item.tracks.some(track=>track.readyState==='live'&&track.enabled&&!track.muted)&&item.captionVisible);
+  const spoken=allowed.map(item=>item.delta).join(''),captions=allowed.map(item=>item.captionText).join(' ');
+  const destination=/Canary Islands|Canarias|Atlantic|archipelago|volcanic|beaches/i;
+  return destination.test(spoken)&&destination.test(captions);
+ },null,{timeout:15000});
  await waitToolTurn('set_destination');
  const tourismStart=await page.evaluate(()=>window.__liveEvents.length);
  await ask('While our photo generates, which national parks could we explore in the Canary Islands?');
- await page.waitForFunction(start=>/Teide|Timanfaya|Garajonay|Taburiente/i.test(window.__liveEvents.slice(start).filter(e=>e.type==='session.output_transcript.delta').map(e=>e.delta).join('')),tourismStart,{timeout:45000});
+ // Live may summarize the delegated answer when speaking. Check the factual
+ // answer and the spoken topic separately instead of requiring verbatim names.
+ await page.waitForFunction(start=>{
+  const events=window.__liveEvents.slice(start);
+  const answer=events.filter(e=>e.type==='response.event'&&e.event?.type==='response.output_item.done'&&e.event.item?.type==='message').flatMap(e=>e.event.item.content||[]).filter(c=>c.type==='output_text').map(c=>c.text).join(' ');
+  const spoken=events.filter(e=>e.type==='session.output_transcript.delta').map(e=>e.delta).join('');
+  const namedParks=['Teide','Timanfaya','Garajonay','Taburiente'].filter(name=>new RegExp(name,'i').test(answer));
+  return namedParks.length>=2&&/national parks?/i.test(answer)&&/national parks?|Teide|Timanfaya|Garajonay|Taburiente/i.test(spoken)&&/volcan|forest|hiking|island|nature|Canary|Canarias/i.test(spoken);
+ },tourismStart,{timeout:45000});
+ const tourismReply=await page.evaluate(start=>{
+  const events=window.__liveEvents.slice(start);
+  return {answer:events.filter(e=>e.type==='response.event'&&e.event?.type==='response.output_item.done'&&e.event.item?.type==='message').flatMap(e=>e.event.item.content||[]).filter(c=>c.type==='output_text').map(c=>c.text).join(' '),spoken:events.filter(e=>e.type==='session.output_transcript.delta').map(e=>e.delta).join('')};
+ },tourismStart);
  assert.equal(await page.locator('body').getAttribute('data-phase'),'generating');
  await page.locator('#guestNameInput').fill('Voice Test Guests');await page.locator('#emailInput').fill('voice-smoke@example.invalid');
  assert.equal(emailCalls,0,'Typing contact details does not deliver');
@@ -105,16 +147,17 @@ try{
   sessionStarted:window.__liveEvents.some(e=>e.type==='session.started'),
   spokenOutput:window.__liveEvents.filter(e=>e.type==='session.output_transcript.delta').map(e=>e.delta).join(''),
   tools:window.__liveEvents.filter(e=>e.type==='response.event'&&e.event?.type==='response.output_item.done'&&e.event.item?.type==='function_call').map(e=>e.event.item.name),
-  errors:window.__liveEvents.filter(e=>e.type==='error').map(e=>e.error)
+  errors:window.__liveEvents.filter(e=>e.type==='error').map(e=>e.error),
+  voiceObservations:window.__voiceObservations,audioPhases:window.__audioPhases
  }));
- Object.assign(report,{generationCalls,emailCalls,imageGenerationMocked:true,emailDeliveryMocked:true,inputMode:'text through real live data channel; microphone recognition covered separately'});
+ Object.assign(report,{generationCalls,emailCalls,tourismReply,imageGenerationMocked:true,emailDeliveryMocked:true,inputMode:'text through real live data channel; microphone recognition covered separately'});
  assert.ok(report.captionUpdates>5,'Live captions stream through the conversation');assert.deepEqual(report.errors,[],'No Live protocol errors');
  await page.screenshot({path:'artifacts/host-live-result.png'});await fs.writeFile('artifacts/live-report.json',JSON.stringify(report,null,2));
  console.log('Real voice flow passed:',JSON.stringify(report));
 }catch(error){
  await page.screenshot({path:'artifacts/host-live-failure.png'}).catch(()=>{});
  console.error('Voice startup status:',JSON.stringify({sessionStatus,sessionFailure}));
- await fs.writeFile('artifacts/live-failure.json',JSON.stringify(await page.evaluate(()=>({events:window.__liveEvents,sent:window.__liveSent,connections:window.__connectionStates,phase:document.body.dataset.phase,hint:document.getElementById('hint')?.textContent})).catch(()=>({})),null,2));
+ await fs.writeFile('artifacts/live-failure.json',JSON.stringify(await page.evaluate(()=>({events:window.__liveEvents,sent:window.__liveSent,connections:window.__connectionStates,voiceObservations:window.__voiceObservations,audioPhases:window.__audioPhases,phase:document.body.dataset.phase,hint:document.getElementById('hint')?.textContent})).catch(()=>({})),null,2));
  throw error;
 }finally{
  releaseImage?.();

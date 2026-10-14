@@ -18,7 +18,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Exercise real voice with image and email delivery intercepted
         env:
-          TURESPANA_HOST_PREVIEW_URL: https://turespana-imex-kiosk2-aay0q47lv-powerwyzes-projects.vercel.app
+          TURESPANA_HOST_PREVIEW_URL: https://turespana-imex-kiosk2-edlwfffdl-powerwyzes-projects.vercel.app
         run: node tests/host-live.e2e.mjs
       - uses: actions/upload-artifact@v4
         if: always()
