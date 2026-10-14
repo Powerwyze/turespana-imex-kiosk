@@ -18,7 +18,7 @@ let sessionStatus=null,sessionFailure=null,generationCalls=0,emailCalls=0,releas
 await fs.mkdir('artifacts',{recursive:true});
 await page.addInitScript(()=>{
  const Native=window.RTCPeerConnection;
- window.__liveEvents=[];window.__liveSent=[];window.__liveChannel=null;
+ window.__liveEvents=[];window.__liveSent=[];window.__liveChannel=null;window.__connectionStates=[];
  window.__captureTiming={start:null,captured:null};window.__captionUpdates=0;
  window.addEventListener('DOMContentLoaded',()=>{
   new MutationObserver(()=>{if(document.getElementById('hostCaptionText').textContent)window.__captionUpdates++;}).observe(document.getElementById('hostCaptionText'),{childList:true,characterData:true,subtree:true});
@@ -29,6 +29,7 @@ await page.addInitScript(()=>{
   }).observe(document.body,{attributes:true,attributeFilter:['data-phase']});
  });
  window.RTCPeerConnection=class extends Native{
+  constructor(...args){super(...args);this.addEventListener('connectionstatechange',()=>window.__connectionStates.push({connection:this.connectionState,ice:this.iceConnectionState}));}
   addTrack(track,...args){if(track.kind==='audio')track.enabled=false;return super.addTrack(track,...args);}
   createDataChannel(...args){
    const channel=super.createDataChannel(...args);window.__liveChannel=channel;
@@ -97,7 +98,8 @@ try{
  console.log('Real voice flow passed:',JSON.stringify(report));
 }catch(error){
  await page.screenshot({path:'artifacts/host-live-failure.png'}).catch(()=>{});
- await fs.writeFile('artifacts/live-failure.json',JSON.stringify(await page.evaluate(()=>({events:window.__liveEvents,sent:window.__liveSent,phase:document.body.dataset.phase})).catch(()=>({})),null,2));
+ console.error('Voice startup status:',JSON.stringify({sessionStatus,sessionFailure}));
+ await fs.writeFile('artifacts/live-failure.json',JSON.stringify(await page.evaluate(()=>({events:window.__liveEvents,sent:window.__liveSent,connections:window.__connectionStates,phase:document.body.dataset.phase,hint:document.getElementById('hint')?.textContent})).catch(()=>({})),null,2));
  throw error;
 }finally{
  releaseImage?.();

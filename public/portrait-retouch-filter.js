@@ -70,6 +70,12 @@ export function finishFace(ctx,landmarks,width,height){
   // Extend crop edges so blur never introduces a transparent/dark fringe.
   blurCtx.drawImage(crop,-w,0);blurCtx.drawImage(crop,w,0);blurCtx.drawImage(crop,0,-h);blurCtx.drawImage(crop,0,h);blurCtx.drawImage(crop,0,0);
   const soft=blurCtx.getImageData(0,0,w,h).data,src=original.data;
+  // Broad forehead lines need a wider, feathered finish than fine under-eye skin.
+  const broad=new OffscreenCanvas(w,h),broadCtx=broad.getContext('2d',{willReadFrequently:true});
+  broadCtx.filter=`blur(${Math.max(3,w*.040)}px)`;
+  for(const dx of [-w,0,w])for(const dy of [-h,0,h])broadCtx.drawImage(crop,dx,dy);
+  const broadSkin=broadCtx.getImageData(0,0,w,h).data;
+  const browLine=Math.min(...BROWS.map(row=>mean(row.map(i=>points[i])).y));
   const marks=beautyMarkMask(src,soft,mask,w,h,w);
   const eyes=EYES.map((indices,index)=>{
     const p=indices.map(i=>points[i]),center=mean(p),eyeWidth=Math.max(...p.map(v=>v.x))-Math.min(...p.map(v=>v.x));
@@ -83,8 +89,10 @@ export function finishFace(ctx,landmarks,width,height){
     let strength=y<eyeLevel?.80:.48;
     let lift=0;const light=luminance(soft[i],soft[i+1],soft[i+2]);
     for(const eye of eyes){const radius=((x-eye.x)/eye.rx)**2+((y-eye.y)/eye.ry)**2;if(radius<1){strength=Math.max(strength,.48+.40*(1-radius));lift=Math.max(lift,Math.min(20,Math.max(0,eye.target-light-2)*.70)*(1-radius)**1.2);}}
+    const foreheadAmount=clamp((browLine-y-h*.035)/(h*.075),0,1);
+    strength=Math.max(strength,foreheadAmount*.96);
     const alpha=mask[i+3]/255*strength;
-    for(let channel=0;channel<3;channel++)src[i+channel]=clamp(src[i+channel]*(1-alpha)+(soft[i+channel]+lift)*alpha,0,255);
+    for(let channel=0;channel<3;channel++)src[i+channel]=clamp(src[i+channel]*(1-alpha)+(soft[i+channel]*(1-foreheadAmount)+broadSkin[i+channel]*foreheadAmount+lift)*alpha,0,255);
   }
   ctx.putImageData(original,x0,y0);return true;
 }
