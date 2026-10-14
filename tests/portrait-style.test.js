@@ -15,11 +15,11 @@ async function exercise(run,{empty=false,status=200}={}){
  };
  try{await run(calls);}finally{globalThis.fetch=priorFetch;if(priorKey===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=priorKey;}
 }
-const generate=destinationId=>generatePortrait({file:new File(['camera-source'],'guest.jpg',{type:'image/jpeg'}),destinationId});
+const generate=(destinationId,guestCount=1)=>generatePortrait({file:new File(['camera-source'],'guest.jpg',{type:'image/jpeg'}),destinationId,guestCount});
 test('all six regions return the render directly with face identity prioritized',async()=>{
  await exercise(async calls=>{
   for(const dest of destinations){
-   calls.length=0;const result=await generate(dest.id);
+   calls.length=0;const result=await generate(dest.id,2);
    assert.equal(result.bytes.toString(),'photo-result');assert.equal(result.pipeline,PIPELINE_VERSION);
    assert.equal(calls.length,1);assert.equal(result.attempts,1);assert.equal(result.timings.verificationMs,0);
    const edit=calls[0].body;
@@ -29,6 +29,10 @@ test('all six regions return the render directly with face identity prioritized'
    assert.match(edit.prompt,/iPhone/);assert.doesNotMatch(edit.prompt,/Image 3|Velázquez|SPANISH BAROQUE/);assert.match(edit.prompt,/Facial likeness takes precedence/);
    assert.match(edit.prompt,/best-effort guidance, not acceptance requirements/);
    assert.match(edit.prompt,/Guests do not need to be centered/);assert.match(edit.prompt,/head-to-body scale/);
+   assert.match(edit.prompt,/GUEST GROUP: Exactly 2 posed foreground guests/);
+   assert.match(edit.prompt,/For two women, give BOTH guests women's regional outfits; for two men, give BOTH guests men's regional outfits/);
+   assert.match(edit.prompt,/Never force one dress and one trouser outfit, alternate outfits by position/);
+   assert.doesNotMatch(edit.prompt,/default to the TROUSER ensemble|shirt, T-shirt, jacket, suit, shorts or trousers uses/);
   }
  });
 });
@@ -45,16 +49,17 @@ test('missing output and provider failures remain honest retryable errors',async
  await exercise(async calls=>{await assert.rejects(generate('madrid'),{code:'EMPTY_IMAGE'});assert.equal(calls.length,1);},{empty:true});
  await exercise(async calls=>{await assert.rejects(generate('madrid'),{code:'GENERATION_FAILED'});assert.equal(calls.length,1);},{status:400});
 });
-test('outfit policy defaults from source clothing, honors explicit choices, and never turns negation into a dress request',()=>{
- for(const request of ['', 'No dress', "Don't put me in a dress", 'Sin vestido']){
+test('outfit matching has no male fallback and preserves individual garment requests',()=>{
+ assert.doesNotMatch(outfitSelectionPrompt(),/EXPLICIT OUTFIT CHOICE|default to the TROUSER ensemble/);
+ for(const request of ['No dress', "Don't put me in a dress", 'Sin vestido','No dress, use trousers']){
   const rules=outfitSelectionPrompt(request);
-  assert.doesNotMatch(rules,/EXPLICIT OUTFIT CHOICE/);
-  assert.match(rules,/default to the TROUSER ensemble/);
+  assert.match(rules,/EXPLICIT OUTFIT CHOICE: Use the TROUSER ensemble/);
+  assert.doesNotMatch(rules,/EXPLICIT OUTFIT CHOICE: Use the DRESS ensemble/);
  }
  assert.match(outfitSelectionPrompt('Use a dress'),/EXPLICIT OUTFIT CHOICE: Use the DRESS ensemble/);
- assert.match(outfitSelectionPrompt('No dress, use trousers'),/default to the TROUSER ensemble/);
+ assert.match(outfitSelectionPrompt('No trousers; use a dress'),/EXPLICIT OUTFIT CHOICE: Use the DRESS ensemble/);
  assert.match(outfitSelectionPrompt('Use trousers'),/EXPLICIT OUTFIT CHOICE: Use the TROUSER ensemble/);
- assert.doesNotMatch(outfitSelectionPrompt('Use a dress',2),/EXPLICIT OUTFIT CHOICE/);
+ for(const count of [2,3,4])for(const request of ['Use a dress','Use trousers','No dress'])assert.doesNotMatch(outfitSelectionPrompt(request,count),/EXPLICIT OUTFIT CHOICE/,'Unassigned requests must not dress the entire group');
 });
 
 test('direct pipeline accepts four guests with one render and rejects five before any provider call',async()=>{

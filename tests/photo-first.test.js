@@ -18,8 +18,8 @@ test('reset during capture discards the late photo',async()=>{
  let release;const engine=new TurespanaEngine({capture:()=>new Promise(r=>release=r),generate:()=>assert.fail('must not generate')});
  await engine.execute('take_photo',{confirmed:true});const job=engine.job;engine.reset();release(new Blob(['late']));await job;assert.equal(engine.source,null);assert.equal(engine.phase,'listening');
 });
-test('countdown lasts seven seconds with seven synchronized ticks',async()=>{
- let now=0;const ticks=[];await runCountdown({now:()=>now,sleep:async ms=>{now+=ms;},onTick:n=>ticks.push(n)});assert.equal(now,7000);assert.deepEqual(ticks,[7,6,5,4,3,2,1]);
+test('countdown lasts five seconds with five synchronized ticks',async()=>{
+ let now=0;const ticks=[];await runCountdown({now:()=>now,sleep:async ms=>{now+=ms;},onTick:n=>ticks.push(n)});assert.equal(now,5000);assert.deepEqual(ticks,[5,4,3,2,1]);
 });
 test('double city taps cannot duplicate generation and retry uses saved source',async()=>{
  const {engine,calls}=fixture();await engine.execute('take_photo',{confirmed:true});await engine.job;await engine.execute('set_guest_count',{count:1});

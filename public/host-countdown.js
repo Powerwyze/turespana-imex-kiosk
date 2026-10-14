@@ -10,7 +10,7 @@ export function countdownWait(ms,signal){
 // Every tick targets the same deadline, so a late browser timer cannot add
 // another second to the pose or play a burst of outdated countdown numbers.
 export async function runCountdown({signal,onTick,now=()=>performance.now(),sleep=countdownWait}){
-  const deadline=now()+7000;
+  const deadline=now()+5000;
   let previous=0;
   for(;;){
     if(signal?.aborted)throw cancelled();

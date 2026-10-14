@@ -185,9 +185,9 @@ try{
  assert.equal(await page.locator('#homeExamples').isVisible(),false,'People selection does not show the homepage examples');
  const timing=await page.evaluate(()=>({captures:window.__captures,ticks:window.__ticks,phases:window.__phases}));
  assert.equal(timing.captures.length,1,'Ready plus duplicate AI call captures exactly once');
- assert.deepEqual(timing.ticks.map(t=>t.tick),[7,6,5,4,3,2,1]);
+ assert.deepEqual(timing.ticks.map(t=>t.tick),[5,4,3,2,1]);
  const duration=timing.captures[0]-timing.ticks[0].at;
- assert.ok(duration>=6900&&duration<8500,'Seven-second countdown: '+duration);
+ assert.ok(duration>=4900&&duration<6500,'Five-second countdown: '+duration);
  assert.equal(jobs.length,0,'Photo capture does not generate before count and city');
  for(const n of [1,2,3,4])assert.equal(await page.locator('[data-touch=people-'+n+']').isVisible(),true);
  await tool('set_guest_count',{count:5});assert.equal(await phase(),'choosing_people','Invalid group count does not advance');
@@ -245,7 +245,7 @@ try{
  assert.equal(mail.length,1);assert.equal(mail[0].email,'kiosk-test@example.invalid');assert.equal(mail[0].name,'Test Guest');assert.equal(mail[0].marketingOptIn,false);assert.ok(mail[0].imageBase64.length>100);
  assert.equal(await page.locator('#picture').isVisible(),true);await assertTranscript('result',['[data-touch=finish]']);
  await page.screenshot({path:path.join(artifacts,'result.png')});
- report.checks.push('ready/negation/duplicates','cancel countdown preserves live camera','seven-second capture','spoken count/city order','responsive captions/cards/contact','uppercase keyboard','confirmation-only stubbed email');
+ report.checks.push('ready/negation/duplicates','cancel countdown preserves live camera','five-second capture','spoken count/city order','responsive captions/cards/contact','uppercase keyboard','confirmation-only stubbed email');
  await reset();
  // A detector failure must re-arm on the homepage without requiring a voice session.
  await page.evaluate(()=>{sessionStorage.setItem('testPeaceFail','true');});await page.reload();await page.waitForFunction(()=>document.querySelector('#camera').videoWidth>0);

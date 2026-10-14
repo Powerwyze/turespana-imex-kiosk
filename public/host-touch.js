@@ -22,7 +22,7 @@ export function mountTouchControls({getState,start,voice,action,finish,labels,on
    title.textContent='Connecting to Lola…';button('Cancel','cancel',finish,true);
   }else if(busy){
    title.textContent=s.phase==='generating'?'Creating your photo…':s.phase==='countdown'?'Look at the camera!':'Getting the camera ready…';
-   hint.textContent=s.phase==='generating'?'Please wait. You can still talk to Lola if connected.':'Your photo starts after the seven-second countdown.';
+   hint.textContent=s.phase==='generating'?'Please wait. You can still talk to Lola if connected.':'Your photo starts after the five-second countdown.';
    button('Cancel','cancel',finish,true);
   }else if(s.phase==='result'){
    title.textContent=s.emailSent?'Your photo has been sent':'Your photo is ready';
@@ -33,7 +33,7 @@ export function mountTouchControls({getState,start,voice,action,finish,labels,on
    button('Retake photo','retake',()=>action('take_photo',{confirmed:true,style:''}));
    button('Start over','restart',start,true);
   }else if(!s.hasPhoto){
-   title.textContent='See yourself in Spain';hint.textContent='Look at the camera. Your photo starts after a seven-second countdown.';
+   title.textContent='See yourself in Spain';hint.textContent='Look at the camera. Your photo starts after a five-second countdown.';
    button(homeText('captureAction'),'capture',()=>action('take_photo',{confirmed:true,style:''}));
   }else if(!s.guestCount||edit==='people'){
    title.textContent='How many people?';hint.textContent=(labels[s.destinationId]?labels[s.destinationId]+' · ':'')+'How many people are in the picture?';
@@ -50,7 +50,7 @@ export function mountTouchControls({getState,start,voice,action,finish,labels,on
    }
    button('Back','back',()=>{edit='people';render();},true);
   }else{
-   title.textContent='Ready for your photo?';hint.textContent=s.guestCount+' '+(s.guestCount===1?'person':'people')+' · '+labels[s.destinationId]+' · Say yes, okay, or take the picture — or hold up a peace sign ✌ for a moment. Seven-second countdown.';
+   title.textContent='Ready for your photo?';hint.textContent=s.guestCount+' '+(s.guestCount===1?'person':'people')+' · '+labels[s.destinationId]+' · Say yes, okay, or take the picture — or hold up a peace sign ✌ for a moment. Five-second countdown.';
    button('Take photo','capture',()=>action('take_photo',{confirmed:true,style:''}));
    button('Change place','place',()=>{edit='destination';render();},true);
    button('Change people','people',()=>{edit='people';render();},true);

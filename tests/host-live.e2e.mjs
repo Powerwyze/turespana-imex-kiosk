@@ -104,7 +104,7 @@ try{
  assert.ok(countdownAudio.phases.every(item=>item.muted)&&countdownAudio.output.every(item=>item.audioMuted),'Lola remains muted during countdown');
  assert.equal(generationCalls,0,'Capture precedes count, destination and image work');
  const duration=await page.evaluate(()=>window.__captureTiming.captured-window.__captureTiming.start);
- assert.ok(duration>=6900&&duration<9000,'Seven-second live countdown: '+duration);
+ assert.ok(duration>=4900&&duration<7000,'Five-second live countdown: '+duration);
  await ask('There are exactly two people in the picture. Please select two people.');
  await waitPhase('choosing_destination');
  await waitToolTurn('set_guest_count');

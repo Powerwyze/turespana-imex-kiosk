@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import {HostVoiceSync} from '../public/host-voice-sync.js';
 function fixture(){let time=0,id=0,level=0;const tasks=new Map(),sent=[],audio={muted:false};const gate=new HostVoiceSync({audio,speak:text=>sent.push(text),now:()=>time,getLevel:()=>level,setTimer:(fn,ms)=>{tasks.set(++id,{fn,at:time+ms});return id;},clearTimer:id=>tasks.delete(id)});return {gate,audio,sent,setLevel:value=>level=value,advance(ms){const end=time+ms;for(;;){const next=[...tasks].sort((a,b)=>a[1].at-b[1].at)[0];if(!next||next[1].at>end)break;time=next[1].at;tasks.delete(next[0]);next[1].fn();}time=end;}};}
 const acknowledge=(f,id,time)=>{f.gate.expectStateAck(id);f.gate.acknowledge({type:'session.thinking.appended',client_event_id:id,start_ms:time,end_ms:time+200});};
-test('countdown is always muted, but its seven silent seconds allow the next question immediately',()=>{
- const f=fixture();f.gate.transition('listening');f.gate.observeOutput({delta:'Look at the camera.',start_ms:0,end_ms:200});f.gate.transition('countdown');f.gate.speak('wrong countdown narration');f.advance(7000);assert.equal(f.audio.muted,true);assert.deepEqual(f.sent,[]);
- f.gate.transition('choosing_people');acknowledge(f,'people',7200);f.gate.speak('How many people?');assert.equal(f.audio.muted,false);
- assert.equal(f.gate.observeOutput({delta:'How many people are in the picture?',start_ms:7200,end_ms:7400}),true);f.advance(2000);assert.deepEqual(f.sent,[],'do not repeat a question the host already spoke');
+test('countdown is always muted, but its five silent seconds allow the next question immediately',()=>{
+ const f=fixture();f.gate.transition('listening');f.gate.observeOutput({delta:'Look at the camera.',start_ms:0,end_ms:200});f.gate.transition('countdown');f.gate.speak('wrong countdown narration');f.advance(5000);assert.equal(f.audio.muted,true);assert.deepEqual(f.sent,[]);
+ f.gate.transition('choosing_people');acknowledge(f,'people',5200);f.gate.speak('How many people?');assert.equal(f.audio.muted,false);
+ assert.equal(f.gate.observeOutput({delta:'How many people are in the picture?',start_ms:5200,end_ms:5400}),true);f.advance(2000);assert.deepEqual(f.sent,[],'do not repeat a question the host already spoke');
 });
 test('replay of the live19.2s→20.2s transition keeps correct generation narration audible throughout',()=>{
  const f=fixture();f.gate.transition('choosing_destination');f.gate.observeOutput({delta:'one, two, or three?',start_ms:19000,end_ms:19200});f.advance(1000);

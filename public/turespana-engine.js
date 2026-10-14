@@ -22,7 +22,7 @@ export class TurespanaEngine extends BoothEngine {
         }catch(error){if(version===this.version)this.change('error',{error:error.message||'The photo could not be captured.'});}
         finally{if(version===this.version)this.controller=null;}
       })();
-      return {accepted:true,...this.snapshot(),message:'Seven-second countdown started. After capture, ask how many people are in the photo.'};
+      return {accepted:true,...this.snapshot(),message:'Five-second countdown started. After capture, ask how many people are in the photo.'};
     }
     if(name==='set_guest_count'){
       if(!this.source)return {error:'Take the photo first, then ask how many people are in it.'};

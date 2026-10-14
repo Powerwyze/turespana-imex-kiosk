@@ -1,6 +1,6 @@
 # Photo-first kiosk reliability
 
-The live route uses `public/index.html` and `public/host.js`; `host.html` is kept identical. The authoritative sequence is: live viewfinder → seven-second capture → one/two/three/four people → destination → generation with contact entry → confirmed reveal and delivery. A provider error retains the captured source for an explicit retry.
+The live route uses `public/index.html` and `public/host.js`; `host.html` is kept identical. The authoritative sequence is: live viewfinder → five-second capture → one/two/three/four people → destination → generation with contact entry → confirmed reveal and delivery. A provider error retains the captured source for an explicit retry.
 
 ## Capture and voice
 

@@ -34,7 +34,7 @@ export class HostVoiceSync {
   this.destinationId=destinationId;if(phase===this.phase)return;
   const previous=this.phase;this.clearTimer(this.timer);this.timer=null;this.phase=phase;this.pending=null;this.currentAck=null;this.expectedAcks.clear();this.sentence='';
   if(this.getLevel()>.018)this.lastSound=this.now();
-  // Do not invent new activity: the seven silent countdown seconds must count.
+  // Do not invent new activity: the five silent countdown seconds must count.
   this.draining=this.blocked()||(this.now()-this.lastOutput<900||this.now()-this.lastSound<350);
   if(phase==='listening'&&[null,'idle','connecting'].includes(previous))this.draining=false;
   this.audio.muted=this.draining;
