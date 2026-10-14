@@ -22,7 +22,6 @@ body[data-phase="idle"] header{top:max(8vh,110px)}#eyes{transform-origin:300px 3
 
 body[data-phase="countdown"] #head,body[data-phase="countdown"] #eyes{animation-play-state:paused}
 
-
 /* Live voice captions sit immediately above Sunny, with a bounded reading window. */
 #stage{--sun-width:min(80vw,55vh,680px);--sun-shift:4vh;--sun-x:50%}
 #face{width:var(--sun-width);transform:translateY(var(--sun-shift))}
@@ -356,15 +355,14 @@ body[data-phase=choosing_destination] .touch-help{display:none}
 #viewfinderCapture:focus-visible{outline:3px solid white;outline-offset:3px}
 #viewfinderCapture:active{filter:brightness(.94)}
 
-/* One sample outcome beneath the homepage camera. */
-#homeExample{display:none}
+/* Homepage camera sizing. */
+
 body[data-phase=idle] #viewfinder{overflow:visible}
 body[data-phase=idle] #viewfinder .camera-frame{height:min(32dvh,420px)}
-body[data-phase=idle] #homeExample{display:block;position:absolute;top:calc(100% + 12px);left:50%;transform:translateX(-50%);width:calc(clamp(90px,16dvh,280px) * 405 / 640);margin:0;text-align:center}
-.home-example-image{position:relative;width:100%;aspect-ratio:405/640;overflow:hidden;border:1px solid #ffffffc0;border-radius:10px;box-shadow:0 5px 18px #0005}
-.home-example-image img{position:absolute;top:0;left:0;width:300%;height:200%;max-width:none;object-fit:fill}
-#homeExample figcaption{margin-top:6px;color:white;font:600 clamp(11px,1.4vw,16px)/1.2 Arial,sans-serif;text-shadow:0 1px 5px #000}
-@media(orientation:landscape) and (max-height:650px){body[data-phase=idle] #viewfinder{top:15%}body[data-phase=idle] #viewfinder .camera-frame{height:24dvh}body[data-phase=idle] #homeExample{width:calc(17dvh * 405 / 640)}}
+
+
+
+@media(orientation:landscape) and (max-height:650px){body[data-phase=idle] #viewfinder{top:15%}body[data-phase=idle] #viewfinder .camera-frame{height:24dvh}}
 
 /* Reserve a separate speech area above the camera preview. */
 #viewfinder{top:max(240px,26dvh)}
@@ -376,7 +374,7 @@ body[data-phase=countdown] #countdown{top:calc(max(240px,26dvh) + 60px + min(15d
 @media(max-height:740px) and (orientation:portrait){
  #viewfinder{top:220px}
  body[data-phase=idle] #viewfinder .camera-frame{height:20dvh}
- body[data-phase=idle] #homeExample{width:calc(12dvh * 405 / 640)}
+ 
  body[data-phase=listening] #stage>#hostCaptions,body[data-phase=preparing] #stage>#hostCaptions{top:90px;max-height:110px}
  body[data-phase=listening] #viewfinder .camera-frame,body[data-phase=preparing] #viewfinder .camera-frame,body[data-phase=countdown] #viewfinder .camera-frame{height:24dvh}
  body[data-phase=countdown] #countdown{top:calc(280px + 12dvh)}
@@ -453,7 +451,7 @@ body[data-phase=result] #emailToast{grid-row:2}
 /* Camera positions are relative to the stage below the reserved transcript. */
 #viewfinder{top:clamp(140px,19%,360px)}
 body[data-phase=idle] #viewfinder .camera-frame{height:min(28dvh,420px)}
-body[data-phase=idle] #homeExample{width:calc(clamp(80px,14dvh,240px) * 405 / 640)}
+
 body[data-phase=countdown] #countdown{top:calc(clamp(140px,19%,360px) + 60px + min(15dvh,210px))}
 body[data-phase=choosing_destination] #touchControls{bottom:12px}
 .touch-actions.destinations{width:min(100%,calc((var(--booth-height) - max(120px,12dvh) - 180px)*.9))}
@@ -461,7 +459,7 @@ body[data-phase=choosing_destination] #touchControls{bottom:12px}
  #viewfinder{top:136px}
  body[data-phase=idle] #viewfinder .camera-frame{height:18dvh}
  body[data-phase=listening] #viewfinder .camera-frame,body[data-phase=preparing] #viewfinder .camera-frame,body[data-phase=countdown] #viewfinder .camera-frame{height:26dvh}
- body[data-phase=idle] #homeExample{width:calc(11dvh * 405 / 640)}
+ 
  body[data-phase=countdown] #countdown{top:calc(196px + 13dvh)}
 }
 @media(orientation:landscape) and (max-height:650px){
@@ -470,17 +468,17 @@ body[data-phase=choosing_destination] #touchControls{bottom:12px}
  #viewfinder h2{font-size:20px;margin:8px}
  #viewfinder #cameraStatus{padding:6px;font-size:10px}
  body[data-phase=idle] #viewfinder .camera-frame{height:22dvh}
- body[data-phase=idle] #homeExample{top:calc(100% + 6px);width:calc(12dvh * 405 / 640)}
- #homeExample figcaption{font-size:9px;margin-top:3px}
+ 
+ 
  #viewfinderCapture{bottom:6px;min-height:38px;padding:8px;font-size:13px}
  body[data-phase=countdown] #countdown{left:28%;top:calc(110px + 15dvh)}
  .touch-actions.destinations{width:min(76vw,650px);row-gap:24px}
 }
 
-/* Homepage: Lola above the camera, with a full-width before/after below it. */
+/* Homepage: Lola above the live camera. */
 body[data-phase=idle] #stage{
  display:grid;grid-template-columns:minmax(0,1fr);
- grid-template-rows:minmax(180px,1fr) minmax(0,74.6875vw);
+ grid-template-rows:minmax(180px,1fr);
  gap:16px;padding:242px 0 0;overflow:hidden;
 }
 body[data-phase=idle] #intro{grid-area:auto;top:98px;left:5%;right:5%;width:90%}
@@ -496,21 +494,13 @@ body[data-phase=idle] #touchControls [data-touch=voice]{
 }
 body[data-phase=idle] #viewfinder{
  position:relative;inset:auto;transform:none;grid-column:1;grid-row:1;
- align-self:center;justify-self:center;width:min(84vw,720px);height:100%;max-height:524px;
+ align-self:start;justify-self:center;width:min(84vw,720px);height:100%;max-height:524px;
  display:flex;flex-direction:column;min-height:0;overflow:hidden;
 }
 body[data-phase=idle] #viewfinder h2,body[data-phase=idle] #cameraStatus{flex:none}
 body[data-phase=idle] #viewfinder .camera-frame{flex:1;min-height:80px;height:auto}
-body[data-phase=idle] #homeExample{
- display:block;position:relative;inset:auto;transform:none;grid-column:1;grid-row:2;
- width:100%;height:100%;min-height:0;margin:0;align-self:end;z-index:1;
-}
-#homeExample .home-example-image{
- width:100%;height:100%;aspect-ratio:auto;border:0;border-radius:0;box-shadow:none;background:#fff;
-}
-#homeExample .home-example-image img{
- position:static;display:block;width:100%;height:100%;max-width:100%;object-fit:contain;
-}
+
+
 @media(max-width:600px){
  body[data-phase=idle] #stage{padding-top:200px;gap:12px}
  body[data-phase=idle] #intro{top:96px}
@@ -522,17 +512,15 @@ body[data-phase=idle] #homeExample{
 }
 @media(orientation:landscape) and (max-height:650px){
  body[data-phase=idle] #stage{
-  grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr);
+  grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr);
   padding:130px 12px 8px;gap:12px;
  }
  body[data-phase=idle] #intro{display:none}
  body[data-phase=idle] #sentryNotice{display:none}
  body[data-phase=idle] #touchControls{top:76px;width:min(84vw,720px)}
  body[data-phase=idle] #touchControls [data-touch=voice]{min-height:44px;font-size:20px}
- body[data-phase=idle] #viewfinder{width:100%;max-height:none}
+ body[data-phase=idle] #viewfinder{width:min(84vw,720px);max-height:none}
  body[data-phase=idle] #viewfinder h2{font-size:18px;margin:6px}
  body[data-phase=idle] #cameraStatus{font-size:9px;padding:4px}
  body[data-phase=idle] #viewfinder .camera-frame{min-height:70px}
- body[data-phase=idle] #homeExample{grid-column:2;grid-row:1}
- body[data-phase=idle] #homeExample .home-example-image{background:transparent}
 }
