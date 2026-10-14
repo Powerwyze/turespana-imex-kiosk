@@ -22,7 +22,7 @@ const server=http.createServer(async(req,res)=>{
  catch{res.writeHead(404).end();}
 });
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
-const origin='http://127.0.0.1:'+server.address().port;
+const origin=process.env.KIOSK_FLOW_URL||'http://127.0.0.1:'+server.address().port;
 const launch={args:['--no-sandbox','--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream','--autoplay-policy=no-user-gesture-required','--enable-unsafe-swiftshader']};
 if(process.env.CHROMIUM_EXECUTABLE)launch.executablePath=process.env.CHROMIUM_EXECUTABLE;
 else try{await fs.access('/usr/bin/chromium');launch.executablePath='/usr/bin/chromium';}catch{}
@@ -163,8 +163,18 @@ try{
  const duration=timing.captures[0]-timing.ticks[0].at;
  assert.ok(duration>=6900&&duration<8500,'Seven-second countdown: '+duration);
  assert.equal(jobs.length,0,'Photo capture does not generate before count and city');
- for(const n of [1,2,3])assert.equal(await page.locator('[data-touch=people-'+n+']').isVisible(),true);
- await tool('set_guest_count',{count:4});assert.equal(await phase(),'choosing_people','Invalid group count does not advance');
+ for(const n of [1,2,3,4])assert.equal(await page.locator('[data-touch=people-'+n+']').isVisible(),true);
+ await tool('set_guest_count',{count:5});assert.equal(await phase(),'choosing_people','Invalid group count does not advance');
+ for(const [name,width,height] of [['kiosk',1080,1920],['phone',390,844],['landscape',844,390]]){
+  await page.setViewportSize({width,height});await page.waitForTimeout(150);
+  const sizes=await page.locator('.touch-actions.people [data-touch^=people-]').evaluateAll(es=>es.map(e=>{const b=e.getBoundingClientRect();return {x:b.x,y:b.y,width:b.width,height:b.height};}));
+  assert.equal(sizes.length,4);
+  assert.ok(sizes.every((b,i)=>b.height>=80&&b.width>width*.75&&Math.abs(b.x-sizes[0].x)<1&&(i===0||b.y>=sizes[i-1].y+sizes[i-1].height+9)),name+': four large stacked buttons');
+  if(name==='kiosk')assert.ok(sizes.every(b=>b.height>=200), 'Kiosk group buttons use the available screen height');
+  for(const count of [1,2,3,4]){await page.locator('[data-touch=people-'+count+']').click({trial:true});await assertFooter(name+' people '+count,['[data-touch=people-'+count+']']);}
+  await page.screenshot({path:path.join(artifacts,name+'-people.png')});
+ }
+ await page.setViewportSize({width:1080,height:1920});
  await input('Two people.');await waitPhase('choosing_destination');
  await tool('set_guest_count',{count:2});assert.equal(await phase(),'choosing_destination','Duplicate count acknowledgement cannot reset the flow');
  assert.equal(await page.locator('.destination-card').count(),6);
@@ -180,6 +190,11 @@ try{
   await page.screenshot({path:path.join(artifacts,name+'-cities.png')});
  }
  await page.setViewportSize({width:1080,height:1920});
+ await page.locator('[data-touch=back]').click();
+ assert.equal(await page.locator('#touchControls.people-picker').count(),1,'Back restores the large people column');
+ assert.equal(await page.locator('.touch-actions.people [data-touch^=people-]').count(),4);
+ await page.locator('[data-touch=people-2]').click();await page.locator('.destination-card').first().waitFor({state:'visible'});
+ assert.equal(await page.locator('#touchControls.people-picker').count(),0,'City selection restores its image-card layout');
  await input('Madrid.');const firstJob=await waitJob(1);await tool('set_destination',{destinationId:'madrid'});
  assert.match(firstJob.body,/name="guestCount"\r\n\r\n2/);assert.match(firstJob.body,/name="destinationId"\r\n\r\nmadrid/);
  await page.locator('#emailPanel').waitFor({state:'visible'});
@@ -226,8 +241,8 @@ try{
  assert.equal(await phase(),'idle');assert.equal(await page.locator('#picture').isVisible(),false);assert.equal(await page.locator('#emailInput').inputValue(),'');assert.equal(mail.length,1);
  report.checks.push('homepage peace capture','provider failure retry','late result discarded after reset');
  // Group of three through touch, with an image that finishes before confirmation.
- await page.locator('#viewfinderCapture').click();await waitPhase('choosing_people');await page.locator('[data-touch=people-3]').click();await page.locator('[data-touch=destination-valencia]').click();const thirdGroup=await waitJob(4);
- assert.match(thirdGroup.body,/name="guestCount"\r\n\r\n3/);thirdGroup.release();await page.waitForFunction(()=>document.querySelector('#emailTitle').textContent.includes('ready'));
+ await page.locator('#viewfinderCapture').click();await waitPhase('choosing_people');await page.locator('[data-touch=people-4]').click();await page.locator('[data-touch=destination-valencia]').click();const fourthGroup=await waitJob(4);
+ assert.match(fourthGroup.body,/name="guestCount"\r\n\r\n4/);fourthGroup.release();await page.waitForFunction(()=>document.querySelector('#emailTitle').textContent.includes('ready'));
  assert.equal(await phase(),'generating','Completed image still waits for guest contact confirmation');assert.equal(mail.length,1);
  await page.locator('#guestNameInput').fill('Three Guests');await page.locator('#emailInput').fill('three@example.invalid');await page.locator('#emailConfirm').click();await waitPhase('result');
  await page.waitForFunction(()=>document.querySelector('#emailToast').textContent.includes('accepted'));assert.equal(mail.length,2);

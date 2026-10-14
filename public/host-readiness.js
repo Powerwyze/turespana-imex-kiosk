@@ -20,9 +20,9 @@ export function boothChoice(value,phase){
  const text=String(value||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
  if(readinessIntent(text)==='hold')return null;
  if(phase==='choosing_people'){
-  const match=text.match(/^(?:(?:there (?:are|is)|we are|somos|hay) )?(1|2|3|one|two|three|uno|una|dos|tres|just me|only me|solo yo)(?: (?:people|persons|person|persona|personas|of us))?(?: please| por favor)?$/);
+  const match=text.match(/^(?:(?:there (?:are|is)|we are|somos|hay) )?(1|2|3|4|one|two|three|four|uno|una|dos|tres|cuatro|just me|only me|solo yo)(?: (?:people|persons|person|persona|personas|of us))?(?: please| por favor)?$/);
   if(!match)return null;
-  const count=({'1':1,'2':2,'3':3,one:1,two:2,three:3,uno:1,una:1,dos:2,tres:3,'just me':1,'only me':1,'solo yo':1})[match[1]];
+  const count=({'1':1,'2':2,'3':3,'4':4,one:1,two:2,three:3,four:4,uno:1,una:1,dos:2,tres:3,cuatro:4,'just me':1,'only me':1,'solo yo':1})[match[1]];
   return {name:'set_guest_count',args:{count}};
  }
  if(phase==='choosing_destination'){

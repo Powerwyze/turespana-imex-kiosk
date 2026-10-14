@@ -5,7 +5,7 @@ const placeholders={
   listening:'Lola is listening. Say ready or tap the camera button.',
   preparing:'Getting the camera ready. Your countdown will start shortly.',
   countdown:'Look toward the camera. Your countdown is on screen.',
-  choosing_people:'Your photo is captured. Choose how many people are in it.',
+  choosing_people:'Your photo is captured. Choose 1, 2, 3 or 4 people.',
   choosing_destination:'Where would you like to go? Choose a city above.',
   generating:'Creating your Spain photo. Enter your name and email above.',
   result:'Your Spain photo is ready. Follow the options above.',

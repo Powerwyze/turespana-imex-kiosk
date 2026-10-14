@@ -45,3 +45,11 @@ test('voice tools, portrait catalog and example galleries offer the same ordered
  }
 });
 
+
+test('Lola offers exactly one through four people in both voice instruction paths',()=>{
+ const config=liveSessionConfig();
+ const countTool=config.delegation.responses.tools.find(tool=>tool.name==='set_guest_count');
+ assert.deepEqual(countTool.parameters.properties.count.enum,[1,2,3,4]);
+ assert.match(config.instructions,/one, two, three, or four/);
+ assert.match(config.delegation.responses.instructions,/one to four/);
+});

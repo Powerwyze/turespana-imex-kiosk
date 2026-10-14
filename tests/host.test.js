@@ -8,8 +8,8 @@ test('a photo needs both an explicit group size and readiness; repeated calls ca
   let finish,captures=0,generations=0;
   const engine=new BoothEngine({capture:async()=>{captures++;return 'source';},generate:()=>{generations++;return new Promise(r=>finish=r);}});
   assert.match((await engine.execute('take_photo',{confirmed:true})).error,/how many/);
-  assert.ok((await engine.execute('set_guest_count',{count:4})).error);
-  await engine.execute('set_guest_count',{count:2});
+  assert.ok((await engine.execute('set_guest_count',{count:5})).error);
+  await engine.execute('set_guest_count',{count:4});
   assert.ok((await engine.execute('take_photo',{confirmed:false})).error);
   assert.equal((await engine.execute('take_photo',{confirmed:true})).accepted,true);
   await tick();
@@ -17,7 +17,7 @@ test('a photo needs both an explicit group size and readiness; repeated calls ca
   assert.ok((await engine.execute('set_guest_count',{count:1})).error);
   assert.equal(captures,1);assert.equal(generations,1);
   finish('image');await engine.job;
-  assert.equal(engine.phase,'result');assert.equal(engine.count,2);
+  assert.equal(engine.phase,'result');assert.equal(engine.count,4);
 });
 test('reset invalidates late results and clears private photo state',async()=>{
   let finish;

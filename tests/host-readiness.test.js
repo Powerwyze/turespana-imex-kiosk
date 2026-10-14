@@ -21,11 +21,18 @@ test('a phase change invalidates stale words and a readiness response cannot run
 });
 test('spoken count and city shortcuts require the matching screen and an explicit supported answer',()=>{
  for(const phrase of ['two','2 people','there are two people','dos personas','somos dos'])assert.deepEqual(boothChoice(phrase,'choosing_people'),{name:'set_guest_count',args:{count:2}});
- for(const phrase of ['four','maybe two or three','two minutes','yes','no, two'])assert.equal(boothChoice(phrase,'choosing_people'),null);
+ for(const phrase of ['five','5 people','cinco personas','maybe two or three','two minutes','yes','no, two','not four','no, cuatro'])assert.equal(boothChoice(phrase,'choosing_people'),null);
  for(const phrase of ['Seville','Sevilla por favor','I choose Andalucía'])assert.deepEqual(boothChoice(phrase,'choosing_destination'),{name:'set_destination',args:{destinationId:'andalucia'}});
  assert.equal(boothChoice('Madrid','generating'),null);assert.equal(boothChoice('two','choosing_destination'),null);assert.equal(boothChoice('Cataluña','choosing_destination'),null);
 });
 test('retakes need an explicit retake request rather than a late generic affirmative',()=>{
  for(const phrase of ['Retake','another photo','Take the photo again','otra foto'])assert.equal(retakeIntent(phrase),true,phrase);
  for(const phrase of ['yes','ready','take my photo','do not retake','not another photo'])assert.equal(retakeIntent(phrase),false,phrase);
+});
+
+test('four guests can be selected in English or Spanish only on the people screen',()=>{
+ for(const phrase of ['four','4 people','there are four people','we are four','four of us please','cuatro','cuatro personas','somos cuatro','hay cuatro personas','cuatro por favor']){
+  assert.deepEqual(boothChoice(phrase,'choosing_people'),{name:'set_guest_count',args:{count:4}},phrase);
+  for(const phase of ['listening','countdown','choosing_destination','generating','result'])assert.equal(boothChoice(phrase,phase),null,phase+': '+phrase);
+ }
 });

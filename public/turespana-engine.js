@@ -27,11 +27,11 @@ export class TurespanaEngine extends BoothEngine {
     if(name==='set_guest_count'){
       if(!this.source)return {error:'Take the photo first, then ask how many people are in it.'};
       if(!['choosing_people','choosing_destination','error'].includes(this.phase))return {error:'Start over before changing a finished photo.'};
-      if(![1,2,3].includes(args.count))return {error:'Choose one, two, or three people.'};
+      if(![1,2,3,4].includes(args.count))return {error:'Choose one, two, three, or four people.'};
       this.count=args.count;this.destination=null;this.change('choosing_destination');return this.snapshot();
     }
     if(name==='set_destination'){
-      if(!this.source||!this.count)return {error:'Take the photo and record one, two, or three people before choosing a city.'};
+      if(!this.source||!this.count)return {error:'Take the photo and record one, two, three, or four people before choosing a city.'};
       if(!['choosing_destination','error'].includes(this.phase))return {error:'Wait for the current photo or start over.'};
       if(!Object.hasOwn(destinations,args.destinationId))return {error:'Choose one of the six destinations shown on screen.'};
       this.destination=args.destinationId;

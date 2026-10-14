@@ -8,10 +8,10 @@ test('capture first, then people, then city starts exactly one generation',async
  assert.ok((await engine.execute('set_guest_count',{count:2})).error);
  await engine.execute('take_photo',{confirmed:true});await engine.job;
  assert.equal(engine.phase,'choosing_people');assert.equal(calls.length,0);
- assert.ok((await engine.execute('set_guest_count',{count:4})).error);
- await engine.execute('set_guest_count',{count:3});assert.equal(engine.phase,'choosing_destination');assert.equal(calls.length,0);
+ assert.ok((await engine.execute('set_guest_count',{count:5})).error);
+ await engine.execute('set_guest_count',{count:4});assert.equal(engine.phase,'choosing_destination');assert.equal(calls.length,0);
  const source=engine.source;await engine.execute('set_destination',{destinationId:'madrid'});await engine.job;
- assert.equal(calls.length,1);assert.equal(calls[0].source,source);assert.equal(calls[0].count,3);assert.equal(engine.phase,'result');
+ assert.equal(calls.length,1);assert.equal(calls[0].source,source);assert.equal(calls[0].count,4);assert.equal(engine.phase,'result');
  await engine.execute('take_photo',{confirmed:true});await engine.job;assert.equal(engine.phase,'choosing_people');assert.equal(engine.count,null);assert.equal(engine.destination,null);
 });
 test('reset during capture discards the late photo',async()=>{

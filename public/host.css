@@ -425,6 +425,28 @@ body[data-phase] #stage>#hostCaptions{
 }
 #stage #emailPanel{bottom:12px;max-height:calc(100% - 88px);scroll-padding-block:12px;overscroll-behavior:contain}
 body[data-native-input=true] #stage #emailPanel{max-height:calc(100% - 24px)}
+/* Give each group size its own large row, including when returning from cities. */
+#stage #touchControls.people-picker{
+ top:max(112px,8%);bottom:16px;left:50%;transform:translateX(-50%);
+ width:min(92vw,1000px);max-height:none;padding:clamp(16px,2.4vw,28px);
+ display:flex;flex-direction:column;gap:12px;overflow:auto;
+ background:#071d40f2;border:1px solid #ffffff55;border-radius:24px;
+}
+#touchControls.people-picker #touchTitle{margin:0;font-size:clamp(28px,3.6vw,48px);text-shadow:none}
+#touchControls.people-picker .touch-help{display:block;margin:0;font-size:clamp(16px,2vw,24px)}
+#touchControls .touch-actions.people{
+ flex:1;display:grid;grid-template-columns:minmax(0,1fr);
+ grid-template-rows:repeat(4,minmax(80px,1fr)) auto;gap:clamp(10px,1.2dvh,24px);
+ width:100%;min-height:min-content;
+}
+#touchControls .touch-actions.people button{
+ width:100%;min-height:80px;padding:16px;border-radius:18px;
+ font-size:clamp(30px,4.5vw,64px);line-height:1.1;
+}
+#touchControls .touch-actions.people button.secondary{min-height:52px;padding:12px;font-size:clamp(18px,2vw,26px)}
+@media(orientation:landscape) and (max-height:650px){
+ #stage #touchControls.people-picker{top:92px}
+}
 body[data-phase=result] #stage{grid-template-rows:minmax(0,1fr) auto auto}
 body[data-phase=result] #touchControls{grid-row:3}
 body[data-phase=result] #emailToast{grid-row:2}

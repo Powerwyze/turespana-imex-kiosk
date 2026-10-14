@@ -42,7 +42,7 @@ async function generateCase({ count = '1', check = valid(Number(count ?? 1)), ch
   }
 }
 
-for (const count of [1, 2, 3]) {
+for (const count of [1, 2, 3, 4]) {
   test(`exactly ${count} nearest guest(s) approved; one generation with direct delivery`, async () => {
     const { response, calls } = await generateCase({ count: String(count) });
     assert.equal(response.status, 200);
@@ -85,7 +85,7 @@ test('old cached clients without count default safely to one', async () => {
   assert.match(JSON.parse(calls[0].init.body).prompt, /Exactly 1 posed foreground/);
 });
 
-for (const count of ['', '0', '4', '-1', '1.5', '01', '2 people', ' 1', 'NaN']) {
+for (const count of ['', '0', '5', '-1', '1.5', '01', '2 people', ' 1', 'NaN']) {
   test('invalid guest count rejected before billing: ' + JSON.stringify(count), async () => {
     const { response, calls } = await generateCase({ count });
     assert.equal(response.status, 400); assert.equal(calls.length, 0);

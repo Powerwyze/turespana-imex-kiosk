@@ -56,3 +56,16 @@ test('outfit policy defaults from source clothing, honors explicit choices, and 
  assert.match(outfitSelectionPrompt('Use trousers'),/EXPLICIT OUTFIT CHOICE: Use the TROUSER ensemble/);
  assert.doesNotMatch(outfitSelectionPrompt('Use a dress',2),/EXPLICIT OUTFIT CHOICE/);
 });
+
+test('direct pipeline accepts four guests with one render and rejects five before any provider call',async()=>{
+ await exercise(async calls=>{
+  const source=new File(['camera-source'],'guest.jpg',{type:'image/jpeg'});
+  const result=await generatePortrait({file:source,destinationId:'madrid',guestCount:4});
+  assert.equal(result.bytes.toString(),'photo-result');assert.equal(calls.length,1);
+  assert.match(calls[0].body.prompt,/GUEST GROUP: Exactly 4 posed foreground guests/);
+  assert.equal(calls[0].body.n,1);assert.equal(calls[0].body.model,'gpt-image-2.5-flare');assert.equal(calls[0].body.quality,'medium');
+  calls.length=0;
+  await assert.rejects(generatePortrait({file:source,destinationId:'madrid',guestCount:5}),{code:'INVALID_GUEST_COUNT',status:400});
+  assert.equal(calls.length,0);
+ });
+});

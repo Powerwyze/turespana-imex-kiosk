@@ -12,7 +12,7 @@ export class BoothEngine {
     if (name==='reset_booth') {if(args.confirmed!==true)return {error:'Ask the visitor before clearing their picture.'};return this.reset();}
     if (['preparing','countdown','generating'].includes(this.phase)) return {...this.snapshot(),error:'A photo is already in progress. Do not start another.'};
     if (name==='set_guest_count') {
-      if (![1,2,3].includes(args.count)) return {error:'Ask for exactly one, two, or three foreground guests.'};
+      if (![1,2,3,4].includes(args.count)) return {error:'Ask for exactly one, two, three, or four foreground guests.'};
       this.count=args.count;this.onChange(this.snapshot(),this.image);return this.snapshot();
     }
     if (name!=='take_photo' && name!=='retry_picture')return {error:'Unknown booth action.'};

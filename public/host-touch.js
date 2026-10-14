@@ -37,7 +37,8 @@ export function mountTouchControls({getState,start,voice,action,finish,labels,on
    button(homeText('captureAction'),'capture',()=>action('take_photo',{confirmed:true,style:''}));
   }else if(!s.guestCount||edit==='people'){
    title.textContent='How many people?';hint.textContent=(labels[s.destinationId]?labels[s.destinationId]+' · ':'')+'How many people are in the picture?';
-   for(const count of [1,2,3])button(count+' '+(count===1?'person':'people'),'people-'+count,()=>choose('set_guest_count',{count}));
+   row.classList.add('people');
+   for(const count of [1,2,3,4])button(count+' '+(count===1?'person':'people'),'people-'+count,()=>choose('set_guest_count',{count}));
    button('Retake photo','retake',()=>action('take_photo',{confirmed:true,style:''}),true);
   }else if(!s.destinationId||edit==='destination'){
    title.textContent='Which city would you like?';row.classList.add('destinations');
@@ -55,6 +56,7 @@ export function mountTouchControls({getState,start,voice,action,finish,labels,on
    button('Change people','people',()=>{edit='people';render();},true);
   }
   // Keep the original email button and its confirmation-only handler alive.
+  panel.classList.toggle('people-picker',row.classList.contains('people'));
   row.prepend(email);panel.replaceChildren(title,hint,row);
   if(s.phase==='idle'||(s.phase==='listening'&&!s.hasPhoto)){
    const captureButton=row.querySelector('[data-touch=start],[data-touch=capture]');

@@ -1,16 +1,17 @@
 // Keep countdown silent. For other transitions, suppress only obsolete speech:
 // live acknowledgments and transcript timestamps identify current-screen output.
 const normalize=value=>String(value||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const countOptions=/\bone,? two,? (?:three,? or four|or three)\b|\bun[oa],? dos,? (?:tres,? o cuatro|o tres)\b/;
 function staleForPhase(phase,text){
  const line=normalize(text);
- if(phase!=='choosing_people'&&/how many (people|persons)|cuantas personas|one,? two,? or three/.test(line))return true;
+ if(phase!=='choosing_people'&&(/how many (people|persons)|cuantas personas/.test(line)||countOptions.test(line)))return true;
  if(phase!=='choosing_destination'&&/which (city|destination)|choose (a|your|the) (city|destination)|que ciudad|cual.*destino/.test(line))return true;
  if(!['listening','preparing','countdown'].includes(phase)&&/look (at|toward) the camera|start.*countdown|mira.*camara/.test(line))return true;
  return false;
 }
 function matchesPhase(phase,text,destination){
  const line=normalize(text);if(staleForPhase(phase,line))return false;
- if(phase==='choosing_people')return /how many|people.*picture|cuantas personas|una,? dos,? o tres/.test(line);
+ if(phase==='choosing_people')return /how many|people.*picture|cuantas personas/.test(line)||countOptions.test(line);
  if(phase==='choosing_destination')return /which (city|destination)|choose.*(city|destination)|city of your choice|que ciudad|cual.*destino/.test(line);
  if(phase==='generating'){
   const places={canarias:/canary islands|islas canarias|canarias|teide|national parks/,barcelona:/barcelona|gaudi|sagrada/,bilbao:/bilbao|guggenheim/,madrid:/madrid|retiro|prado/,andalucia:/andalucia|andalusia|seville|sevilla|alhambra/,valencia:/valencia|paella|albufera/};

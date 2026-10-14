@@ -40,3 +40,15 @@ test('an explicitly wrong-screen question cannot unmute via a long post-ack gap'
  assert.equal(f.gate.observeOutput({delta:'How many people are in the picture?',start_ms:2200,end_ms:2400}),false);assert.equal(f.audio.muted,true);
  assert.equal(f.gate.observeOutput({delta:'Your photo is being created.',start_ms:2400,end_ms:2600}),true);assert.equal(f.audio.muted,false);f.advance(1000);assert.deepEqual(f.sent,[]);
 });
+
+test('four-person option prompts are current on the people screen and stale during generation',()=>{
+ for(const question of ['One, two, three, or four?','Uno, dos, tres, o cuatro?']){
+  const f=fixture();f.gate.transition('listening');f.gate.observeOutput({delta:'Your photo',start_ms:1000,end_ms:1200});f.setLevel(.1);
+  f.gate.transition('choosing_people');acknowledge(f,'people',1200);
+  assert.equal(f.gate.observeOutput({delta:question,start_ms:1200,end_ms:1400}),true,question);
+  assert.equal(f.audio.muted,false);
+  f.gate.transition('generating',{destinationId:'madrid'});acknowledge(f,'generating',2000);
+  assert.equal(f.gate.observeOutput({delta:question,start_ms:2000,end_ms:2200}),false,question);
+  assert.equal(f.audio.muted,true);
+ }
+});

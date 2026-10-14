@@ -99,6 +99,6 @@ export function finishFace(ctx,landmarks,width,height){
 export async function finishPortrait(bitmap,faces){
   const canvas=new OffscreenCanvas(bitmap.width,bitmap.height),ctx=canvas.getContext('2d',{willReadFrequently:true});
   ctx.drawImage(bitmap,0,0);
-  for(const face of faces.slice(0,3))finishFace(ctx,face,canvas.width,canvas.height);
+  for(const face of faces.slice(0,4))finishFace(ctx,face,canvas.width,canvas.height);
   return canvas.convertToBlob({type:'image/jpeg',quality:.96});
 }

@@ -9,7 +9,7 @@ self.onmessage=({data})=>{
         ]);
         finishPhoto=filter.finishPortrait;
         detector=await FaceLandmarker.createFromOptions(await FilesetResolver.forVisionTasks('/vendor/vision/wasm'),{
-          baseOptions:{modelAssetPath:'/assets/face-landmarker.task',delegate:'CPU'},runningMode:'IMAGE',numFaces:3,
+          baseOptions:{modelAssetPath:'/assets/face-landmarker.task',delegate:'CPU'},runningMode:'IMAGE',numFaces:4,
           minFaceDetectionConfidence:.35,minFacePresenceConfidence:.35,minTrackingConfidence:.35,
           outputFaceBlendshapes:false,outputFacialTransformationMatrixes:false
         });
