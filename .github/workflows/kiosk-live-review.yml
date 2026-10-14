@@ -1,0 +1,36 @@
+name: Review live voice against the approved kiosk preview
+on:
+  push:
+    branches: [codex/kiosk-live-verification]
+permissions:
+  contents: read
+jobs:
+  live-voice:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts
+      - run: npm install --no-save --package-lock=false playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - name: Exercise real voice with image and email delivery intercepted
+        env:
+          TURESPANA_HOST_PREVIEW_URL: https://turespana-imex-kiosk2-aay0q47lv-powerwyzes-projects.vercel.app
+        run: node tests/host-live.e2e.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: kiosk-live-voice-review
+          path: artifacts/host-live-*.png
+          retention-days: 3
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: kiosk-live-voice-diagnostics
+          path: |
+            artifacts/live-report.json
+            artifacts/live-failure.json
+          retention-days: 3
