@@ -139,11 +139,32 @@ try{
  await page.goto(origin);await page.waitForFunction(()=>document.querySelector('#camera').videoWidth>0);
  for(const [name,width,height] of [['kiosk',1080,1920],['phone',390,844],['landscape',844,390]]){
   await page.setViewportSize({width,height});await page.waitForTimeout(150);
-  report.layouts.push({name,phase:'idle',...await assertTranscript(name+' idle',['#viewfinderCapture'])});
+  await page.waitForFunction(()=>document.querySelector('#homeExample img')?.naturalWidth>0);
+  const home=await page.evaluate(()=>{
+   const example=document.querySelector('#homeExample'),image=example.querySelector('img'),voice=document.querySelector('[data-touch=voice]');
+   const rect=e=>{const r=e.getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,width:r.width,height:r.height};};
+   return {parent:example.parentElement.id,imagePath:new URL(image.src).pathname,naturalWidth:image.naturalWidth,naturalHeight:image.naturalHeight,example:rect(example),image:rect(image),voice:rect(voice),viewfinder:rect(document.querySelector('#viewfinder')),stage:rect(document.querySelector('#stage'))};
+  });
+  assert.equal(home.parent,'stage',name+': example has its own screen section');
+  assert.equal(home.imagePath,'/assets/examples/bilbao-before-after.jpg',name+': supplied before-and-after example is displayed');
+  assert.deepEqual([home.naturalWidth,home.naturalHeight],[1280,956],name+': original example loads in full');
+  assert.ok(home.voice.width>=44&&home.voice.height>=44,name+': Talk to Lola remains a usable touch target');
+  assert.ok(home.voice.bottom<=home.viewfinder.top+1,name+': Talk to Lola sits above the camera: '+JSON.stringify({voice:home.voice,viewfinder:home.viewfinder}));
+  await page.locator('[data-touch=voice]').click({trial:true});
+  await page.locator('#viewfinderCapture').click({trial:true});
+  assert.equal(await page.locator('#homeExample').isVisible(),true,name+': example is visible on the homepage');
+  if(name==='kiosk'){
+   assert.ok(home.example.width>=width*.95,'Kiosk example fills the width of the lower screen');
+   assert.ok(home.example.height>=height*.25,'Kiosk example uses a substantial bottom section');
+   assert.ok(Math.abs(home.example.bottom-home.stage.bottom)<=20,'Kiosk example reaches the bottom of the screen');
+   assert.ok(home.example.top>=home.viewfinder.bottom-1,'Kiosk example does not cover the camera');
+  }
+  report.layouts.push({name,phase:'idle',home,...await assertTranscript(name+' idle',['[data-touch=voice]','#viewfinderCapture'])});
   await page.screenshot({path:path.join(artifacts,name+'-idle.png')});
  }
  await page.setViewportSize({width:1080,height:1920});
  await page.locator('[data-touch=voice]').click();await waitPhase('listening');
+ assert.equal(await page.locator('#homeExample').isVisible(),false,'Homepage example is hidden while talking to Lola');
  await input('Ready');await page.waitForTimeout(300);await input(' — not yet.');await page.waitForTimeout(1750);
  assert.equal(await phase(),'listening','Split negative utterance must not capture');
  assert.equal(await page.evaluate(()=>window.__captures.length),0);
@@ -153,10 +174,12 @@ try{
  assert.equal(await page.evaluate(()=>window.__captures.length),0,'Cancelling countdown does not save a photo');
  await page.evaluate(()=>{window.__ticks=[];});
  await input('Ready.');await waitPhase('countdown');
+ assert.equal(await page.locator('#homeExample').isVisible(),false,'Homepage example is hidden during capture');
  // AI delegation and repeated transcripts cannot race the local readiness action.
  await tool('take_photo',{confirmed:true});await input('Okay, take my picture.');
  await assertTranscript('countdown');
  await waitPhase('choosing_people');
+ assert.equal(await page.locator('#homeExample').isVisible(),false,'Homepage example is hidden during people selection');
  const timing=await page.evaluate(()=>({captures:window.__captures,ticks:window.__ticks,phases:window.__phases}));
  assert.equal(timing.captures.length,1,'Ready plus duplicate AI call captures exactly once');
  assert.deepEqual(timing.ticks.map(t=>t.tick),[7,6,5,4,3,2,1]);
@@ -198,6 +221,7 @@ try{
  await input('Madrid.');const firstJob=await waitJob(1);await tool('set_destination',{destinationId:'madrid'});
  assert.match(firstJob.body,/name="guestCount"\r\n\r\n2/);assert.match(firstJob.body,/name="destinationId"\r\n\r\nmadrid/);
  await page.locator('#emailPanel').waitFor({state:'visible'});
+ assert.equal(await page.locator('#homeExample').isVisible(),false,'Homepage example is hidden during contact entry');
  await page.waitForFunction(()=>!document.querySelector('#voice').muted);
  await say('Madrid is home to the Prado Museum. Enter your name and email while your Spain photo is created.');
  assert.match(await page.locator('#hostCaptionText').textContent(),/Spain/,'Current narration is shown in the top transcript');
@@ -216,6 +240,7 @@ try{
  assert.equal(mail.length,0,'Contact entry alone never sends email');
  await page.locator('#emailConfirm').click();assert.equal(mail.length,0,'Confirmed details wait for image');
  firstJob.release();await waitPhase('result');await page.waitForFunction(()=>document.querySelector('#emailToast').textContent.includes('accepted'));
+ assert.equal(await page.locator('#homeExample').isVisible(),false,'Homepage example is hidden behind the generated result');
  assert.equal(mail.length,1);assert.equal(mail[0].email,'kiosk-test@example.invalid');assert.equal(mail[0].name,'Test Guest');assert.equal(mail[0].marketingOptIn,false);assert.ok(mail[0].imageBase64.length>100);
  assert.equal(await page.locator('#picture').isVisible(),true);await assertTranscript('result',['[data-touch=finish]']);
  await page.screenshot({path:path.join(artifacts,'result.png')});

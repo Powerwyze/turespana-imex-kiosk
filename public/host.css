@@ -476,3 +476,63 @@ body[data-phase=choosing_destination] #touchControls{bottom:12px}
  body[data-phase=countdown] #countdown{left:28%;top:calc(110px + 15dvh)}
  .touch-actions.destinations{width:min(76vw,650px);row-gap:24px}
 }
+
+/* Homepage: Lola above the camera, with a full-width before/after below it. */
+body[data-phase=idle] #stage{
+ display:grid;grid-template-columns:minmax(0,1fr);
+ grid-template-rows:minmax(180px,1fr) minmax(0,74.6875vw);
+ gap:16px;padding:242px 0 0;overflow:hidden;
+}
+body[data-phase=idle] #intro{grid-area:auto;top:98px;left:5%;right:5%;width:90%}
+body[data-phase=idle] #touchControls{
+ grid-area:auto;
+ top:166px;bottom:auto;left:50%;right:auto;transform:translateX(-50%);
+ width:min(84vw,720px);max-height:none;overflow:visible;
+}
+body[data-phase=idle] #touchControls .touch-actions{margin:0}
+body[data-phase=idle] #touchControls [data-touch=voice]{
+ flex:1;width:100%;min-height:60px;font-size:clamp(20px,2.6vw,30px);
+ background:#071d40f2;border:1px solid #ffffffa0;
+}
+body[data-phase=idle] #viewfinder{
+ position:relative;inset:auto;transform:none;grid-column:1;grid-row:1;
+ align-self:center;justify-self:center;width:min(84vw,720px);height:100%;max-height:524px;
+ display:flex;flex-direction:column;min-height:0;overflow:hidden;
+}
+body[data-phase=idle] #viewfinder h2,body[data-phase=idle] #cameraStatus{flex:none}
+body[data-phase=idle] #viewfinder .camera-frame{flex:1;min-height:80px;height:auto}
+body[data-phase=idle] #homeExample{
+ display:block;position:relative;inset:auto;transform:none;grid-column:1;grid-row:2;
+ width:100%;height:100%;min-height:0;margin:0;align-self:end;z-index:1;
+}
+#homeExample .home-example-image{
+ width:100%;height:100%;aspect-ratio:auto;border:0;border-radius:0;box-shadow:none;background:#fff;
+}
+#homeExample .home-example-image img{
+ position:static;display:block;width:100%;height:100%;max-width:100%;object-fit:contain;
+}
+@media(max-width:600px){
+ body[data-phase=idle] #stage{padding-top:200px;gap:12px}
+ body[data-phase=idle] #intro{top:96px}
+ body[data-phase=idle] #touchControls{top:138px}
+ body[data-phase=idle] #touchControls [data-touch=voice]{min-height:50px;font-size:20px}
+ body[data-phase=idle] #viewfinder h2{font-size:22px;margin:10px}
+ body[data-phase=idle] #cameraStatus{font-size:10px;padding:7px}
+ body[data-phase=idle] #viewfinderCapture{min-height:46px;padding:10px;bottom:8px}
+}
+@media(orientation:landscape) and (max-height:650px){
+ body[data-phase=idle] #stage{
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr);
+  padding:130px 12px 8px;gap:12px;
+ }
+ body[data-phase=idle] #intro{display:none}
+ body[data-phase=idle] #sentryNotice{display:none}
+ body[data-phase=idle] #touchControls{top:76px;width:min(84vw,720px)}
+ body[data-phase=idle] #touchControls [data-touch=voice]{min-height:44px;font-size:20px}
+ body[data-phase=idle] #viewfinder{width:100%;max-height:none}
+ body[data-phase=idle] #viewfinder h2{font-size:18px;margin:6px}
+ body[data-phase=idle] #cameraStatus{font-size:9px;padding:4px}
+ body[data-phase=idle] #viewfinder .camera-frame{min-height:70px}
+ body[data-phase=idle] #homeExample{grid-column:2;grid-row:1}
+ body[data-phase=idle] #homeExample .home-example-image{background:transparent}
+}
