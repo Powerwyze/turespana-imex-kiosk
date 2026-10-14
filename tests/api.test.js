@@ -69,7 +69,7 @@ for (const count of [1, 2, 3]) {
     assert.match(payload.prompt,/Remove ALL reference people completely/);
     assert.notEqual(payload.images[0].image_url,payload.images[1].image_url);
     assert.match(payload.prompt,new RegExp('GUEST GROUP: Exactly '+count));
-    assert.match(payload.prompt,/FINAL PRIORITY: Keep the source face/);
+    assert.match(payload.prompt,/FINAL PRIORITY: Every guest faces forward and looks directly at the camera/);
     assert.match(payload.prompt,/background bystanders/);
     assert.match(payload.prompt,/coherent anatomy/);
     assert.match(payload.prompt,/No text, no printed destination title/);
