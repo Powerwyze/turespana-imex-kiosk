@@ -91,7 +91,19 @@ try{
  await waitToolTurn('set_destination');
  const tourismStart=await page.evaluate(()=>window.__liveEvents.length);
  await ask('While our photo generates, which national parks could we explore in the Canary Islands?');
- await page.waitForFunction(start=>/Teide|Timanfaya|Garajonay|Taburiente/i.test(window.__liveEvents.slice(start).filter(e=>e.type==='session.output_transcript.delta').map(e=>e.delta).join('')),tourismStart,{timeout:45000});
+ // Live may summarize the delegated answer when speaking. Check the factual
+ // answer and the spoken topic separately instead of requiring verbatim names.
+ await page.waitForFunction(start=>{
+  const events=window.__liveEvents.slice(start);
+  const answer=events.filter(e=>e.type==='response.event'&&e.event?.type==='response.output_item.done'&&e.event.item?.type==='message').flatMap(e=>e.event.item.content||[]).filter(c=>c.type==='output_text').map(c=>c.text).join(' ');
+  const spoken=events.filter(e=>e.type==='session.output_transcript.delta').map(e=>e.delta).join('');
+  const namedParks=['Teide','Timanfaya','Garajonay','Taburiente'].filter(name=>new RegExp(name,'i').test(answer));
+  return namedParks.length>=2&&/national parks?/i.test(answer)&&/national parks?|Teide|Timanfaya|Garajonay|Taburiente/i.test(spoken)&&/volcan|forest|hiking|island|nature|Canary|Canarias/i.test(spoken);
+ },tourismStart,{timeout:45000});
+ const tourismReply=await page.evaluate(start=>{
+  const events=window.__liveEvents.slice(start);
+  return {answer:events.filter(e=>e.type==='response.event'&&e.event?.type==='response.output_item.done'&&e.event.item?.type==='message').flatMap(e=>e.event.item.content||[]).filter(c=>c.type==='output_text').map(c=>c.text).join(' '),spoken:events.filter(e=>e.type==='session.output_transcript.delta').map(e=>e.delta).join('')};
+ },tourismStart);
  assert.equal(await page.locator('body').getAttribute('data-phase'),'generating');
  await page.locator('#guestNameInput').fill('Voice Test Guests');await page.locator('#emailInput').fill('voice-smoke@example.invalid');
  assert.equal(emailCalls,0,'Typing contact details does not deliver');
@@ -107,7 +119,7 @@ try{
   tools:window.__liveEvents.filter(e=>e.type==='response.event'&&e.event?.type==='response.output_item.done'&&e.event.item?.type==='function_call').map(e=>e.event.item.name),
   errors:window.__liveEvents.filter(e=>e.type==='error').map(e=>e.error)
  }));
- Object.assign(report,{generationCalls,emailCalls,imageGenerationMocked:true,emailDeliveryMocked:true,inputMode:'text through real live data channel; microphone recognition covered separately'});
+ Object.assign(report,{generationCalls,emailCalls,tourismReply,imageGenerationMocked:true,emailDeliveryMocked:true,inputMode:'text through real live data channel; microphone recognition covered separately'});
  assert.ok(report.captionUpdates>5,'Live captions stream through the conversation');assert.deepEqual(report.errors,[],'No Live protocol errors');
  await page.screenshot({path:'artifacts/host-live-result.png'});await fs.writeFile('artifacts/live-report.json',JSON.stringify(report,null,2));
  console.log('Real voice flow passed:',JSON.stringify(report));
