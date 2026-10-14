@@ -30,9 +30,10 @@ const browser=await chromium.launch(launch);
 const context=await browser.newContext({viewport:{width:1080,height:1920},permissions:['camera','microphone'],reducedMotion:'reduce'});
 const page=await context.newPage();page.setDefaultTimeout(15000);
 const pageErrors=[],apiCalls=[],jobs=[],mail=[];
+let visitorGreeting=false,sessionGate=null;
 page.on('pageerror',e=>pageErrors.push(e.stack||e.message));
 await context.addInitScript(()=>{
- window.__events=[];window.__sent=[];window.__peace=false;window.__peaceFail=sessionStorage.getItem('testPeaceFail')==='true';window.__peaceStarts=0;sessionStorage.removeItem('testPeaceFail');
+ window.__events=[];window.__sent=[];window.__peace=false;window.__present=false;window.__peaceFail=sessionStorage.getItem('testPeaceFail')==='true';window.__peaceStarts=0;sessionStorage.removeItem('testPeaceFail');
  window.__captures=[];window.__ticks=[];window.__phases=[];
  class FakeChannel extends EventTarget{
   readyState='open';
@@ -60,7 +61,7 @@ await context.addInitScript(()=>{
     if(data.type==='init'){
      if(this.url.includes('peace')&&window.__peaceFail){window.__peaceFail=false;message={type:'error',message:'simulated transient detector failure'};}
      else message={type:'ready'};
-    }else if(data.type==='frame')message=this.url.includes('peace')?{type:'gesture',victory:window.__peace}:{type:'presence',present:false};
+    }else if(data.type==='frame')message=this.url.includes('peace')?{type:'gesture',victory:window.__peace}:{type:'presence',present:window.__present};
     if(message){const event=new MessageEvent('message',{data:message});this.onmessage?.(event);this.dispatchEvent(event);}
    },20);
   }
@@ -85,10 +86,10 @@ await page.route('**/*',async route=>{
  if(url.origin!==origin){await route.abort();return;}
  if(!url.pathname.startsWith('/api/')){await route.continue();return;}
  apiCalls.push(url.pathname);
- if(url.pathname==='/api/host-session')return route.fulfill({status:201,json:{session:{id:'test_session'},transport:{sdp:'test answer'}}});
+ if(url.pathname==='/api/host-session'){if(sessionGate)await sessionGate;return route.fulfill({status:201,json:{session:{id:'test_session'},transport:{sdp:'test answer'}}});}
  if(url.pathname==='/api/host-email'){mail.push(route.request().postDataJSON());return route.fulfill({json:{ok:true}});}
  if(url.pathname==='/api/host-narration')return route.fulfill({status:503,json:{error:'Use browser speech fallback'}});
- if(url.pathname==='/api/host-greeting')return route.fulfill({json:{personPresent:false}});
+ if(url.pathname==='/api/host-greeting')return route.fulfill({json:visitorGreeting?{personPresent:true,greeting:'Hello! Welcome to the Spain photo booth.'}:{personPresent:false}});
  if(url.pathname==='/api/host-photo'){
   const body=route.request().postDataBuffer().toString('latin1');
   let done;const pending=new Promise(resolve=>done=resolve);
@@ -131,8 +132,32 @@ async function assertTranscript(label,controls=[]){
  assert.ok(metrics.textHeight>=metrics.lineHeight*2-1,label+': two full lines fit');
  assert.ok(metrics.textTop>=metrics.top&&metrics.textBottom<=metrics.bottom,label+': both lines remain inside box');
  assert.equal(metrics.overflow,false,label+': no horizontal overflow');
- if(await phase()!=='idle')assert.equal(await page.locator('#homeExamples').isVisible(),false,label+': homepage examples stay hidden during the photo flow');
+ const cameraVisible=['idle','connecting','listening','preparing','countdown'].includes(await phase());
+ assert.equal(await page.locator('#homeExamples').isVisible(),cameraVisible,label+': examples remain with the live camera until capture');
  for(const c of metrics.controls){assert.ok(!c.missing,label+': '+c.selector+' exists');assert.ok(!c.covered,label+': '+c.selector+' is below transcript');assert.ok(c.bottom<=metrics.viewportBottom+1,label+': '+c.selector+' stays above visible viewport bottom');}
+ return metrics;
+}
+async function assertCameraExamples(label,{countdown=false}={}){
+ const metrics=await page.evaluate(()=>{
+  const rect=selector=>{const r=document.querySelector(selector).getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,width:r.width,height:r.height};};
+  return {viewfinder:rect('#viewfinder'),camera:rect('#viewfinder .camera-frame'),examples:rect('#homeExamples'),countdown:rect('#countdown')};
+ });
+ const {viewfinder,camera,examples,countdown:counter}=metrics;
+ assert.equal(await page.locator('#homeExamples').isVisible(),true,label+': before-and-after examples stay visible');
+ assert.ok(examples.top>=viewfinder.bottom-1||examples.left>=viewfinder.right-1,label+': examples never overlap the camera');
+ await assertTranscript(label,['#viewfinder','#homeExamples']);
+ if(await page.locator('[data-touch=cancel]').isVisible()){
+  const cancel=await page.locator('[data-touch=cancel]').boundingBox();
+  assert.ok(cancel.y+cancel.height<=viewfinder.top+1,label+': Cancel stays above the camera and examples');
+  await page.locator('[data-touch=cancel]').click({trial:true});
+  await assertTranscript(label+' Cancel',['[data-touch=cancel]']);
+ }
+ if(countdown){
+  assert.equal(await page.locator('#countdown').isVisible(),true,label+': countdown is visible');
+  assert.ok(Math.abs((counter.left+counter.right-camera.left-camera.right)/2)<2,label+': countdown is horizontally centered inside the camera');
+  assert.ok(Math.abs((counter.top+counter.bottom-camera.top-camera.bottom)/2)<2,label+': countdown is vertically centered inside the camera');
+  assert.ok(counter.left>=camera.left-1&&counter.right<=camera.right+1&&counter.top>=camera.top-1&&counter.bottom<=camera.bottom+1,label+': countdown fits inside the camera');
+ }
  return metrics;
 }
 const report={layouts:[],checks:[]};
@@ -167,8 +192,26 @@ try{
   await page.screenshot({path:path.join(artifacts,name+'-idle.png')});
  }
  await page.setViewportSize({width:1080,height:1920});
+ // Exercise the actual sentry gate, greeting request and session startup instead
+ // of injecting an app phase. Hold only the remote session response to inspect
+ // the otherwise fleeting connecting layout.
+ let releaseSession;
+ sessionGate=new Promise(resolve=>releaseSession=resolve);visitorGreeting=true;
+ await page.evaluate(()=>{window.__present=true;});await waitPhase('connecting');
+ await assertCameraExamples('sentry connecting');
+ releaseSession();sessionGate=null;await waitPhase('listening');
+ assert.ok(apiCalls.includes('/api/host-greeting'),'Presence detection requests a greeting');
+ assert.ok(await page.evaluate(()=>window.__sent.some(e=>e.type==='session.instructions.append'&&e.content?.includes('Hello! Welcome to the Spain photo booth.'))),'Sentry greeting starts Lola through the real session path');
+ for(const [name,width,height] of [['kiosk',1080,1920],['phone',390,844],['landscape',844,390]]){
+  await page.setViewportSize({width,height});await page.waitForTimeout(150);
+  report.layouts.push({name,phase:'sentry-listening',...await assertCameraExamples(name+' sentry listening')});
+  await page.screenshot({path:path.join(artifacts,name+'-sentry-listening.png')});
+ }
+ await page.evaluate(()=>{window.__present=false;});visitorGreeting=false;await reset();
+ await page.setViewportSize({width:1080,height:1920});
+ await page.waitForFunction(()=>document.querySelector('#camera').videoWidth>0);
  await page.locator('[data-touch=voice]').click();await waitPhase('listening');
- assert.equal(await page.locator('#homeExamples').isVisible(),false,'Starting Lola hides the homepage examples');
+ await assertCameraExamples('Talk to Lola listening');
  await input('Ready');await page.waitForTimeout(300);await input(' — not yet.');await page.waitForTimeout(1750);
  assert.equal(await phase(),'listening','Split negative utterance must not capture');
  assert.equal(await page.evaluate(()=>window.__captures.length),0);
@@ -180,7 +223,10 @@ try{
  await input('Ready.');await waitPhase('countdown');
  // AI delegation and repeated transcripts cannot race the local readiness action.
  await tool('take_photo',{confirmed:true});await input('Okay, take my picture.');
- await assertTranscript('countdown');
+ for(const [name,width,height] of [['kiosk',1080,1920],['phone',390,844],['landscape',844,390]]){
+  await page.setViewportSize({width,height});await page.waitForTimeout(100);
+  report.layouts.push({name,phase:'countdown',...await assertCameraExamples(name+' countdown',{countdown:true})});
+ }
  await waitPhase('choosing_people');
  assert.equal(await page.locator('#homeExamples').isVisible(),false,'People selection does not show the homepage examples');
  const timing=await page.evaluate(()=>({captures:window.__captures,ticks:window.__ticks,phases:window.__phases}));
@@ -245,7 +291,7 @@ try{
  assert.equal(mail.length,1);assert.equal(mail[0].email,'kiosk-test@example.invalid');assert.equal(mail[0].name,'Test Guest');assert.equal(mail[0].marketingOptIn,false);assert.ok(mail[0].imageBase64.length>100);
  assert.equal(await page.locator('#picture').isVisible(),true);await assertTranscript('result',['[data-touch=finish]']);
  await page.screenshot({path:path.join(artifacts,'result.png')});
- report.checks.push('ready/negation/duplicates','cancel countdown preserves live camera','five-second capture','spoken count/city order','responsive captions/cards/contact','uppercase keyboard','confirmation-only stubbed email');
+ report.checks.push('sentry greeting keeps examples visible','camera/examples/countdown geometry at three viewports','ready/negation/duplicates','cancel countdown preserves live camera','five-second capture','spoken count/city order','responsive captions/cards/contact','uppercase keyboard','confirmation-only stubbed email');
  await reset();
  // A detector failure must re-arm on the homepage without requiring a voice session.
  await page.evaluate(()=>{sessionStorage.setItem('testPeaceFail','true');});await page.reload();await page.waitForFunction(()=>document.querySelector('#camera').videoWidth>0);

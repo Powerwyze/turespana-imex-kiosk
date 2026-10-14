@@ -475,8 +475,8 @@ body[data-phase=choosing_destination] #touchControls{bottom:12px}
  .touch-actions.destinations{width:min(76vw,650px);row-gap:24px}
 }
 
-/* Homepage: Lola above the camera, with a clear before-and-after underneath. */
-body[data-phase=idle] #stage{
+/* Keep the camera and examples stable until the photo has been captured. */
+body:is([data-phase=idle],[data-phase=connecting],[data-phase=listening],[data-phase=preparing],[data-phase=countdown]) #stage{
  display:grid;grid-template-columns:minmax(0,1fr);
  grid-template-rows:minmax(180px,min(28dvh,524px)) minmax(0,1fr);
  gap:24px;padding:242px 0 20px;overflow:hidden;
@@ -492,16 +492,16 @@ body[data-phase=idle] #touchControls [data-touch=voice]{
  flex:1;width:100%;min-height:60px;font-size:clamp(20px,2.6vw,30px);
  background:#071d40f2;border:1px solid #ffffffa0;
 }
-body[data-phase=idle] #viewfinder{
+body:is([data-phase=idle],[data-phase=connecting],[data-phase=listening],[data-phase=preparing],[data-phase=countdown]) #viewfinder{
  position:relative;inset:auto;transform:none;grid-column:1;grid-row:1;
  align-self:start;justify-self:center;width:min(84vw,720px);height:100%;max-height:524px;
  display:flex;flex-direction:column;min-height:0;overflow:hidden;
 }
-body[data-phase=idle] #viewfinder h2,body[data-phase=idle] #cameraStatus{flex:none}
-body[data-phase=idle] #viewfinder .camera-frame{flex:1;min-height:80px;height:auto}
+body:is([data-phase=idle],[data-phase=connecting],[data-phase=listening],[data-phase=preparing],[data-phase=countdown]) #viewfinder h2,body:is([data-phase=idle],[data-phase=connecting],[data-phase=listening],[data-phase=preparing],[data-phase=countdown]) #cameraStatus{flex:none}
+body:is([data-phase=idle],[data-phase=connecting],[data-phase=listening],[data-phase=preparing],[data-phase=countdown]) #viewfinder .camera-frame{flex:1;min-height:80px;height:auto}
 
 #homeExamples{display:none}
-body[data-phase=idle] #homeExamples{
+body:is([data-phase=idle],[data-phase=connecting],[data-phase=listening],[data-phase=preparing],[data-phase=countdown]) #homeExamples{
  grid-column:1;grid-row:2;align-self:start;justify-self:center;
  display:grid;grid-template-columns:minmax(0,120fr) clamp(32px,6vw,72px) minmax(0,89fr);
  align-items:center;gap:12px;width:min(94vw,1100px);height:100%;max-height:780px;min-height:0;
@@ -514,32 +514,50 @@ body[data-phase=idle] #homeExamples{
 .home-example-arrow{display:block;color:#ffdf39;margin-top:36px}
 .home-example-arrow svg{display:block;width:100%;height:auto}
 
+/* Connection and capture controls use the same top row as Talk to Lola. */
+body:is([data-phase=connecting],[data-phase=preparing],[data-phase=countdown]) #touchControls{
+ grid-area:auto;top:166px;bottom:auto;left:50%;right:auto;transform:translateX(-50%);
+ width:min(84vw,720px);max-height:none;padding:0;border:0;background:none;box-shadow:none;overflow:visible;
+}
+body:is([data-phase=connecting],[data-phase=preparing],[data-phase=countdown]) #touchTitle,
+body:is([data-phase=connecting],[data-phase=preparing],[data-phase=countdown]) .touch-help,
+body[data-phase=listening] #touchControls,
+body:is([data-phase=connecting],[data-phase=listening],[data-phase=preparing],[data-phase=countdown]) #message{display:none}
+body:is([data-phase=connecting],[data-phase=preparing],[data-phase=countdown]) #touchControls .touch-actions button{min-height:60px;font-size:clamp(20px,2.6vw,30px)}
+body[data-phase=countdown] #viewfinder #countdown{
+ top:50%;left:50%;transform:translate(-50%,-50%);font-size:clamp(48px,18dvh,150px);line-height:1;pointer-events:none;
+}
+
 @media(max-width:600px){
- body[data-phase=idle] #stage{padding-top:200px;padding-bottom:12px;gap:12px}
+ body:is([data-phase=idle],[data-phase=connecting],[data-phase=listening],[data-phase=preparing],[data-phase=countdown]) #stage{padding-top:200px;padding-bottom:12px;gap:12px}
  body[data-phase=idle] #intro{top:96px}
  body[data-phase=idle] #touchControls{top:138px}
+ body:is([data-phase=connecting],[data-phase=preparing],[data-phase=countdown]) #touchControls{top:138px}
+ body:is([data-phase=connecting],[data-phase=preparing],[data-phase=countdown]) #touchControls .touch-actions button{min-height:50px;font-size:20px}
  body[data-phase=idle] #touchControls [data-touch=voice]{min-height:50px;font-size:20px}
- body[data-phase=idle] #viewfinder h2{font-size:22px;margin:10px}
- body[data-phase=idle] #cameraStatus{font-size:10px;padding:7px}
- body[data-phase=idle] #viewfinderCapture{min-height:46px;padding:10px;bottom:8px}
- body[data-phase=idle] #homeExamples{padding:10px;gap:8px;border-radius:16px}
+ body:is([data-phase=idle],[data-phase=connecting],[data-phase=listening],[data-phase=preparing],[data-phase=countdown]) #viewfinder h2{font-size:22px;margin:10px}
+ body:is([data-phase=idle],[data-phase=connecting],[data-phase=listening],[data-phase=preparing],[data-phase=countdown]) #cameraStatus{font-size:10px;padding:7px}
+ body:is([data-phase=idle],[data-phase=connecting],[data-phase=listening],[data-phase=preparing],[data-phase=countdown]) #viewfinderCapture{min-height:46px;padding:10px;bottom:8px}
+ body:is([data-phase=idle],[data-phase=connecting],[data-phase=listening],[data-phase=preparing],[data-phase=countdown]) #homeExamples{padding:10px;gap:8px;border-radius:16px}
  #homeExamples figure{gap:6px}
  .home-example-arrow{margin-top:22px}
 }
 @media(orientation:landscape) and (max-height:650px){
- body[data-phase=idle] #stage{
+ body:is([data-phase=idle],[data-phase=connecting],[data-phase=listening],[data-phase=preparing],[data-phase=countdown]) #stage{
   grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr);
   padding:130px 12px 8px;gap:12px;
  }
  body[data-phase=idle] #intro{display:none}
  body[data-phase=idle] #sentryNotice{display:none}
  body[data-phase=idle] #touchControls{top:76px;width:min(84vw,720px)}
+ body:is([data-phase=connecting],[data-phase=preparing],[data-phase=countdown]) #touchControls{top:76px}
+ body:is([data-phase=connecting],[data-phase=preparing],[data-phase=countdown]) #touchControls .touch-actions button{min-height:44px;font-size:20px}
  body[data-phase=idle] #touchControls [data-touch=voice]{min-height:44px;font-size:20px}
- body[data-phase=idle] #viewfinder{width:100%;max-height:none}
- body[data-phase=idle] #viewfinder h2{font-size:18px;margin:6px}
- body[data-phase=idle] #cameraStatus{font-size:9px;padding:4px}
- body[data-phase=idle] #viewfinder .camera-frame{min-height:70px}
- body[data-phase=idle] #homeExamples{grid-column:2;grid-row:1;width:100%;padding:8px;gap:8px}
+ body:is([data-phase=idle],[data-phase=connecting],[data-phase=listening],[data-phase=preparing],[data-phase=countdown]) #viewfinder{width:100%;max-height:none}
+ body:is([data-phase=idle],[data-phase=connecting],[data-phase=listening],[data-phase=preparing],[data-phase=countdown]) #viewfinder h2{font-size:18px;margin:6px}
+ body:is([data-phase=idle],[data-phase=connecting],[data-phase=listening],[data-phase=preparing],[data-phase=countdown]) #cameraStatus{font-size:9px;padding:4px}
+ body:is([data-phase=idle],[data-phase=connecting],[data-phase=listening],[data-phase=preparing],[data-phase=countdown]) #viewfinder .camera-frame{min-height:70px}
+ body:is([data-phase=idle],[data-phase=connecting],[data-phase=listening],[data-phase=preparing],[data-phase=countdown]) #homeExamples{grid-column:2;grid-row:1;width:100%;padding:8px;gap:8px}
  #homeExamples figure{gap:4px}
  #homeExamples figcaption{font-size:13px}
  .home-example-arrow{margin-top:20px}

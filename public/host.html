@@ -44,7 +44,7 @@ Tap the camera button to begin.</p>
     <p class="email-note">Your name, email and marketing choice are saved for this photo experience.</p>
   </section>
   <aside id="viewfinder" aria-label="Live photo booth camera preview">
-    <h2 data-home-text="takePicture">See yourself in Spain</h2><div class="camera-frame"><video id="camera" autoplay playsinline muted aria-label="Your camera framing"></video></div>
+    <h2 data-home-text="takePicture">See yourself in Spain</h2><div class="camera-frame"><video id="camera" autoplay playsinline muted aria-label="Your camera framing"></video><div id="countdown" aria-live="assertive" hidden></div></div>
     <span id="cameraStatus" role="status">YOUR FRAME</span>
   </aside>
   <section id="homeExamples" aria-label="Example photo transformation">
@@ -52,7 +52,6 @@ Tap the camera button to begin.</p>
     <span class="home-example-arrow" aria-hidden="true"><svg viewBox="0 0 64 48" fill="none" focusable="false"><path d="M6 24h48M36 6l18 18-18 18" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
     <figure class="home-example-after"><figcaption data-home-text="afterPhoto">You in Spain</figcaption><img src="/assets/examples/andalucia-after.jpg" width="712" height="1280" alt="Example generated photo of the same visitor in Andalucía wearing a red flamenco dress"></figure>
   </section>
-  <div id="countdown" aria-live="assertive" hidden></div>
   <button id="sentryToggle" type="button" aria-pressed="false">Enable camera sentry</button>
   <p id="sentryNotice" role="status" hidden></p>
   <button id="end" aria-label="End conversation and clear photo" hidden>End</button>
