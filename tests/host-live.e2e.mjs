@@ -59,6 +59,19 @@ const ask=text=>page.evaluate(text=>{
  window.__liveChannel.send(JSON.stringify({type:'response.create'}));
 },text);
 const waitPhase=phase=>page.waitForFunction(phase=>document.body.dataset.phase===phase,phase);
+// A tool updates the UI before LiveTools can submit its result. Wait for the
+// backend's follow-up message and terminal event before injecting another turn.
+const waitToolTurn=name=>page.waitForFunction(name=>{
+ const events=window.__liveEvents;
+ const callIndex=events.findLastIndex(e=>e.type==='response.event'&&e.event?.type==='response.output_item.done'&&e.event.item?.type==='function_call'&&e.event.item.name===name);
+ if(callIndex<0)return false;
+ const call=events[callIndex].event.item;
+ if(!window.__liveSent.some(e=>e.type==='response.item.create'&&e.item?.type==='function_call_output'&&e.item.call_id===call.call_id))return false;
+ const messageIndex=events.findLastIndex(e=>e.type==='response.event'&&e.event?.type==='response.output_item.done'&&e.event.item?.type==='message');
+ const terminalIndex=events.findLastIndex(e=>e.type==='response.event'&&e.event?.type==='response.completed');
+ const createdIndex=events.findLastIndex(e=>e.type==='response.event'&&e.event?.type==='response.created');
+ return messageIndex>callIndex&&terminalIndex>messageIndex&&terminalIndex>createdIndex;
+},name,{timeout:45000});
 try{
  await page.goto(url);await page.locator('[data-touch=voice]').click();
  await page.waitForFunction(()=>['listening','preparing','countdown','error'].includes(document.body.dataset.phase),null,{timeout:65000});
@@ -71,9 +84,11 @@ try{
  assert.ok(duration>=6900&&duration<9000,'Seven-second live countdown: '+duration);
  await ask('There are exactly two people in the picture. Please select two people.');
  await waitPhase('choosing_destination');
+ await waitToolTurn('set_guest_count');
  await ask('We choose Canarias. Please select Canarias and begin our image.');
  await waitPhase('generating');await page.locator('#emailPanel').waitFor({state:'visible'});
  assert.equal(generationCalls,1);
+ await waitToolTurn('set_destination');
  const tourismStart=await page.evaluate(()=>window.__liveEvents.length);
  await ask('While our photo generates, which national parks could we explore in the Canary Islands?');
  await page.waitForFunction(start=>/Teide|Timanfaya|Garajonay|Taburiente/i.test(window.__liveEvents.slice(start).filter(e=>e.type==='session.output_transcript.delta').map(e=>e.delta).join('')),tourismStart,{timeout:45000});
