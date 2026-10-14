@@ -1,7 +1,7 @@
 // Mobile keyboards can shrink only the visual viewport, leaving 100dvh unchanged.
 export function mountContactViewport({panel,inputs,view=window,doc=document}){
  const viewport=view.visualViewport;
- let frame=null;
+ let frame=null,nativeSession=false;
  function update(){
   frame=null;
   const height=viewport?.height||view.innerHeight;
@@ -10,7 +10,10 @@ export function mountContactViewport({panel,inputs,view=window,doc=document}){
   doc.documentElement.style.setProperty('--viewport-top',top+'px');
   const active=doc.activeElement;
   const nativeEditing=!panel.hidden&&inputs.includes(active)&&active.inputMode!=='none';
-  doc.body.dataset.nativeInput=String(nativeEditing);
+  // Keep the larger form while a native keyboard is closing. A confirmation tap
+  // can blur the input before the visual viewport has regained its full height.
+  nativeSession=!panel.hidden&&(nativeEditing||(nativeSession&&height<view.innerHeight-80));
+  doc.body.dataset.nativeInput=String(nativeSession);
   if(!nativeEditing)return;
   // Scroll the form, not the page or footer. Custom key presses keep their place.
   const bounds=panel.getBoundingClientRect(),field=active.getBoundingClientRect();

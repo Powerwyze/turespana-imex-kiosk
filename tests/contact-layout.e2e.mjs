@@ -85,6 +85,8 @@ try{
   const field=await page.locator('#emailInput').boundingBox(),panel=await page.locator('#emailPanel').boundingBox();
   assert.ok(field.y>=panel.y&&field.y+field.height<=panel.y+panel.height,`${width} native keyboard: focused input stays visible ${JSON.stringify({field,panel,state:await page.evaluate(()=>({native:document.body.dataset.nativeInput,active:document.activeElement.id,mode:document.activeElement.inputMode,scroll:document.querySelector("#emailPanel").scrollTop}))})}`);
   await check(`${width} native keyboard`,'#emailInput',visibleHeight+top);
+  await page.locator('#emailConfirm').focus();
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   await check(`${width} native confirmation`,'#emailConfirm',visibleHeight+top);
   await resize(width,height-20);
   assert.equal(await page.locator('#contactKeyboardToggle').getAttribute('aria-expanded'),'false','Height-only resize preserves native keyboard choice');

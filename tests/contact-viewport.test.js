@@ -30,3 +30,10 @@ test('blur clears compact native editing and browsers without visualViewport use
  f.doc.activeElement=f.doc.body;f.doc.dispatchEvent(new Event('focusout'));f.flush();assert.equal(f.doc.body.dataset.nativeInput,'false');
  f.controller.destroy();f.view.innerHeight=600;f.view.dispatchEvent(new Event('resize'));f.flush();assert.equal(f.properties.get('--viewport-height'),'844px');
 });
+test('confirmation focus keeps the form expanded until the native keyboard closes',()=>{
+ const f=fixture();f.view.visualViewport.height=220;f.flush();assert.equal(f.doc.body.dataset.nativeInput,'true');
+ f.panel.scrollTop=0;f.doc.activeElement={id:'emailConfirm'};f.doc.dispatchEvent(new Event('focusout'));f.flush();
+ assert.equal(f.doc.body.dataset.nativeInput,'true');assert.equal(f.panel.scrollTop,0,'Only an active native text field requests scrolling');
+ f.view.visualViewport.height=f.view.innerHeight;f.view.visualViewport.dispatchEvent(new Event('resize'));f.flush();
+ assert.equal(f.doc.body.dataset.nativeInput,'false');f.controller.destroy();
+});
