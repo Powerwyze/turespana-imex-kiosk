@@ -50,7 +50,7 @@ function phase(value){
  if(document.body.dataset.phase!==value)readiness.reset();
  if(!['idle','listening'].includes(value)){peaceArmed=false;peaceEpoch++;peace?.stop();}
  // Suppress obsolete speech until its audio drains, then announce this screen.
- voiceSync.transition(value);
+ voiceSync.transition(value,{destinationId:engine.destination});
  if(value!=='generating'){ $('emailPanel').hidden=true;document.body.dataset.emailOpen='false';if($('emailPanel').contains(document.activeElement))document.activeElement.blur();captions.placeIn(null);}
  $('viewfinder').hidden=!['idle','connecting','listening','preparing','countdown'].includes(value);
  queueMicrotask(()=>touchUI?.render());document.body.dataset.phase=value;captions.setPhase(value);contactKeyboardLayout();placeHomeLogo();homeLanguage.refresh();$('sentryToggle').disabled=!sentry.enabled&&!['idle','error'].includes(value);}
@@ -63,7 +63,7 @@ function placeHomeLogo(){
   }
 }
 placeHomeLogo();
-function send(event){if(!ready||events?.readyState!=='open'||(ending&&event.type!=='session.close'))return;events.send(JSON.stringify({event_id:crypto.randomUUID(),...event}));}
+function send(event){if(!ready||events?.readyState!=='open'||(ending&&event.type!=='session.close'))return;const payload={event_id:crypto.randomUUID(),...event};if(payload.type==='session.thinking.append'&&/^(Initial booth state|Booth state):/.test(payload.content||''))voiceSync.expectStateAck(payload.event_id);events.send(JSON.stringify(payload));}
 const voiceSync=new HostVoiceSync({audio,speak:content=>send({type:'session.commentary.append',delegation_id:null,content}),getLevel:()=>{if(!analyser)return 0;const samples=new Float32Array(analyser.fftSize);analyser.getFloatTimeDomainData(samples);return Math.sqrt(samples.reduce((sum,value)=>sum+value*value,0)/samples.length);}});
 function note(content,speak=false){if(speak)voiceSync.speak(content);else send({type:'session.thinking.append',delegation_id:null,content});}
 function finishSpokenTurn(){
@@ -366,6 +366,7 @@ async function begin({sentryGreeting=null}={}){
     channel.addEventListener('message',({data})=>{
       if(epoch!==sessionEpoch)return;
       let event;try{event=JSON.parse(data);}catch{return;}
+      voiceSync.acknowledge(event);
       if(event.type==='session.started'){
         ready=true;connecting=false;clearTimeout(startTimer);
         if(sentryGreeting&&(!sentry.enabled||!sentry.gate.isFresh(performance.now()))){send({type:'session.close'});cleanup();return;}
@@ -388,9 +389,9 @@ async function begin({sentryGreeting=null}={}){
       } else if(event.type==='session.closed'){cleanup();}
       else if(event.type==='session.input_transcript.delta'){if(typeof event.delta==='string'){readiness.append(event.delta);if(event.delta.trim()){touch();guestInterrupted=true;lastVoiceAt=Date.now();captions.nextTurn();}}}
       else if(event.type==='session.output_transcript.delta'){
-        const currentSpeech=voiceSync.observeOutput();lastVoiceAt=Date.now();hostSpeaking=true;syncIdle();clearTimeout(speechQuietTimer);
+        const currentSpeech=voiceSync.observeOutput(event);lastVoiceAt=Date.now();hostSpeaking=true;syncIdle();clearTimeout(speechQuietTimer);
         speechQuietTimer=setTimeout(finishSpokenTurn,1600);
-        if(currentSpeech&&ready&&!ending&&!['idle','connecting','preparing','countdown'].includes(document.body.dataset.phase))captions.append(event.delta);
+        if(currentSpeech&&ready&&!ending&&!['idle','connecting','preparing','countdown'].includes(document.body.dataset.phase))captions.append(voiceSync.captionDelta);
       }
       else if(event.type==='error'){
         text('Your host needs a moment.','The connection had a problem. End and tap the logo to reconnect.');
