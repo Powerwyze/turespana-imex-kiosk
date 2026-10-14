@@ -387,3 +387,12 @@ body[data-phase=countdown] #countdown{top:calc(max(240px,26dvh) + 60px + min(15d
  body[data-phase=idle] #viewfinder .camera-frame{height:24dvh}
  body[data-phase=countdown] #countdown{top:calc(170px + 15dvh)}
 }
+
+/* Keep captions in one scroll area; never clip text inside a second box. */
+#hostCaptions{display:flex;flex-direction:column;overflow:hidden;pointer-events:auto}
+#hostCaptions .caption-speaker{flex:none}
+#hostCaptions #hostCaptionText{min-height:0;max-height:none;overflow-y:auto;overflow-x:hidden;white-space:normal;overflow-wrap:anywhere;flex:0 1 auto;scrollbar-width:thin}
+body[data-phase=generating] #stage>#hostCaptions{width:min(92vw,900px)!important;max-height:min(40dvh,420px);overflow:hidden;padding:14px 20px}
+body[data-phase=generating] #hostCaptionText{font-size:clamp(18px,2.2vw,30px);line-height:1.4}
+#emailPanel #hostCaptions{max-height:170px;flex-shrink:0}
+@media(max-width:600px){body[data-phase=generating] #stage>#hostCaptions{padding:12px 14px}#emailPanel #hostCaptions{max-height:140px}}
